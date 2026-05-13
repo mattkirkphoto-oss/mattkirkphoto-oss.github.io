@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matt Kirkham</title>
+  <meta name="description" content="Photography and film — Matt Kirkham, Cambridge.">
+
+  <!-- Favicon — embedded, no separate file needed -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230a0a0a'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='system-ui,sans-serif' font-size='13' font-weight='400' letter-spacing='1' fill='%23ede9e1'%3EMK%3C/text%3E%3C/svg%3E">
+
+  <!-- Mobile browser chrome colour -->
+  <meta name="theme-color" content="#0a0a0a">
+
+  <!-- OpenGraph — controls link previews in iMessage, WhatsApp, Instagram DMs etc.
+       Once live: replace YOUR_DOMAIN with your domain.
+       Save a 1200×630px image as images/og-cover.jpg for the preview image. -->
+  <meta property="og:type"        content="website">
+  <meta property="og:title"       content="Matt Kirkham — Photographer &amp; Filmmaker">
+  <meta property="og:description" content="Photography and film based in Cambridge.">
+  <meta property="og:image"       content="https://YOUR_DOMAIN/images/og-cover.jpg">
+  <meta property="og:url"         content="https://YOUR_DOMAIN">
+  <meta name="twitter:card"       content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500&display=swap" rel="stylesheet">
+  <style>
+
+    /* ── TOKENS ─────────────────────────────────────────── */
+    :root {
+      --bg:   #0a0a0a;
+      --bg2:  #101010;
+      --text: #f2ede5;
+      --mid:  rgba(242,237,229,0.72);
+      --dim:  rgba(242,237,229,0.42);
+      --rule: rgba(242,237,229,0.16);
+      --f:    'Manrope', sans-serif;
+      --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--f);
+      font-weight: 200;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* Custom cursor only on true pointer devices */
+    @media (hover: hover) and (pointer: fine) {
+      body { cursor: none; }
+    }
+
+    #grain {
+      position: fixed; inset: -50%; z-index: 9000;
+      width: 200%; height: 200%;
+      pointer-events: none;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+      animation: grain 0.4s steps(1) infinite;
+    }
+    @keyframes grain {
+      0%  { transform:translate(0,0) }     10% { transform:translate(-3%,-4%) }
+      20% { transform:translate(4%,2%) }   30% { transform:translate(-2%,5%) }
+      40% { transform:translate(5%,-3%) }  50% { transform:translate(-4%,4%) }
+      60% { transform:translate(2%,-5%) }  70% { transform:translate(-5%,3%) }
+      80% { transform:translate(3%,-2%) }  90% { transform:translate(-2%,-3%) }
+    }
+
+    #loader {
+      position: fixed; inset:0; z-index:10000;
+      background: var(--bg);
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:24px;
+      transition: opacity 0.9s var(--ease);
+    }
+    #loader.out { opacity:0; pointer-events:none; }
+    #loader-name {
+      font-family: var(--f); font-weight:200;
+      font-size: clamp(18px, 3vw, 30px);
+      letter-spacing: 0.45em; text-transform:uppercase;
+      color: var(--text); min-height: 1.2em;
+    }
+    #loader-cur {
+      display:inline-block;
+      animation: blink 0.7s infinite;
+      opacity:0.5;
+    }
+    @keyframes blink { 0%,100%{opacity:0.5} 50%{opacity:0} }
+    #loader-bar {
+      width:32px; height:1px;
+      background: var(--rule);
+      position:relative; overflow:hidden;
+    }
+    #loader-bar::after {
+      content:''; position:absolute; inset:0;
+      background: var(--mid);
+      transform:translateX(-100%);
+      animation: barSlide 1.2s var(--ease) forwards;
+    }
+    @keyframes barSlide { to { transform:translateX(0); } }
+
+    #cur {
+      width:5px; height:5px;
+      background:var(--text); border-radius:50%;
+      position:fixed; pointer-events:none; z-index:9999;
+      transform:translate(-50%,-50%);
+    }
+    #cur-ring {
+      width:24px; height:24px;
+      border:1px solid var(--dim); border-radius:50%;
+      position:fixed; pointer-events:none; z-index:9998;
+      transform:translate(-50%,-50%);
+      display:flex; align-items:center; justify-content:center;
+      transition: width .4s var(--ease), height .4s var(--ease), border-color .4s ease;
+    }
+    #cur-ring.on  { width:52px; height:52px; border-color:var(--mid); }
+    #cur-ring.view { width:64px; height:64px; border-color:rgba(229,224,216,0.55); }
+    #cur-label {
+      font-size:7px; font-weight:400; letter-spacing:0.2em; text-transform:uppercase;
+      color:var(--text); opacity:0; transition:opacity 0.25s;
+      pointer-events:none; user-select:none; position:absolute;
+    }
+    #cur-ring.view #cur-label { opacity:1; }
+
+    #nav {
+      position:fixed; top:0; left:0; right:0; z-index:100;
+      padding:0 44px; height:56px;
+      display:flex; align-items:center; justify-content:space-between;
+      transition: background .5s, border-color .5s;
+      border-bottom:1px solid transparent;
+    }
+    #nav.scrolled {
+      background:rgba(10,10,10,0.94);
+      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+      border-bottom-color:var(--rule);
+    }
+    .nav-logo {
+      font-family:var(--f); font-weight:300;
+      font-size:11px; letter-spacing:0.28em; text-transform:uppercase;
+      color:var(--text); text-decoration:none; opacity:1;
+    }
+    .nav-links { list-style:none; display:flex; gap:32px; align-items:center; }
+    .nav-links a {
+      font-size:9px; font-weight:300; letter-spacing:0.28em; text-transform:uppercase;
+      color:var(--text); text-decoration:none; opacity:.68; transition:opacity .25s;
+    }
+    .nav-links a:hover { opacity:1; }
+    .nav-toggle {
+      display:none; background:none; border:none; cursor:pointer;
+      font-family:var(--f); font-size:9px; font-weight:300;
+      letter-spacing:0.28em; text-transform:uppercase;
+      color:var(--text); opacity:0.5; padding:4px;
+    }
+
+    #hero { height:100svh; position:relative; overflow:hidden; }
+    .hero-bg {
+      position:absolute; inset:0; overflow:hidden;
+      opacity:0; transition:opacity 1.8s ease 0.4s;
+    }
+    .hero-bg.loaded { opacity:0.65; }
+    .hero-bg iframe {
+      position:absolute; top:50%; left:50%;
+      width:max(100%, 177.78vh); height:max(56.25vw, 100%);
+      transform:translate(-50%,-50%);
+      border:0; pointer-events:none;
+    }
+    .hero-fallback {
+      position:absolute; inset:0;
+      background:radial-gradient(ellipse at 60% 45%, #1c1310 0%, #0a0a0a 62%);
+    }
+    .hero-overlay {
+      position:absolute; inset:0;
+      background:linear-gradient(160deg, rgba(10,10,10,.42) 0%, rgba(10,10,10,.04) 45%, rgba(10,10,10,.55) 100%);
+    }
+    #hero-content {
+      position:absolute; bottom:48px; left:48px; z-index:2;
+    }
+    .hero-eyebrow {
+      font-size:9px; font-weight:300; letter-spacing:0.42em; text-transform:uppercase;
+      color:var(--mid); margin-bottom:16px; display:block;
+      opacity:0; animation:hFade 1s var(--ease) forwards .6s;
+    }
+    .hero-name {
+      font-size:clamp(44px,7vw,96px); font-weight:200;
+      letter-spacing:0.38em; margin-right:-0.38em;
+      text-transform:uppercase; line-height:.92; color:var(--text);
+      opacity:0; animation:hFade 1.2s var(--ease) forwards .2s;
+    }
+    @keyframes hFade {
+      from { opacity:0; transform:translateY(18px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    #hero-rule {
+      position:absolute; bottom:52px; right:48px; z-index:2;
+      width:1px; height:52px;
+      background:linear-gradient(to bottom, var(--mid), transparent);
+      animation:rulePulse 2.6s ease-in-out infinite;
+    }
+    @keyframes rulePulse {
+      0%,100%{opacity:.15;transform:scaleY(.3);transform-origin:top}
+      50%    {opacity:.8; transform:scaleY(1); transform-origin:top}
+    }
+
+    .work-section { border-top:1px solid var(--rule); }
+    .section-inner { max-width:1440px; margin:0 auto; padding:88px 44px; }
+    .section-header {
+      display:flex; justify-content:space-between; align-items:baseline;
+      margin-bottom:56px; padding-bottom:20px; border-bottom:1px solid var(--rule);
+    }
+    .section-title {
+      font-size:clamp(26px,3.5vw,46px); font-weight:200;
+      letter-spacing:0.28em; text-transform:uppercase;
+    }
+    .section-idx {
+      font-size:9px; font-weight:300;
+      letter-spacing:0.35em; text-transform:uppercase; color:var(--mid);
+    }
+
+    .project-grid {
+      display:grid; grid-template-columns:repeat(2,1fr);
+      row-gap:60px; column-gap:28px; perspective:1200px;
+    }
+    .project {
+      display:block; text-decoration:none; cursor:none;
+      position:relative; isolation:isolate;
+      transform-style:preserve-3d; transition:transform 0.5s var(--ease);
+    }
+    .project:hover { z-index:2; }
+    .project-thumb {
+      position:relative; overflow:hidden; background:var(--bg2);
+      transform:translateZ(0); outline:1px solid rgba(229,224,216,0.1);
+    }
+    .project-thumb::before { content:''; display:block; padding-top:66%; }
+    .project-img {
+      position:absolute; inset:0; width:100%; height:100%;
+      object-fit:cover; opacity:.93;
+      transition:opacity .75s ease, transform .95s ease;
+      will-change:transform; backface-visibility:hidden;
+    }
+    .project:hover .project-img { opacity:1; transform:scale(1.032); }
+    .play-label {
+      position:absolute; bottom:14px; left:16px;
+      font-size:8px; font-weight:400; letter-spacing:0.28em; text-transform:uppercase;
+      color:var(--text); opacity:.48; transition:opacity .3s;
+    }
+    .project:hover .play-label { opacity:.9; }
+    .project-info {
+      display:grid; grid-template-columns:1fr auto; gap:0 16px; align-items:start;
+      padding-top:13px; border-top:1px solid var(--rule);
+      background:var(--bg); position:relative;
+    }
+    .info-l { display:flex; flex-direction:column; gap:4px; }
+    .p-title { font-size:9px; font-weight:500; letter-spacing:0.24em; text-transform:uppercase; color:var(--text); }
+    .p-caption { font-size:9px; font-weight:200; letter-spacing:0.08em; color:var(--mid); line-height:1.75; }
+    .info-r { text-align:right; font-size:9px; font-weight:200; letter-spacing:0.1em; color:var(--mid); line-height:1.75; white-space:nowrap; }
+
+    #film-section-inner { max-width:none; padding:88px 0 88px 44px; }
+    #film-section-inner .section-header,
+    #film-scroll-hint { max-width:1440px; padding-right:44px; }
+    #grid-film {
+      display:flex; flex-direction:row; gap:20px;
+      overflow-x:auto; overflow-y:visible;
+      scrollbar-width:none;
+      padding-right:44px; padding-bottom:2px;
+      touch-action: pan-x;
+    }
+    #grid-film::-webkit-scrollbar { display:none; }
+    #grid-film .project { flex:0 0 clamp(300px, 36vw, 500px); }
+    /* 1.85:1 flat widescreen ratio for film thumbnails — 1÷1.85 = 54.05% */
+    #grid-film .project-thumb::before { padding-top: 54.05%; }
+    #film-progress-wrap { height:1px; background:var(--rule); margin:20px 44px 0; position:relative; overflow:hidden; }
+    #film-progress { position:absolute; inset:0; background:rgba(242,237,229,0.35); transform-origin:left; transform:scaleX(0); transition:transform 0.08s linear; }
+    #film-scroll-hint {
+      font-size:9px; font-weight:300; letter-spacing:0.28em; text-transform:uppercase;
+      color:var(--mid); text-align:right; padding:0 44px 20px 44px; transition:opacity 0.5s ease;
+    }
+    #film-scroll-hint.hidden { opacity:0; }
+
+    #gallery {
+      position:fixed; inset:0; z-index:500; background:rgba(8,8,8,.98);
+      display:flex; flex-direction:column; opacity:0; pointer-events:none; transition:opacity .4s ease;
+    }
+    #gallery.open { opacity:1; pointer-events:all; }
+    #g-head {
+      flex-shrink:0; height:52px; padding:0 44px;
+      display:flex; align-items:center; justify-content:space-between;
+      border-bottom:1px solid var(--rule); overflow:hidden; max-height:52px;
+      transition:max-height .35s ease, opacity .3s ease, border-color .3s ease;
+    }
+    #g-title { font-size:11px; font-weight:300; letter-spacing:0.22em; text-transform:uppercase; }
+    #g-meta { font-size:9px; font-weight:200; letter-spacing:0.28em; text-transform:uppercase; color:var(--mid); }
+    #g-close {
+      background:none; border:none; cursor:pointer; font-family:var(--f);
+      font-size:9px; font-weight:300; letter-spacing:0.24em; text-transform:uppercase;
+      color:var(--text); opacity:.82; transition:opacity .25s; padding:8px 0 8px 28px;
+    }
+    #g-close:hover { opacity:1; }
+    #g-desc {
+      flex-shrink:0; padding:14px 44px; border-bottom:1px solid var(--rule);
+      font-size:9px; font-weight:200; letter-spacing:0.1em; color:var(--mid); line-height:1.8;
+      display:none; overflow:hidden; max-height:500px;
+      transition:max-height .35s ease, opacity .3s ease, padding .3s ease;
+    }
+    #g-desc.show { display:block; }
+
+    /* Mobile: truncate long descriptions with a Read more toggle */
+    @media (max-width:900px) {
+      #g-desc.show:not(.mob-expanded) {
+        max-height:68px;
+        -webkit-mask-image:linear-gradient(to bottom, black 40%, transparent 100%);
+        mask-image:linear-gradient(to bottom, black 40%, transparent 100%);
+      }
+      #g-desc.show.mob-expanded {
+        max-height:500px;
+        -webkit-mask-image:none; mask-image:none;
+      }
+    }
+    #g-desc-more {
+      display:none; /* desktop: hidden */
+      flex-shrink:0; background:none; border:none; cursor:pointer;
+      font-family:var(--f); font-size:9px; font-weight:300;
+      letter-spacing:0.22em; text-transform:uppercase;
+      color:var(--mid); opacity:.7;
+      padding:10px 44px 12px; text-align:left; width:100%;
+      border-bottom:1px solid var(--rule);
+      transition:opacity .25s;
+    }
+    #g-desc-more:hover { opacity:1; }
+    @media (max-width:900px) {
+      #g-desc-more.show { display:block; }
+    }
+    #g-stage {
+      flex:1; position:relative; min-height:0;
+      display:flex; align-items:center; justify-content:center;
+      overflow:hidden; cursor:pointer;
+    }
+    #g-media {
+      width:100%; height:100%; display:flex; align-items:center; justify-content:center;
+      padding:28px 72px; transition:opacity 0.22s ease; cursor:default;
+    }
+    #g-media.fading { opacity:0; }
+    #g-media img { max-width:100%; max-height:100%; object-fit:contain; display:block; outline:1px solid rgba(229,224,216,0.08); cursor:pointer; }
+    #g-media iframe { width:100%; height:100%; border:0; display:block; }
+
+    /* Gallery video wrapper — transparent cover sits above iframe,
+       absorbs all mouse events so Vimeo never detects hover → controls never appear */
+    .g-video-wrap { position:relative; width:100%; height:100%; }
+    .g-video-cover { position:absolute; inset:0; z-index:1; cursor:default; }
+
+    /* Hover preview iframe — dimensions set by JS to guarantee cover
+       behaviour regardless of container ratio or video ratio */
+    .preview-frame {
+      position:absolute;
+      top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      border:0; pointer-events:none;
+      opacity:0; transition:opacity 0.7s ease;
+    }
+    .preview-frame.loaded { opacity:1; }
+    .g-arrow {
+      position:absolute; top:50%; transform:translateY(-50%);
+      background:none; border:none; cursor:pointer; font-family:var(--f);
+      font-size:10px; font-weight:300; letter-spacing:0.14em; color:var(--text);
+      opacity:.48; transition:opacity .25s; padding:60px 28px; z-index:3;
+    }
+    .g-arrow:hover { opacity:1; }
+    #g-prev { left:0; } #g-next { right:0; }
+    .g-arrow.off { opacity:0 !important; pointer-events:none; }
+    #g-thumbs {
+      flex-shrink:0; display:flex; gap:6px; align-items:center;
+      padding:12px 44px; border-top:1px solid var(--rule);
+      overflow:hidden; scrollbar-width:none; max-height:62px;
+      transition:max-height .35s ease, opacity .3s ease, padding .3s ease, border-color .3s ease;
+    }
+    #g-thumbs::-webkit-scrollbar { display:none; }
+    .g-thumb { flex-shrink:0; width:52px; height:36px; object-fit:cover; display:block; cursor:pointer; opacity:.48; outline:1px solid transparent; transition:opacity .25s, outline-color .25s; }
+    .g-thumb.active { opacity:1; outline-color:rgba(242,237,229,0.55); }
+    .g-thumb:hover { opacity:.82; }
+    .g-thumb-video { flex-shrink:0; width:52px; height:36px; background:var(--bg2); outline:1px solid transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:.48; transition:opacity .25s, outline-color .25s; font-size:8px; letter-spacing:.1em; color:var(--mid); }
+    .g-thumb-video.active { opacity:1; outline-color:rgba(242,237,229,0.55); }
+    .g-thumb-video:hover { opacity:.82; }
+    #g-foot {
+      flex-shrink:0; padding:0 44px; display:flex; align-items:center; justify-content:space-between;
+      border-top:1px solid var(--rule); max-height:42px; overflow:hidden;
+      transition:max-height .35s ease, opacity .3s ease, border-color .3s ease;
+    }
+    #g-caption { font-size:9px; font-weight:200; letter-spacing:0.14em; color:var(--mid); max-width:50%; }
+    #g-foot-right { display:flex; align-items:center; gap:22px; }
+    #g-mute-btn  { background:none; border:none; cursor:pointer; font-family:var(--f); font-size:9px; font-weight:300; letter-spacing:0.22em; text-transform:uppercase; color:var(--text); opacity:.68; transition:opacity .25s; padding:4px 0; display:none; }
+    #g-mute-btn:hover  { opacity:1; }
+    #g-expand-btn { background:none; border:none; cursor:pointer; font-family:var(--f); font-size:9px; font-weight:300; letter-spacing:0.22em; text-transform:uppercase; color:var(--text); opacity:.68; transition:opacity .25s; padding:4px 0; }
+    #g-expand-btn:hover { opacity:1; }
+    #g-count { font-size:9px; font-weight:200; letter-spacing:0.14em; color:var(--mid); }
+    #gallery.expanded #g-head   { max-height:0; opacity:0; pointer-events:none; border-color:transparent; }
+    #gallery.expanded #g-desc   { max-height:0; opacity:0; pointer-events:none; padding:0 44px; }
+    #gallery.expanded #g-thumbs { max-height:0; opacity:0; pointer-events:none; padding:0 44px; border-color:transparent; }
+    #gallery.expanded #g-foot   { max-height:0; opacity:0; pointer-events:none; border-color:transparent; }
+    #gallery.expanded .g-arrow  { opacity:0 !important; pointer-events:none; }
+    #gallery.expanded #g-media  { padding:20px; } /* breathing room rather than full bleed */
+    #gallery.expanded #g-stage  { cursor:default; }
+
+    /* Collapse button — visible only when gallery is in expanded mode */
+    #g-collapse-btn {
+      position:absolute; bottom:22px; right:24px; z-index:4;
+      background:none; border:none; cursor:pointer;
+      font-family:var(--f); font-size:9px; font-weight:300;
+      letter-spacing:0.22em; text-transform:uppercase;
+      color:var(--text); opacity:0; pointer-events:none;
+      transition:opacity 0.3s ease;
+    }
+    #gallery.expanded #g-collapse-btn { opacity:0.68; pointer-events:all; }
+    #g-collapse-btn:hover { opacity:1; }
+    .g-video-loader {
+      position:absolute; top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      width:28px; height:1px;
+      background:var(--mid); transform-origin:center;
+      animation:loadPulse 1.2s ease-in-out infinite;
+      pointer-events:none;
+    }
+    @keyframes loadPulse {
+      0%,100% { opacity:.25; transform:translate(-50%,-50%) scaleX(.35); }
+      50%      { opacity:.8;  transform:translate(-50%,-50%) scaleX(1); }
+    }
+
+    #about { border-top:1px solid var(--rule); }
+    .about-wrap { max-width:1440px; margin:0 auto; padding:88px 44px; display:grid; grid-template-columns:300px 1fr; gap:88px; align-items:start; }
+    .about-l { position:sticky; top:80px; }
+    .about-tag { font-size:9px; font-weight:300; letter-spacing:0.35em; text-transform:uppercase; color:var(--mid); margin-bottom:22px; display:block; }
+    .about-name { font-size:clamp(28px,3vw,42px); font-weight:200; letter-spacing:0.22em; text-transform:uppercase; line-height:1.1; }
+    .about-img { width:100%; aspect-ratio:3/4; object-fit:cover; opacity:.78; margin-top:28px; display:block; }
+    .about-r { padding-top:4px; }
+    .about-body { font-size:15px; font-weight:200; line-height:1.92; color:rgba(242,237,229,0.95); }
+    .about-body p + p { margin-top:20px; }
+
+    #contact { border-top:1px solid var(--rule); }
+    .contact-wrap { max-width:1440px; margin:0 auto; padding:88px 44px 72px; display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:end; }
+    .contact-label { font-size:9px; font-weight:300; letter-spacing:0.38em; text-transform:uppercase; color:var(--mid); margin-bottom:18px; display:block; }
+    .contact-email { font-size:clamp(20px,2.6vw,40px); font-weight:200; letter-spacing:0.04em; text-transform:lowercase; color:var(--text); text-decoration:none; line-height:1.25; display:block; transition:opacity .3s; }
+    .contact-email:hover { opacity:.44; }
+    .contact-r { display:flex; flex-direction:column; align-items:flex-end; gap:10px; }
+    .social-a { font-size:9px; font-weight:300; letter-spacing:0.26em; text-transform:uppercase; color:var(--text); text-decoration:none; opacity:.68; transition:opacity .25s; }
+    .social-a:hover { opacity:1; }
+    .copy { font-size:9px; font-weight:200; letter-spacing:0.14em; text-transform:uppercase; color:var(--mid); opacity:.6; }
+
+    .fi { opacity:0; transform:translateY(20px); transition:opacity .8s ease, transform .8s ease; }
+    .fi.vis { opacity:1; transform:translateY(0); }
+    .fi.d1 { transition-delay:.1s; }
+
+    @media (max-width:900px) {
+      .nav-links { display:none; }
+      .nav-toggle { display:block; }
+      #nav { padding:0 26px; }
+      .nav-links.open { display:flex; flex-direction:column; position:fixed; inset:0; background:var(--bg); justify-content:center; align-items:center; gap:28px; z-index:190; }
+      .nav-links.open a { font-size:11px; opacity:.85; }
+      #hero-content { left:28px; bottom:36px; }
+      #hero-rule { right:28px; }
+      .hero-name { letter-spacing:.18em; margin-right:-.18em; }
+      .section-inner { padding:60px 26px; }
+      .project-grid { grid-template-columns:1fr; row-gap:44px; }
+      #film-section-inner { padding:60px 26px; }
+      #grid-film { display:grid; flex-direction:unset; grid-template-columns:1fr; overflow-x:visible; scroll-snap-type:none; padding-right:0; gap:44px; }
+      #grid-film .project { flex:none; }
+      #film-progress-wrap { display:none; }
+      #film-scroll-hint { display:none; }
+      .about-wrap { grid-template-columns:1fr; gap:40px; padding:60px 26px; }
+      .about-l { position:static; }
+      .contact-wrap { grid-template-columns:1fr; padding:60px 26px 52px; }
+      .contact-r { align-items:flex-start; }
+      #g-head, #g-foot { padding:0 22px; }
+      #g-media { padding:20px 48px; }
+      .g-arrow { padding:28px 14px; }
+    }
+    @media (max-width:540px) { .hero-name { font-size:38px; } }
+
+    /* Respect OS-level reduced motion preference */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      html { scroll-behavior: auto; }
+      #grain { display: none; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <div id="grain" aria-hidden="true"></div>
+
+  <div id="loader">
+    <span id="loader-name"><span id="loader-cur">|</span></span>
+    <div id="loader-bar"></div>
+  </div>
+
+  <div id="cur"></div>
+  <div id="cur-ring"><span id="cur-label">View</span></div>
+
+  <nav id="nav">
+    <a href="#hero" class="nav-logo">Matt Kirkham</a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#photography">Photography</a></li>
+      <li><a href="#videography">Videography</a></li>
+      <li><a href="#film">Film</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu">Menu</button>
+  </nav>
+
+  <section id="hero">
+    <div class="hero-fallback"></div>
+    <div class="hero-bg" id="heroBg">
+      <iframe src="https://player.vimeo.com/video/1191660565?background=1&autoplay=1&loop=1&muted=1&badge=0&autopause=0" frameborder="0" allow="autoplay; fullscreen" title="Background reel"></iframe>
+    </div>
+    <div class="hero-overlay"></div>
+    <div id="hero-content">
+      <span class="hero-eyebrow">Photographer &amp; Filmmaker</span>
+      <h1 class="hero-name">Matt<br>Kirkham</h1>
+    </div>
+    <div id="hero-rule"></div>
+  </section>
+
+  <section id="photography" class="work-section">
+    <div class="section-inner">
+      <div class="section-header fi" id="hdr-photography">
+        <h2 class="section-title">Photography</h2>
+        <span class="section-idx">WORKS 01</span>
+      </div>
+      <div class="project-grid" id="grid-photography"></div>
+    </div>
+  </section>
+
+  <section id="videography" class="work-section">
+    <div class="section-inner">
+      <div class="section-header fi" id="hdr-videography">
+        <h2 class="section-title">Videography</h2>
+        <span class="section-idx">WORKS 02</span>
+      </div>
+      <div class="project-grid" id="grid-videography"></div>
+    </div>
+  </section>
+
+  <section id="film" class="work-section">
+    <div id="film-section-inner">
+      <div class="section-header fi" id="hdr-film">
+        <h2 class="section-title">Film</h2>
+        <span class="section-idx">WORKS 03</span>
+      </div>
+      <div id="film-scroll-hint">Scroll &rarr;</div>
+      <div id="grid-film" class="project-grid"></div>
+      <div id="film-progress-wrap"><div id="film-progress"></div></div>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="about-wrap">
+      <div class="about-l fi">
+        <span class="about-tag">04 — About</span>
+        <h2 class="about-name">Matt<br>Kirkham</h2>
+      </div>
+      <div class="about-r fi d1">
+        <div class="about-body">
+          <p>Matt Kirkham is a Cambridge-based photographer and filmmaker. His practice spans theatre, events and portraiture photography, commercial videography, and independent film.</p>
+          <p>Working as a director of photography, he takes projects from shoot through to colour grade. A BFI Film Academy alumnus, he is a committee member of Silver Street Productions, a production company at Queens' College, Cambridge.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer id="contact">
+    <div class="contact-wrap">
+      <div>
+        <span class="contact-label">Get in touch</span>
+        <a href="mailto:mattkirk.photo@gmail.com" class="contact-email">mattkirk.photo<br>@gmail.com</a>
+      </div>
+      <div class="contact-r">
+        <a href="https://instagram.com/mkirk.visual" class="social-a" target="_blank" rel="noopener noreferrer">@mkirk.visual</a>
+        <p class="copy">&copy; 2026 Matt Kirkham</p>
+      </div>
+    </div>
+  </footer>
+
+  <div id="gallery" role="dialog" aria-modal="true" aria-labelledby="g-title">
+    <div id="g-head">
+      <span id="g-title"></span>
+      <span id="g-meta"></span>
+      <button id="g-close">Close</button>
+    </div>
+    <div id="g-desc"></div>
+    <button id="g-desc-more" aria-label="Toggle description">Read more</button>
+    <div id="g-stage">
+      <button class="g-arrow" id="g-prev">&#8592;</button>
+      <div id="g-media"></div>
+      <button class="g-arrow" id="g-next">&#8594;</button>
+      <button id="g-collapse-btn">Collapse</button>
+    </div>
+    <div id="g-thumbs"></div>
+    <div id="g-foot">
+      <span id="g-caption"></span>
+      <div id="g-foot-right">
+        <button id="g-mute-btn">Mute</button>
+        <button id="g-expand-btn">Expand</button>
+        <span id="g-count"></span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+
+    const PROJECTS = {
+
+      photography: [
+        {
+          title:    'Radiance',
+          caption:  'Cambridge University Dance Society',
+          year:     '2026',
+          category: 'Performance',
+          cover:    'images/CUDS_POSTMK-001.jpg',
+          text:     'Shot during the Cambridge University Dance Society\'s spring production at The Great Hall at The Leys, Cambridge. Radiance brought together choreography across contemporary, ballet, and commercial styles — this series documents the dress rehearsal and live performances across two nights.',
+          gallery: [
+            { src: 'images/CUDS_POSTMK-001.jpg', caption: '' },
+            { src: 'images/CUDS_POSTMK-002.jpg', caption: '' },
+            { src: 'images/CUDS_POSTMK-003.jpg', caption: '' },
+            { src: 'images/CUDS_POSTMK-004.jpg', caption: '' },
+            { src: 'images/CUDS_POSTMK-005.jpg', caption: '' },
+          ]
+        },
+        { title:'Project Title', caption:'Client name or location', year:'2025', category:'Portrait', cover:'images/photo-2.jpg', text:'', gallery:[{src:'images/photo-2a.jpg',caption:''},{src:'images/photo-2b.jpg',caption:''}] },
+        { title:'Project Title', caption:'Client name or location', year:'2024', category:'Editorial', cover:'images/photo-3.jpg', text:'', gallery:[{src:'images/photo-3a.jpg',caption:''},{src:'images/photo-3b.jpg',caption:''}] },
+        { title:'Project Title', caption:'Client name or location', year:'2024', category:'Event', cover:'images/photo-4.jpg', text:'', gallery:[{src:'images/photo-4a.jpg',caption:''},{src:'images/photo-4b.jpg',caption:''}] },
+      ],
+
+      videography: [
+        {
+          title:    'CUCFS × Groove Tripos',
+          caption:  'Cambridge University Charity Fashion Show',
+          year:     '2026',
+          category: 'Event',
+          cover:    'images/groove-cover.jpg',
+          text:     'Event coverage across the Cambridge University Charity Fashion Show and the Groove Tripos afterparty, Cambridge, 2026.',
+          gallery: [
+            { vimeo: '1191660565', caption: '' },
+          ]
+        },
+        {
+          title:    'Groove Tripos × Magdalene Bop',
+          caption:  'Magdalene College Cambridge',
+          year:     '2026',
+          category: 'Event',
+          cover:    'images/magd-bop-cover.jpg',
+          text:     'Event coverage for the Groove Tripos × Magdalene College Bop, Cambridge, 2026.',
+          gallery: [
+            { vimeo: '1191854456', caption: '' },
+          ]
+        },
+        { title:'Client / Project', caption:'Brief description', year:'2025', category:'Commercial', cover:'images/video-3.jpg', text:'', gallery:[{vimeo:'YOUR_VIMEO_ID',caption:''}] },
+        { title:'Client / Project', caption:'Brief description', year:'2025', category:'Music Video', cover:'images/video-4.jpg', text:'', gallery:[{vimeo:'YOUR_VIMEO_ID',caption:''}] },
+      ],
+
+      film: [
+        {
+          title:    'Bathwater',
+          caption:  'Short Film — Trailer',
+          year:     '2026',
+          category: 'Narrative',
+          cover:    'images/bathwater-cover.jpg',
+          text:     'Directed, shot, edited and colour graded by Matt Kirkham. Bathwater is a short narrative film, Cambridge, 2026.',
+          gallery: [
+            { vimeo: '1191867904', caption: '' },
+          ]
+        },
+        { title:'Film Title', caption:'Logline or brief description', year:'2025', category:'Short Film', cover:'images/film-1.jpg', text:'An optional director\'s note or context about the film.', gallery:[{vimeo:'YOUR_VIMEO_ID',caption:''},{src:'images/film-1b.jpg',caption:'Still from the film.'}] },
+        { title:'Film Title', caption:'Logline or brief description', year:'2024', category:'Narrative', cover:'images/film-2.jpg', text:'', gallery:[{vimeo:'YOUR_VIMEO_ID',caption:''}] },
+        { title:'Film Title', caption:'Logline or brief description', year:'2024', category:'Documentary', cover:'images/film-3.jpg', text:'', gallery:[{vimeo:'YOUR_VIMEO_ID',caption:''}] },
+      ],
+
+    };
+
+    /* ── TAB TITLE + GRAIN PAUSE ── */
+    document.title = 'MATT KIRKHAM';
+    document.addEventListener('visibilitychange', () => {
+      document.title = 'MATT KIRKHAM';
+      /* Pause grain animation when tab is hidden — no point animating off-screen */
+      document.getElementById('grain').style.animationPlayState =
+        document.hidden ? 'paused' : 'running';
+    });
+
+    /* ── TYPEWRITER PRELOADER ── */
+    const loaderEl   = document.getElementById('loader');
+    const loaderName = document.getElementById('loader-name');
+    const loaderCur  = document.getElementById('loader-cur');
+    const NAME = 'MATT KIRKHAM';
+    let charIdx = 0;
+    function typeLetter() {
+      if (charIdx < NAME.length) {
+        loaderName.insertBefore(document.createTextNode(NAME[charIdx++]), loaderCur);
+        setTimeout(typeLetter, 75 + Math.random() * 40);
+      }
+    }
+    typeLetter();
+
+    /* Dismiss loader — on load, or after 3.5s max if Vimeo is slow */
+    let loaderGone = false;
+    function dismissLoader() {
+      if (loaderGone) return;
+      loaderGone = true;
+      loaderCur.style.display = 'none';
+      setTimeout(() => loaderEl.classList.add('out'), 200);
+    }
+    window.addEventListener('load', () => setTimeout(dismissLoader, 400));
+    setTimeout(dismissLoader, 3500);
+
+    /* ── HERO VIDEO ── */
+    setTimeout(() => document.getElementById('heroBg').classList.add('loaded'), 1200);
+
+    /* ── HERO SCROLL FADE ── */
+    const heroContent = document.getElementById('hero-content');
+    const heroRule    = document.getElementById('hero-rule');
+    let rafPending = false;
+    window.addEventListener('scroll', () => {
+      if (rafPending) return;
+      rafPending = true;
+      requestAnimationFrame(() => {
+        const p = Math.min(scrollY / (window.innerHeight * 0.6), 1);
+        heroContent.style.opacity   = 1 - p * 1.6;
+        heroContent.style.transform = `translateY(${p * 28}px)`;
+        heroRule.style.opacity      = 1 - p * 2;
+        rafPending = false;
+      });
+    }, { passive: true });
+
+    /* ── CURSOR — pointer devices only ── */
+    const cur  = document.getElementById('cur');
+    const ring = document.getElementById('cur-ring');
+    const hasPointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+    function curOn()   { if (hasPointer) { ring.classList.add('on');   ring.classList.remove('view'); } }
+    function curOff()  { if (hasPointer) ring.classList.remove('on', 'view'); }
+    function curView() { if (hasPointer) { ring.classList.add('view'); ring.classList.remove('on'); } }
+
+    if (hasPointer) {
+      let mx = 0, my = 0, rx = 0, ry = 0;
+      document.addEventListener('mousemove', e => {
+        mx = e.clientX; my = e.clientY;
+        cur.style.left = mx + 'px'; cur.style.top = my + 'px';
+      });
+      (function tick() {
+        rx += (mx - rx) * .11; ry += (my - ry) * .11;
+        ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+        requestAnimationFrame(tick);
+      })();
+      document.querySelectorAll('a, button').forEach(el => {
+        el.addEventListener('mouseenter', curOn);
+        el.addEventListener('mouseleave', curOff);
+      });
+    } else {
+      /* Hide cursor elements on touch devices */
+      cur.style.display  = 'none';
+      ring.style.display = 'none';
+    }
+
+    /* ── NAV ── */
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => { nav.classList.toggle('scrolled', scrollY > 40); }, { passive: true });
+    const toggle = document.getElementById('navToggle');
+    const links  = document.getElementById('navLinks');
+    toggle.addEventListener('click', () => {
+      const open = links.classList.toggle('open');
+      toggle.textContent = open ? 'Close' : 'Menu';
+      document.body.style.overflow = open ? 'hidden' : '';
+    });
+    links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+      links.classList.remove('open'); toggle.textContent = 'Menu'; document.body.style.overflow = '';
+    }));
+
+    /* ── SCROLL FADE ── */
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); });
+    }, { threshold: .06 });
+    document.querySelectorAll('.fi').forEach(el => io.observe(el));
+
+    /* ── RENDER PROJECTS ── */
+    function renderGrid(section) {
+      const grid = document.getElementById('grid-' + section);
+      if (!grid) return;
+      const projects = PROJECTS[section] || [];
+      grid.innerHTML = projects.map((p, i) => {
+        const hasVideo = p.gallery && p.gallery.some(g => g.vimeo);
+        return `<div class="project fi${i%2===1?' d1':''}" data-section="${section}" data-idx="${i}" role="button" tabindex="0" aria-label="Open ${p.title}">
+          <div class="project-thumb">
+            <img src="${p.cover}" alt="${p.title}" class="project-img" loading="lazy" decoding="async">
+            ${hasVideo?'<span class="play-label">&#9654;&ensp;Play</span>':''}
+          </div>
+          <div class="project-info">
+            <div class="info-l"><span class="p-title">${p.title}</span><span class="p-caption">${p.caption}</span></div>
+            <div class="info-r">${p.year}<br>${p.category}</div>
+          </div>
+        </div>`;
+      }).join('');
+      grid.querySelectorAll('.fi').forEach(el => io.observe(el));
+
+      /* Auto-fetch Vimeo thumbnail if cover image is missing */
+      grid.querySelectorAll('.project').forEach((el, i) => {
+        const p   = projects[i];
+        const img = el.querySelector('.project-img');
+        if (!img) return;
+        img.addEventListener('error', async () => {
+          const vimeoItem = (p.gallery || []).find(g => g.vimeo && g.vimeo !== 'YOUR_VIMEO_ID');
+          if (!vimeoItem) return;
+          try {
+            const res  = await fetch(`https://vimeo.com/api/oembed.json?url=https://vimeo.com/${vimeoItem.vimeo}&width=640`);
+            const data = await res.json();
+            if (data.thumbnail_url) {
+              img.src = data.thumbnail_url.replace(/_\d+$/, '_640');
+            }
+          } catch (_) { /* leave as broken — dark bg shows through */ }
+        });
+      });
+      const canHover = window.matchMedia('(hover: hover)').matches;
+      grid.querySelectorAll('.project').forEach((el, i) => {
+        const p     = projects[i];
+        const thumb = el.querySelector('.project-thumb');
+        el.addEventListener('mouseenter', () => curView());
+        el.addEventListener('mouseleave', () => curOff());
+
+        if (canHover) {
+          /* 3D tilt — image only, caption stays flat */
+          el.addEventListener('mousemove', e => {
+            const r = el.getBoundingClientRect();
+            const x = (e.clientX - r.left) / r.width - 0.5;
+            const y = (e.clientY - r.top)  / r.height - 0.5;
+            thumb.style.transition = 'transform 0.1s ease';
+            thumb.style.transform  = `perspective(900px) rotateY(${x*4}deg) rotateX(${-y*3}deg)`;
+          });
+          el.addEventListener('mouseleave', () => {
+            thumb.style.transition = 'transform 0.55s var(--ease)';
+            thumb.style.transform  = '';
+          });
+
+          /* Preload video preview when project enters viewport — iframe loads silently
+             so by the time the user hovers the video is already playing in the background */
+          const vimeoItem = (p.gallery || []).find(g => g.vimeo && g.vimeo !== 'YOUR_VIMEO_ID');
+          if (vimeoItem) {
+            let previewFrame = null;
+            let hoverTimer   = null;
+
+            /* Start preloading when card scrolls into view.
+               Calculate iframe dimensions to cover the container regardless of
+               the container's aspect ratio or the video's aspect ratio (16:9). */
+            const preloadIO = new IntersectionObserver(entries => {
+              if (!entries[0].isIntersecting) return;
+              previewFrame = document.createElement('iframe');
+              previewFrame.className = 'preview-frame';
+              previewFrame.src = `https://player.vimeo.com/video/${vimeoItem.vimeo}?background=1&autoplay=1&loop=1&muted=1`;
+              previewFrame.allow = 'autoplay';
+              previewFrame.tabIndex = -1;
+
+              /* Cover calculation: make iframe the size needed for a 16:9 video
+                 to fill the container, then center it (overflow clipped by parent) */
+              const cW = thumb.offsetWidth;
+              const cH = thumb.offsetHeight;
+              const videoRatio = 16 / 9;
+              const containerRatio = cW / cH;
+              let fW, fH;
+              if (containerRatio > videoRatio) {
+                /* Container wider than video: scale to fill width */
+                fW = cW + 2;
+                fH = Math.ceil(cW / videoRatio) + 2;
+              } else {
+                /* Container taller (or equal): scale to fill height */
+                fH = cH + 2;
+                fW = Math.ceil(cH * videoRatio) + 2;
+              }
+              previewFrame.style.width  = fW + 'px';
+              previewFrame.style.height = fH + 'px';
+
+              thumb.appendChild(previewFrame);
+              preloadIO.unobserve(el);
+            }, { threshold: 0.1 });
+            preloadIO.observe(el);
+
+            /* On hover: just fade the already-loaded iframe in */
+            el.addEventListener('mouseenter', () => {
+              hoverTimer = setTimeout(() => {
+                if (previewFrame) previewFrame.classList.add('loaded');
+              }, 50);
+            });
+            el.addEventListener('mouseleave', () => {
+              clearTimeout(hoverTimer);
+              if (previewFrame) previewFrame.classList.remove('loaded');
+            });
+          }
+        }
+
+        el.addEventListener('click', openGallery);
+        el.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); openGallery.call(el,e); } });
+      });
+    }
+    ['photography','videography','film'].forEach(renderGrid);
+
+    const filmGrid     = document.getElementById('grid-film');
+    const filmProgress = document.getElementById('film-progress');
+    const filmHint     = document.getElementById('film-scroll-hint');
+    if (filmGrid && filmProgress) {
+      filmGrid.addEventListener('scroll', () => {
+        const max = filmGrid.scrollWidth - filmGrid.clientWidth;
+        const pct = max > 0 ? filmGrid.scrollLeft / max : 0;
+        filmProgress.style.transform = `scaleX(${pct})`;
+        if (filmHint && pct > 0.02) filmHint.classList.add('hidden');
+      }, { passive: true });
+    }
+
+    /* Film section — momentum drag scroll */
+    if (filmGrid) {
+      let dragging = false, dragMoved = false;
+      let startX, scrollStart;
+      let velocity = 0, lastX = 0, lastT = 0;
+      let inertiaID = null;
+
+      function stopInertia() {
+        if (inertiaID) { cancelAnimationFrame(inertiaID); inertiaID = null; }
+      }
+
+      filmGrid.addEventListener('mousedown', e => {
+        stopInertia();
+        dragging   = true;
+        dragMoved  = false;
+        startX     = e.pageX;
+        scrollStart = filmGrid.scrollLeft;
+        velocity   = 0;
+        lastX      = e.pageX;
+        lastT      = Date.now();
+        filmGrid.style.userSelect = 'none';
+        filmGrid.style.cursor = 'grabbing';
+      });
+
+      document.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        const dx = e.pageX - startX;
+        if (Math.abs(dx) > 4) dragMoved = true;
+
+        /* Track velocity as px/ms, keep a rolling smoothed average */
+        const now = Date.now();
+        const dt  = Math.max(now - lastT, 1);
+        velocity  = velocity * 0.6 + ((lastX - e.pageX) / dt) * 0.4;
+        lastX = e.pageX;
+        lastT = now;
+
+        filmGrid.scrollLeft = scrollStart - dx;
+      });
+
+      document.addEventListener('mouseup', () => {
+        if (!dragging) return;
+        dragging = false;
+        filmGrid.style.userSelect = '';
+        filmGrid.style.cursor = '';
+
+        /* Apply momentum — scroll continues with decaying velocity */
+        const frameVel = velocity * 16; /* px per frame at 60fps */
+        if (Math.abs(frameVel) > 0.8) {
+          let v = frameVel;
+          function coast() {
+            filmGrid.scrollLeft += v;
+            v *= 0.95; /* friction: higher = longer coast */
+            if (Math.abs(v) > 0.5) {
+              inertiaID = requestAnimationFrame(coast);
+            } else {
+              inertiaID = null;
+            }
+          }
+          inertiaID = requestAnimationFrame(coast);
+        }
+      });
+
+      /* Swallow click after drag so gallery doesn't open */
+      filmGrid.addEventListener('click', e => {
+        if (dragMoved) { dragMoved = false; e.stopPropagation(); e.preventDefault(); }
+      }, true);
+    }
+
+    /* ── GALLERY ── */
+    const gallery    = document.getElementById('gallery');
+    const gTitle     = document.getElementById('g-title');
+    const gMeta      = document.getElementById('g-meta');
+    const gDesc      = document.getElementById('g-desc');
+    const gDescMore  = document.getElementById('g-desc-more');
+    const gMedia     = document.getElementById('g-media');
+    const gCaption   = document.getElementById('g-caption');
+    const gCount     = document.getElementById('g-count');
+    const gClose     = document.getElementById('g-close');
+    const gPrev      = document.getElementById('g-prev');
+    const gNext      = document.getElementById('g-next');
+    const gThumbs      = document.getElementById('g-thumbs');
+    const gExpandBtn   = document.getElementById('g-expand-btn');
+    const gMuteBtn     = document.getElementById('g-mute-btn');
+    const gCollapseBtn = document.getElementById('g-collapse-btn');
+    let gItems = [], gIdx = 0;
+    let currentPlayer = null, isMuted = false;
+
+    function setExpanded(on) {
+      gallery.classList.toggle('expanded', on);
+      gExpandBtn.textContent = on ? 'Collapse' : 'Expand';
+    }
+
+    /* Collapse button — always reachable in expanded mode */
+    gCollapseBtn.addEventListener('click', () => setExpanded(false));
+
+    /* Mute / unmute toggle */
+    gMuteBtn.addEventListener('click', () => {
+      if (!currentPlayer) return;
+      isMuted = !isMuted;
+      currentPlayer.setMuted(isMuted).catch(() => {});
+      gMuteBtn.textContent = isMuted ? 'Unmute' : 'Mute';
+    });
+
+    /* Mobile description toggle */
+    gDescMore.addEventListener('click', () => {
+      const expanded = gDesc.classList.toggle('mob-expanded');
+      gDescMore.textContent = expanded ? 'Show less' : 'Read more';
+    });
+
+    function openGallery(e) {
+      e.preventDefault();
+      const el = e.currentTarget;
+      const p  = PROJECTS[el.dataset.section]?.[parseInt(el.dataset.idx)];
+      if (!p) return;
+      gItems = p.gallery || [];
+      if (!gItems.length) return;
+      gTitle.textContent = p.title;
+      gMeta.textContent  = p.year + ' · ' + p.category;
+      if (p.text) {
+        gDesc.textContent = p.text;
+        gDesc.classList.add('show');
+        gDesc.classList.remove('mob-expanded');
+        gDescMore.textContent = 'Read more';
+        gDescMore.classList.add('show');
+      } else {
+        gDesc.textContent = '';
+        gDesc.classList.remove('show', 'mob-expanded');
+        gDescMore.classList.remove('show');
+      }
+      gThumbs.innerHTML = gItems.map((item,i) =>
+        item.src
+          ? `<img class="g-thumb${i===0?' active':''}" src="${item.src}" alt="" data-gi="${i}">`
+          : `<div class="g-thumb-video${i===0?' active':''}" data-gi="${i}">&#9654;</div>`
+      ).join('');
+      gThumbs.querySelectorAll('.g-thumb,.g-thumb-video').forEach(el => {
+        el.addEventListener('click', () => { gIdx = parseInt(el.dataset.gi); renderGalleryItem(gIdx); });
+        el.addEventListener('mouseenter', curOn);
+        el.addEventListener('mouseleave', curOff);
+      });
+      gallery.classList.remove('expanded');
+      gExpandBtn.textContent = 'Expand';
+      gIdx = 0;
+      renderGalleryItem(0, true);
+      gallery.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    /* Load Vimeo Player API on demand — used to unmute background=1 players */
+    let vimeoAPIPromise = null;
+    function loadVimeoAPI() {
+      if (vimeoAPIPromise) return vimeoAPIPromise;
+      vimeoAPIPromise = new Promise(resolve => {
+        if (window.Vimeo) { resolve(); return; }
+        const s = document.createElement('script');
+        s.src = 'https://player.vimeo.com/api/player.js';
+        s.onload = resolve;
+        document.head.appendChild(s);
+      });
+      return vimeoAPIPromise;
+    }
+
+    function renderGalleryItem(i, skipFade) {
+      const item = gItems[i];
+      if (!item) return;
+      const swap = () => {
+        gMedia.innerHTML = '';
+        currentPlayer = null;
+        gMuteBtn.style.display = 'none';
+        if (item.vimeo && item.vimeo !== 'YOUR_VIMEO_ID') {
+          const wrap = document.createElement('div');
+          wrap.className = 'g-video-wrap';
+
+          /* background=1 removes ALL Vimeo UI (controls, logo, title — everything).
+             The Player API then unmutes it so audio still works.
+             Fade iframe in once player is ready so there's no jarring content jump. */
+          const iframe = document.createElement('iframe');
+          iframe.src = 'https://player.vimeo.com/video/' + item.vimeo + '?background=1&autoplay=1&loop=1';
+          iframe.allow = 'autoplay; fullscreen; picture-in-picture';
+          iframe.allowFullscreen = true;
+          iframe.style.cssText = 'opacity:0;transition:opacity 0.5s ease;';
+
+          /* Subtle loading indicator — disappears when video is ready */
+          const loader = document.createElement('div');
+          loader.className = 'g-video-loader';
+          wrap.appendChild(loader);
+
+          /* Unmute via Player API after iframe is ready, then reveal */
+          loadVimeoAPI().then(() => {
+            const player = new Vimeo.Player(iframe);
+            player.ready().then(() => {
+              currentPlayer = player;
+              isMuted = false;
+              gMuteBtn.textContent = 'Mute';
+              gMuteBtn.style.display = 'inline';
+              player.setMuted(false).catch(() => {});
+              player.setVolume(1).catch(() => {});
+              iframe.style.opacity = '1';
+              loader.remove();
+            }).catch(() => { iframe.style.opacity = '1'; loader.remove(); });
+          });
+
+          /* Transparent overlay for click interactions */
+          const cover = document.createElement('div');
+          cover.className = 'g-video-cover';
+
+          /* Double click on video → expand/collapse */
+          cover.addEventListener('dblclick', () => setExpanded(!gallery.classList.contains('expanded')));
+
+          wrap.appendChild(iframe);
+          wrap.appendChild(cover);
+          gMedia.appendChild(wrap);
+        } else if (item.src) {
+          currentPlayer = null;
+          gMuteBtn.style.display = 'none';
+          const img = document.createElement('img');
+          img.src = item.src; img.alt = '';
+          /* Left third → previous, right third → next (instant, no timer).
+             Middle third → single click navigates forward; double click expands.
+             Timer only applies in the ambiguous middle zone. */
+          let midTimer = null;
+          img.style.cursor = 'pointer';
+          img.addEventListener('click', e => {
+            const rect  = img.getBoundingClientRect();
+            const x     = e.clientX - rect.left;
+            const third = rect.width / 3;
+
+            if (x < third) {
+              /* Left third — immediate back */
+              clearTimeout(midTimer); midTimer = null;
+              if (gIdx > 0) renderGalleryItem(--gIdx);
+            } else if (x > third * 2) {
+              /* Right third — immediate forward */
+              clearTimeout(midTimer); midTimer = null;
+              if (gIdx < gItems.length - 1) renderGalleryItem(++gIdx);
+            } else {
+              /* Middle third — wait to distinguish single from double click */
+              if (midTimer) {
+                clearTimeout(midTimer); midTimer = null;
+                setExpanded(!gallery.classList.contains('expanded'));
+              } else {
+                midTimer = setTimeout(() => {
+                  midTimer = null;
+                  if (gIdx < gItems.length - 1) renderGalleryItem(++gIdx);
+                }, 280);
+              }
+            }
+          });
+          gMedia.appendChild(img);
+        } else {
+          const note = document.createElement('p');
+          note.style.cssText = 'font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--mid);';
+          note.textContent = 'Add your Vimeo ID to preview video here.';
+          gMedia.appendChild(note);
+        }
+        gCaption.textContent = item.caption || '';
+        gCount.textContent   = (i+1) + ' / ' + gItems.length;
+        gPrev.classList.toggle('off', i===0);
+        gNext.classList.toggle('off', i===gItems.length-1);
+        gThumbs.querySelectorAll('.g-thumb,.g-thumb-video').forEach((el,idx) => el.classList.toggle('active', idx===i));
+        const active = gThumbs.querySelector('.active');
+        if (active) active.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+        requestAnimationFrame(() => gMedia.classList.remove('fading'));
+      };
+      if (skipFade) { swap(); } else { gMedia.classList.add('fading'); setTimeout(swap, 220); }
+    }
+
+    gPrev.addEventListener('click', () => { if (gIdx>0) renderGalleryItem(--gIdx); });
+    gNext.addEventListener('click', () => { if (gIdx<gItems.length-1) renderGalleryItem(++gIdx); });
+    gExpandBtn.addEventListener('click', () => setExpanded(!gallery.classList.contains('expanded')));
+    document.getElementById('g-stage').addEventListener('click', e => {
+      if (gallery.classList.contains('expanded')) return;
+      if (e.target===document.getElementById('g-stage')||e.target===gMedia) closeGallery();
+    });
+    let touchX = 0;
+    document.getElementById('g-stage').addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, {passive:true});
+    document.getElementById('g-stage').addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - touchX;
+      if (Math.abs(dx)<40) return;
+      if (dx<0 && gIdx<gItems.length-1) renderGalleryItem(++gIdx);
+      if (dx>0 && gIdx>0) renderGalleryItem(--gIdx);
+    }, {passive:true});
+    document.addEventListener('keydown', e => {
+      if (!gallery.classList.contains('open')) return;
+      if (e.key==='Escape') {
+        if (gallery.classList.contains('expanded')) setExpanded(false);
+        else closeGallery();
+      }
+      if (e.key==='ArrowRight'&&gIdx<gItems.length-1) renderGalleryItem(++gIdx);
+      if (e.key==='ArrowLeft'&&gIdx>0) renderGalleryItem(--gIdx);
+    });
+    function closeGallery() {
+      gallery.classList.remove('open','expanded');
+      gExpandBtn.textContent = 'Expand';
+      gDesc.classList.remove('mob-expanded');
+      gDescMore.classList.remove('show');
+      gMedia.innerHTML = '';
+      currentPlayer = null;
+      isMuted = false;
+      gMuteBtn.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+    gClose.addEventListener('click', closeGallery);
+    gallery.addEventListener('click', e => { if (e.target===gallery) closeGallery(); });
+
+  </script>
+</body>
+</html>
