@@ -668,74 +668,92 @@
 
   <script>
 
-    const PROJECTS = {
+    /* ═══════════════════════════════════════════════════════
+       YOUR PROJECTS — the only thing you edit in this file.
+
+       To add a project:
+         1. Create a folder under images/photography/, images/videography/,
+            or images/film/ and upload your files.
+         2. Add one line here with the folder path.
+
+       Everything else — title, caption, year, description, image order —
+       lives in a project.json file inside each folder. See below.
+    ═══════════════════════════════════════════════════════ */
+    const PROJECTS_DEF = {
 
       photography: [
-        {
-          title:    'Radiance',
-          caption:  'Cambridge University Dance Society',
-          year:     '2026',
-          category: 'Performance',
-          cover:    'images/CUDS_POSTMK-001.jpg',
-          text:     'Shot during the Cambridge University Dance Society\'s spring production at The Great Hall at The Leys, Cambridge. Radiance brought together choreography across contemporary, ballet, and commercial styles — this series documents the dress rehearsal and live performances across two nights.',
-          gallery: [
-            { src: 'images/CUDS_POSTMK-001.jpg', caption: '' },
-            { src: 'images/CUDS_POSTMK-002.jpg', caption: '' },
-            { src: 'images/CUDS_POSTMK-003.jpg', caption: '' },
-            { src: 'images/CUDS_POSTMK-004.jpg', caption: '' },
-            { src: 'images/CUDS_POSTMK-005.jpg', caption: '' },
-          ]
-        },
-        { title:'Project Title', caption:'Client name or location', year:'2025', category:'Portrait', cover:'images/photo-2.jpg', text:'', gallery:[{src:'images/photo-2a.jpg',caption:''},{src:'images/photo-2b.jpg',caption:''}] },
-        { title:'Project Title', caption:'Client name or location', year:'2024', category:'Editorial', cover:'images/photo-3.jpg', text:'', gallery:[{src:'images/photo-3a.jpg',caption:''},{src:'images/photo-3b.jpg',caption:''}] },
-        { title:'Project Title', caption:'Client name or location', year:'2024', category:'Event', cover:'images/photo-4.jpg', text:'', gallery:[{src:'images/photo-4a.jpg',caption:''},{src:'images/photo-4b.jpg',caption:''}] },
+        'images/photography/radiance/',
+        'images/photography/project-2/',
+        'images/photography/project-3/',
+        'images/photography/project-4/',
       ],
 
       videography: [
-        {
-          title:    'CUCFS × Groove Tripos',
-          caption:  'Cambridge University Charity Fashion Show',
-          year:     '2026',
-          category: 'Event',
-          cover:    'images/groove-cover.jpg',
-          text:     'Event coverage across the Cambridge University Charity Fashion Show and the Groove Tripos afterparty, Cambridge, 2026.',
-          gallery: [
-            { vimeo: '1191660565', caption: '' },
-          ]
-        },
-        {
-          title:    'Groove Tripos × Magdalene Bop',
-          caption:  'Magdalene College Cambridge',
-          year:     '2026',
-          category: 'Event',
-          cover:    'images/magd-bop-cover.jpg',
-          text:     'Event coverage for the Groove Tripos × Magdalene College Bop, Cambridge, 2026.',
-          gallery: [
-            { vimeo: '1191854456', caption: '' },
-          ]
-        },
-        { title:'Client / Project', caption:'Brief description', year:'2025', category:'Commercial', cover:'images/video-3.jpg', text:'', gallery:[{vimeo:'YOUR_VIMEO_ID',caption:''}] },
-        { title:'Client / Project', caption:'Brief description', year:'2025', category:'Music Video', cover:'images/video-4.jpg', text:'', gallery:[{vimeo:'YOUR_VIMEO_ID',caption:''}] },
+        'images/videography/cucfs-groove/',
+        'images/videography/magd-bop/',
+        'images/videography/project-3/',
+        'images/videography/project-4/',
       ],
 
       film: [
-        {
-          title:    'Bathwater',
-          caption:  'Short Film — Trailer',
-          year:     '2026',
-          category: 'Narrative',
-          cover:    'images/bathwater-cover.jpg',
-          text:     'Directed, shot, edited and colour graded by Matt Kirkham. Bathwater is a short narrative film, Cambridge, 2026.',
-          gallery: [
-            { vimeo: '1191867904', caption: '' },
-          ]
-        },
-        { title:'Film Title', caption:'Logline or brief description', year:'2025', category:'Short Film', cover:'images/film-1.jpg', text:'An optional director\'s note or context about the film.', gallery:[{vimeo:'YOUR_VIMEO_ID',caption:''},{src:'images/film-1b.jpg',caption:'Still from the film.'}] },
-        { title:'Film Title', caption:'Logline or brief description', year:'2024', category:'Narrative', cover:'images/film-2.jpg', text:'', gallery:[{vimeo:'YOUR_VIMEO_ID',caption:''}] },
-        { title:'Film Title', caption:'Logline or brief description', year:'2024', category:'Documentary', cover:'images/film-3.jpg', text:'', gallery:[{vimeo:'YOUR_VIMEO_ID',caption:''}] },
+        'images/film/bathwater/',
+        'images/film/project-2/',
+        'images/film/project-3/',
+        'images/film/project-4/',
       ],
 
     };
+    /* ═══════════════════════════════════════════════════════
+       project.json format — put this file in each project folder:
+       {
+         "title":       "Project Title",
+         "caption":     "Client or location",
+         "year":        "2026",
+         "category":    "Portrait",
+         "description": "Optional longer text shown when the gallery opens.",
+         "gallery": [
+           "001.jpg",
+           "002.jpg",
+           { "vimeo": "VIMEO_ID" }
+         ]
+       }
+       cover.jpg in the same folder is always the grid thumbnail.
+       Images appear in gallery in the order listed.
+    ═══════════════════════════════════════════════════════ */
+
+    /* Resolved project data — populated on load from project.json files */
+    const resolvedProjects = { photography: [], videography: [], film: [] };
+
+    async function fetchProject(folder) {
+      try {
+        const r = await fetch(folder + 'project.json');
+        if (!r.ok) return null;
+        const meta = await r.json();
+        const gallery = (meta.gallery || []).map(item => {
+          if (typeof item === 'string') return { src: folder + item, caption: '' };
+          if (item.vimeo) return { vimeo: item.vimeo, caption: item.caption || '' };
+          return item;
+        });
+        return {
+          folder,
+          cover:    folder + 'cover.jpg',
+          title:    meta.title       || '',
+          caption:  meta.caption     || '',
+          year:     meta.year        || '',
+          category: meta.category    || '',
+          text:     meta.description || '',
+          gallery
+        };
+      } catch (_) { return null; }
+    }
+
+    async function init() {
+      await Promise.all(['photography', 'videography', 'film'].map(async section => {
+        const projects = await Promise.all(PROJECTS_DEF[section].map(fetchProject));
+        resolvedProjects[section] = projects.filter(Boolean);
+        renderGrid(section);
+      }));
+    }
 
     /* ── TAB TITLE + GRAIN PAUSE ── */
     document.title = 'MATT KIRKHAM';
@@ -842,9 +860,10 @@
 
     /* ── RENDER PROJECTS ── */
     function renderGrid(section) {
-      const grid = document.getElementById('grid-' + section);
+      const grid     = document.getElementById('grid-' + section);
       if (!grid) return;
-      const projects = PROJECTS[section] || [];
+      const projects = resolvedProjects[section] || [];
+      if (!projects.length) return;
       grid.innerHTML = projects.map((p, i) => {
         const hasVideo = p.gallery && p.gallery.some(g => g.vimeo);
         return `<div class="project fi${i%2===1?' d1':''}" data-section="${section}" data-idx="${i}" role="button" tabindex="0" aria-label="Open ${p.title}">
@@ -957,7 +976,7 @@
         el.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); openGallery.call(el,e); } });
       });
     }
-    ['photography','videography','film'].forEach(renderGrid);
+    init();
 
     const filmGrid     = document.getElementById('grid-film');
     const filmProgress = document.getElementById('film-progress');
@@ -1083,7 +1102,7 @@
     function openGallery(e) {
       e.preventDefault();
       const el = e.currentTarget;
-      const p  = PROJECTS[el.dataset.section]?.[parseInt(el.dataset.idx)];
+      const p = resolvedProjects[el.dataset.section]?.[parseInt(el.dataset.idx)];
       if (!p) return;
       gItems = p.gallery || [];
       if (!gItems.length) return;
