@@ -1,0 +1,8 @@
+{
+  "title": "Film Title",
+  "caption": "Short Film",
+  "year": "2026",
+  "category": "Narrative",
+  "description": "",
+  "gallery": [{ "vimeo": "YOUR_VIMEO_ID" }]
+}
