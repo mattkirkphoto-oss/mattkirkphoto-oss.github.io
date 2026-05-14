@@ -345,10 +345,10 @@
     #g-media img { max-width:100%; max-height:100%; object-fit:contain; display:block; outline:1px solid rgba(229,224,216,0.08); cursor:pointer; }
     #g-media iframe { width:100%; height:100%; border:0; display:block; }
 
-    /* Gallery video wrapper — transparent cover sits above iframe,
-       absorbs all mouse events so Vimeo never detects hover → controls never appear */
-    .g-video-wrap { position:relative; width:100%; height:100%; }
+    /* Gallery video wrapper */
+    .g-video-wrap { position:relative; width:100%; height:100%; outline:1px solid rgba(242,237,229,0.12); }
     .g-video-cover { position:absolute; inset:0; z-index:1; cursor:default; }
+    #gallery.expanded .g-video-wrap { outline:none; }
 
     /* Hover preview iframe — dimensions set by JS to guarantee cover
        behaviour regardless of container ratio or video ratio */
@@ -402,9 +402,9 @@
     #gallery.expanded #g-media  { padding:20px; } /* breathing room rather than full bleed */
     #gallery.expanded #g-stage  { cursor:default; }
 
-    /* Collapse button — visible only when gallery is in expanded mode */
+    /* Collapse button — top-right corner so it never overlaps video content */
     #g-collapse-btn {
-      position:absolute; bottom:22px; right:24px; z-index:4;
+      position:absolute; top:16px; right:16px; z-index:10;
       background:none; border:none; cursor:pointer;
       font-family:var(--f); font-size:9px; font-weight:300;
       letter-spacing:0.22em; text-transform:uppercase;
@@ -843,20 +843,30 @@
     window.addEventListener('scroll', () => { nav.classList.toggle('scrolled', scrollY > 40); }, { passive: true });
     const toggle = document.getElementById('navToggle');
     const links  = document.getElementById('navLinks');
-    toggle.addEventListener('click', () => {
+    function closeNav() { links.classList.remove('open'); toggle.textContent = 'Menu'; document.body.style.overflow = ''; }
+    toggle.addEventListener('click', e => {
+      e.stopPropagation();
       const open = links.classList.toggle('open');
       toggle.textContent = open ? 'Close' : 'Menu';
       document.body.style.overflow = open ? 'hidden' : '';
     });
-    links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
-      links.classList.remove('open'); toggle.textContent = 'Menu'; document.body.style.overflow = '';
-    }));
+    links.querySelectorAll('a').forEach(a => a.addEventListener('click', closeNav));
+    /* Close menu when tapping outside on mobile */
+    document.addEventListener('click', e => {
+      if (links.classList.contains('open') && !nav.contains(e.target)) closeNav();
+    });
 
     /* ── SCROLL FADE ── */
     const io = new IntersectionObserver(entries => {
       entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); });
     }, { threshold: .06 });
     document.querySelectorAll('.fi').forEach(el => io.observe(el));
+
+    /* Film grid — bidirectional observer so cards re-animate every time they scroll in */
+    const filmGridEl = document.getElementById('grid-film');
+    const filmIO = filmGridEl ? new IntersectionObserver(entries => {
+      entries.forEach(e => e.target.classList.toggle('vis', e.isIntersecting));
+    }, { threshold: 0.15, root: filmGridEl }) : null;
 
     /* ── RENDER PROJECTS ── */
     function renderGrid(section) {
@@ -877,7 +887,11 @@
           </div>
         </div>`;
       }).join('');
-      grid.querySelectorAll('.fi').forEach(el => io.observe(el));
+      /* Use filmIO for film cards so they re-animate on every scroll-in */
+      grid.querySelectorAll('.fi').forEach(el => {
+        if (section === 'film' && filmIO) filmIO.observe(el);
+        else io.observe(el);
+      });
 
       /* Auto-fetch Vimeo thumbnail if cover image is missing */
       grid.querySelectorAll('.project').forEach((el, i) => {
@@ -959,7 +973,14 @@
             }, { threshold: 0.1 });
             preloadIO.observe(el);
 
-            /* On hover: just fade the already-loaded iframe in */
+            /* On touch devices — show preview when card is mostly visible, hide when not */
+            if (!canHover && vimeoItem) {
+              const mobilePreviewIO = new IntersectionObserver(entries => {
+                if (entries[0].isIntersecting && previewFrame) previewFrame.classList.add('loaded');
+                else if (previewFrame) previewFrame.classList.remove('loaded');
+              }, { threshold: 0.75 });
+              mobilePreviewIO.observe(el);
+            }
             el.addEventListener('mouseenter', () => {
               hoverTimer = setTimeout(() => {
                 if (previewFrame) previewFrame.classList.add('loaded');
@@ -1181,14 +1202,16 @@
             const player = new Vimeo.Player(iframe);
             player.ready().then(() => {
               currentPlayer = player;
-              isMuted = false;
-              gMuteBtn.textContent = 'Mute';
-              gMuteBtn.style.display = 'inline';
-              player.setMuted(false).catch(() => {});
+              /* Try to unmute — mobile browsers may block this */
+              player.setMuted(false)
+                .then(() => { isMuted = false; gMuteBtn.textContent = 'Mute'; })
+                .catch(() => { isMuted = true;  gMuteBtn.textContent = 'Unmute'; });
               player.setVolume(1).catch(() => {});
+              gMuteBtn.style.display = 'inline';
               iframe.style.opacity = '1';
-              loader.remove();
-            }).catch(() => { iframe.style.opacity = '1'; loader.remove(); });
+              /* Keep loader until fade completes */
+              setTimeout(() => loader.remove(), 550);
+            }).catch(() => { iframe.style.opacity = '1'; setTimeout(() => loader.remove(), 550); });
           });
 
           /* Transparent overlay for click interactions */
