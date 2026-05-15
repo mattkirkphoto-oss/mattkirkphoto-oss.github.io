@@ -1,8 +1,19 @@
 {
-  "title": "Film Title",
-  "caption": "Short Film",
-  "year": "2026",
+  "title": "i think something's wrong",
+  "caption": "Short Film - 2023",
+  "year": "2023",
   "category": "Narrative",
-  "description": "",
-  "gallery": [{ "vimeo": "YOUR_VIMEO_ID" }]
+  "description": "A coming-of-age short film. Directed and shot by Matt Kirkham, written and directed by Lola Malone.",
+  "gallery": [
+    "001.webp",
+    "002.webp",
+    "003.webp",
+    "004.webp",
+    "005.webp",
+    "006.webp",
+    "007.webp",
+    "008.webp",
+    "009.webp",
+    "010.webp"
+  ]
 }
