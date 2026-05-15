@@ -275,6 +275,7 @@
     }
     #grid-film::-webkit-scrollbar { display:none; }
     #grid-film .project { flex:0 0 clamp(420px, 46vw, 640px); }
+    #grid-film.is-dragging .preview-frame { opacity:0 !important; transition:none !important; }
     /* 1.85:1 flat widescreen ratio for film thumbnails — 1÷1.85 = 54.05% */
     #grid-film .project-thumb::before { padding-top: 54.05%; }
     #film-progress-wrap { height:1px; background:var(--rule); margin:20px 44px 0; position:relative; overflow:hidden; }
@@ -1266,6 +1267,42 @@
               if (previewFrame) previewFrame.classList.remove('loaded');
             });
           }
+
+          /* Photo gallery cycling — hover 2s then fade through gallery images */
+          const imgSrcs = (p.gallery || []).filter(g => g.src).map(g => g.src);
+          if (!vimeoItem && imgSrcs.length > 1) {
+            const projectImg = el.querySelector('.project-img');
+            let cycleTimer = null, cycleInterval = null, cycleIdx = 0;
+
+            function fadeToSrc(src) {
+              projectImg.style.transition = 'opacity 0.35s ease';
+              projectImg.style.opacity = '0';
+              setTimeout(() => {
+                projectImg.src = src;
+                projectImg.style.opacity = '';
+                setTimeout(() => { projectImg.style.transition = ''; }, 400);
+              }, 350);
+            }
+
+            el.addEventListener('mouseenter', () => {
+              imgSrcs.forEach(src => { const img = new Image(); img.src = src; });
+              cycleTimer = setTimeout(() => {
+                cycleIdx = 0;
+                fadeToSrc(imgSrcs[cycleIdx]);
+                cycleInterval = setInterval(() => {
+                  cycleIdx = (cycleIdx + 1) % imgSrcs.length;
+                  fadeToSrc(imgSrcs[cycleIdx]);
+                }, 1200);
+              }, 2000);
+            });
+
+            el.addEventListener('mouseleave', () => {
+              clearTimeout(cycleTimer);
+              clearInterval(cycleInterval);
+              cycleTimer = null; cycleInterval = null;
+              fadeToSrc(p.cover);
+            });
+          }
         }
 
         el.addEventListener('click', openGallery);
@@ -1375,7 +1412,7 @@
       filmGrid.addEventListener('mousedown', e => {
         stopInertia();
         hideFilmPreviews();
-        filmGrid.style.pointerEvents = 'none'; /* prevent hover re-triggering during drag */
+        filmGrid.classList.add('is-dragging');
         dragging   = true;
         dragMoved  = false;
         startX     = e.pageX;
@@ -1407,7 +1444,8 @@
         dragging = false;
         filmGrid.style.userSelect = '';
         filmGrid.style.cursor = '';
-        filmGrid.style.pointerEvents = ''; /* restore hover events */
+        /* Small delay before re-enabling previews so they don't flash on release */
+        setTimeout(() => filmGrid.classList.remove('is-dragging'), 150);
 
         /* Apply momentum — scroll continues with decaying velocity */
         const frameVel = velocity * 16; /* px per frame at 60fps */
