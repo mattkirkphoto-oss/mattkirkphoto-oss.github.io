@@ -463,7 +463,30 @@
     /* ── COLOUR GRADING ────────────────────────────────────── */
     #grading { border-top:1px solid var(--rule); }
     .grade-inner { max-width:1440px; margin:0 auto; padding:88px 44px; }
-    #grading-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:28px; }
+    /* Colour grading — collapsible grid */
+    #grading-grid {
+      display:grid; grid-template-columns:repeat(2,1fr); gap:28px;
+      max-height:0; overflow:hidden;
+      transition:max-height .5s var(--ease), opacity .35s ease, margin-top .35s ease;
+      opacity:0; margin-top:0;
+    }
+    #grading-grid.open { max-height:2000px; opacity:1; margin-top:0; }
+    #grading-toggle-btn {
+      background:none; border:none; cursor:pointer;
+      font-family:var(--f); font-size:9px; font-weight:300;
+      letter-spacing:0.35em; text-transform:uppercase;
+      color:var(--mid); transition:color .25s; padding:0;
+      display:flex; align-items:center; gap:8px;
+    }
+    #grading-toggle-btn:hover { color:var(--text); }
+    #grading-toggle-btn::after {
+      content:'↓'; font-size:10px;
+      transition:transform .3s var(--ease); display:inline-block;
+    }
+    #grading-toggle-btn.open::after { transform:rotate(180deg); }
+
+    /* Prevent long-press image context menu / Google visual search on mobile */
+    img { -webkit-touch-callout:none; }
 
     .grade-slider {
       position:relative; overflow:hidden; background:var(--bg2);
@@ -743,7 +766,7 @@
     <div class="grade-inner">
       <div class="section-header fi" id="hdr-grading">
         <h2 class="section-title">Colour Grading</h2>
-        <span class="section-idx">Drag to compare</span>
+        <button id="grading-toggle-btn">Show work</button>
       </div>
       <div id="grading-grid"></div>
     </div>
@@ -1063,6 +1086,20 @@
       const open = skillsPanel.classList.toggle('open');
       skillsBtn.classList.toggle('open', open);
     });
+
+    /* ── GRADING TOGGLE ── */
+    const gradingToggleBtn = document.getElementById('grading-toggle-btn');
+    const gradingGridEl    = document.getElementById('grading-grid');
+    if (gradingToggleBtn && gradingGridEl) {
+      gradingToggleBtn.addEventListener('click', () => {
+        const open = gradingGridEl.classList.toggle('open');
+        gradingToggleBtn.classList.toggle('open', open);
+        gradingToggleBtn.textContent = open ? 'Hide' : 'Show work';
+        if (open) requestAnimationFrame(() =>
+          gradingGridEl.querySelectorAll('.grade-slider').forEach(initGradeSlider)
+        );
+      });
+    }
     const io = new IntersectionObserver(entries => {
       entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); });
     }, { threshold: .06 });
@@ -1261,8 +1298,9 @@
       function setPos(clientX) {
         const r   = slider.getBoundingClientRect();
         const pct = Math.min(Math.max((clientX - r.left) / r.width * 100, 0), 100);
-        afterImg.style.clipPath = `inset(0 ${100 - pct}% 0 0)`;
-        handle.style.left        = pct + '%';
+        /* Clip from left — consistent with CSS initial state inset(0 0 0 50%) */
+        afterImg.style.clipPath = `inset(0 0 0 ${pct}%)`;
+        handle.style.left       = pct + '%';
       }
 
       /* Mouse */
@@ -1274,6 +1312,12 @@
       slider.addEventListener('touchstart', e => { dragging = true; setPos(e.touches[0].clientX); }, { passive:true });
       document.addEventListener('touchmove', e => { if (dragging) setPos(e.touches[0].clientX); }, { passive:true });
       document.addEventListener('touchend',  () => { dragging = false; });
+
+      /* Sync JS state with CSS initial state — prevents jump on first click */
+      requestAnimationFrame(() => {
+        const r = slider.getBoundingClientRect();
+        setPos(r.left + r.width * 0.5);
+      });
     }
 
     loadGrading();
