@@ -147,7 +147,7 @@
     .nav-links {
       list-style:none; display:flex; gap:32px; align-items:center;
       position:fixed; top:0; right:44px; height:56px;
-      margin:0; padding:0; z-index:99;
+      margin:0; padding:0; z-index:101;
     }
     .nav-links a {
       font-size:9px; font-weight:300; letter-spacing:0.28em; text-transform:uppercase;
@@ -900,7 +900,7 @@
         });
         return {
           folder,
-          cover:    folder + 'cover.jpg',
+          cover:    folder + (meta.cover || 'cover.jpg'),
           title:    meta.title       || '',
           caption:  meta.caption     || '',
           year:     meta.year        || '',
