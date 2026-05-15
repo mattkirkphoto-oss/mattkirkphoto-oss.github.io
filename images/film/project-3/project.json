@@ -1,8 +1,8 @@
 {
-  "title": "Film Title",
-  "caption": "Short Film",
-  "year": "2026",
-  "category": "Narrative",
-  "description": "",
-  "gallery": [{ "vimeo": "YOUR_VIMEO_ID" }]
+  "title": "Bathwater",
+  "caption": "BATS Theatre Society, 2025",
+  "year": "2025",
+  "category": "Theatre",
+  "description": "Trailer for Bathwater, a theatre production by BATS Theatre Society. Directed, shot and edited by Matt Kirkham.",
+  "gallery": [{ "vimeo": "1191867904" }]
 }
