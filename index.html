@@ -460,6 +460,44 @@
       text-transform:uppercase; color:rgba(242,237,229,0.2);
     }
 
+    /* ── COLOUR GRADING ────────────────────────────────────── */
+    #grading { border-top:1px solid var(--rule); }
+    .grade-inner { max-width:1440px; margin:0 auto; padding:88px 44px; }
+    #grading-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:28px; }
+
+    .grade-slider {
+      position:relative; overflow:hidden; background:var(--bg2);
+      cursor:col-resize; user-select:none;
+      outline:1px solid rgba(242,237,229,0.1);
+    }
+    .grade-slider::before { content:''; display:block; padding-top:56.25%; }
+    .grade-before-img,
+    .grade-after-img {
+      position:absolute; inset:0; width:100%; height:100%;
+      object-fit:cover; display:block; pointer-events:none;
+    }
+    .grade-after-img { clip-path:inset(0 0 0 50%); }
+    .grade-handle {
+      position:absolute; top:0; bottom:0; left:50%;
+      transform:translateX(-50%);
+      width:1px; background:rgba(242,237,229,0.9); z-index:3;
+    }
+    .grade-knob {
+      position:absolute; top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      width:32px; height:32px; border-radius:50%;
+      background:rgba(242,237,229,0.95);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .grade-label {
+      position:absolute; bottom:12px; z-index:2;
+      font-size:8px; font-weight:300; letter-spacing:0.22em;
+      text-transform:uppercase; color:rgba(242,237,229,0.6);
+      pointer-events:none;
+    }
+    .grade-label-l { left:14px; }
+    .grade-label-r { right:14px; }
+
     #about { border-top:1px solid var(--rule); }
     .about-wrap { max-width:1440px; margin:0 auto; padding:88px 44px; display:grid; grid-template-columns:300px 1fr; gap:88px; align-items:start; }
     .about-l { position:sticky; top:80px; }
@@ -572,6 +610,10 @@
       #film-progress-wrap { display:none; }
       #film-scroll-hint { display:none; }
 
+      /* ── GRADING ── */
+      #grading-grid { grid-template-columns:1fr; }
+      .grade-inner { padding:56px 22px; }
+
       /* ── ABOUT ── */
       .about-wrap { grid-template-columns:1fr; gap:36px; padding:56px 22px; }
       .about-l { position:static; }
@@ -646,6 +688,7 @@
     <li><a href="#photography">Photography</a></li>
     <li><a href="#videography">Videography</a></li>
     <li><a href="#film">Film</a></li>
+    <li><a href="#grading">Grade</a></li>
     <li><a href="#about">About</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
@@ -692,6 +735,17 @@
       <div id="film-scroll-hint">Scroll &rarr;</div>
       <div id="grid-film" class="project-grid"></div>
       <div id="film-progress-wrap"><div id="film-progress"></div></div>
+    </div>
+  </section>
+
+  <!-- ── COLOUR GRADING ──────────────────────────────────── -->
+  <section id="grading">
+    <div class="grade-inner">
+      <div class="section-header fi" id="hdr-grading">
+        <h2 class="section-title">Colour Grading</h2>
+        <span class="section-idx">Drag to compare</span>
+      </div>
+      <div id="grading-grid"></div>
     </div>
   </section>
 
@@ -1148,6 +1202,63 @@
         el.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); openGallery.call(el,e); } });
       });
     }
+    /* ── COLOUR GRADING ── */
+    async function loadGrading() {
+      const grid = document.getElementById('grading-grid');
+      if (!grid) return;
+      try {
+        const r = await fetch('colourgrading/manifest.json');
+        if (!r.ok) return;
+        const examples = await r.json(); /* ["example-1","example-2",...] */
+        if (!examples.length) return;
+
+        grid.innerHTML = examples.map(name => `
+          <div class="grade-slider fi" data-name="${name}">
+            <img class="grade-before-img" src="colourgrading/${name}/before.jpg" alt="Before">
+            <img class="grade-after-img"  src="colourgrading/${name}/after.jpg"  alt="After">
+            <div class="grade-handle">
+              <div class="grade-knob">
+                <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
+                  <path d="M4 1L1 5L4 9M10 1L13 5L10 9" stroke="#1c1814" stroke-width="1.2"
+                        stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+            <span class="grade-label grade-label-l">Before</span>
+            <span class="grade-label grade-label-r">After</span>
+          </div>`).join('');
+
+        grid.querySelectorAll('.grade-slider').forEach(el => {
+          io.observe(el);
+          initGradeSlider(el);
+        });
+      } catch(_) {}
+    }
+
+    function initGradeSlider(slider) {
+      const afterImg = slider.querySelector('.grade-after-img');
+      const handle   = slider.querySelector('.grade-handle');
+      let dragging = false;
+
+      function setPos(clientX) {
+        const r   = slider.getBoundingClientRect();
+        const pct = Math.min(Math.max((clientX - r.left) / r.width * 100, 0), 100);
+        afterImg.style.clipPath  = `inset(0 0 0 ${pct}%)`;
+        handle.style.left        = pct + '%';
+      }
+
+      /* Mouse */
+      slider.addEventListener('mousedown', e => { dragging = true; setPos(e.clientX); e.preventDefault(); });
+      document.addEventListener('mousemove', e => { if (dragging) setPos(e.clientX); });
+      document.addEventListener('mouseup',   () => { dragging = false; });
+
+      /* Touch */
+      slider.addEventListener('touchstart', e => { dragging = true; setPos(e.touches[0].clientX); }, { passive:true });
+      document.addEventListener('touchmove', e => { if (dragging) setPos(e.touches[0].clientX); }, { passive:true });
+      document.addEventListener('touchend',  () => { dragging = false; });
+    }
+
+    loadGrading();
     init();
 
     const filmGrid     = document.getElementById('grid-film');
