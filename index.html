@@ -164,7 +164,7 @@
     #hero { height:100svh; position:relative; overflow:hidden; }
     .hero-bg {
       position:absolute; inset:0; overflow:hidden;
-      opacity:0; transition:opacity 1.8s ease 0.4s;
+      opacity:0; transition:opacity 1s ease 0.2s;
     }
     .hero-bg.loaded { opacity:0.65; }
     .hero-bg iframe {
@@ -982,8 +982,21 @@
     window.addEventListener('load', () => setTimeout(dismissLoader, 400));
     setTimeout(dismissLoader, 3500);
 
-    /* ── HERO VIDEO ── */
-    setTimeout(() => document.getElementById('heroBg').classList.add('loaded'), 1200);
+    /* ── HERO VIDEO — show poster immediately, video fades in on top ── */
+    const heroBg = document.getElementById('heroBg');
+    fetch('https://vimeo.com/api/oembed.json?url=https://vimeo.com/1192702019&width=1920')
+      .then(r => r.json())
+      .then(data => {
+        if (data.thumbnail_url) {
+          const url = data.thumbnail_url.replace(/_\d+$/, '_1920');
+          heroBg.style.backgroundImage    = `url(${url})`;
+          heroBg.style.backgroundSize     = 'cover';
+          heroBg.style.backgroundPosition = 'center';
+          heroBg.classList.add('loaded');
+        }
+      }).catch(() => {});
+    /* Fallback — show video even if poster fetch fails */
+    setTimeout(() => heroBg.classList.add('loaded'), 600);
 
     /* ── HERO SCROLL FADE ── */
     const heroContent = document.getElementById('hero-content');
