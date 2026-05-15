@@ -1375,6 +1375,7 @@
       filmGrid.addEventListener('mousedown', e => {
         stopInertia();
         hideFilmPreviews();
+        filmGrid.style.pointerEvents = 'none'; /* prevent hover re-triggering during drag */
         dragging   = true;
         dragMoved  = false;
         startX     = e.pageX;
@@ -1406,6 +1407,7 @@
         dragging = false;
         filmGrid.style.userSelect = '';
         filmGrid.style.cursor = '';
+        filmGrid.style.pointerEvents = ''; /* restore hover events */
 
         /* Apply momentum — scroll continues with decaying velocity */
         const frameVel = velocity * 16; /* px per frame at 60fps */
