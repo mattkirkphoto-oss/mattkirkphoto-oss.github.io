@@ -1,1 +1,4 @@
-["example-1", "example-2"]
+[
+  { "name": "example-1", "ext": "webp" },
+  { "name": "example-2", "ext": "webp" }
+]
