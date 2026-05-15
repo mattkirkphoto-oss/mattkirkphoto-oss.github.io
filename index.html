@@ -238,11 +238,13 @@
     .project-thumb {
       position:relative; overflow:hidden; background:var(--bg2);
       transform:translateZ(0); outline:1px solid rgba(229,224,216,0.1);
+      isolation: isolate;
     }
     .project-thumb::before { content:''; display:block; padding-top:66%; }
     .project-img {
       position:absolute; inset:0; width:100%; height:100%;
       object-fit:cover; opacity:.93;
+      background: #0a0a0a;
       /* FIX: use a long cross-fade transition so images blend rather than flash through grey */
       transition:opacity 1.2s ease, transform .95s ease;
       will-change:transform; backface-visibility:hidden;
@@ -253,6 +255,7 @@
     .project-img-next {
       position:absolute; inset:0; width:100%; height:100%;
       object-fit:cover; opacity:0;
+      background: #0a0a0a;
       transition:opacity 1.2s ease;
       pointer-events:none;
     }
@@ -941,12 +944,13 @@
         });
         return {
           folder,
-          cover:    folder + (meta.cover || 'cover.jpg'),
-          title:    meta.title       || '',
-          caption:  meta.caption     || '',
-          year:     meta.year        || '',
-          category: meta.category    || '',
-          text:     meta.description || '',
+          cover:        folder + (meta.cover || 'cover.jpg'),
+          title:        meta.title       || '',
+          caption:      meta.caption     || '',
+          year:         meta.year        || '',
+          category:     meta.category    || '',
+          text:         meta.description || '',
+          previewScale: meta.previewScale || 1,
           gallery
         };
       } catch (_) { return null; }
@@ -1200,6 +1204,7 @@
       });
 
       const canHover = window.matchMedia('(hover: hover)').matches;
+      const isMobile = window.matchMedia('(max-width: 900px)').matches;
       grid.querySelectorAll('.project').forEach((el, i) => {
         const p     = projects[i];
         const thumb = el.querySelector('.project-thumb');
@@ -1295,7 +1300,7 @@
              project-img-next (overlay) fades in on top — no grey flash.
              On mouse leave, cancels everything and resets instantly to cover. */
           const imgSrcs = (p.gallery || []).filter(g => g.src).map(g => g.src);
-          if (!vimeoItem && imgSrcs.length > 1) {
+          if (!isMobile && !vimeoItem && imgSrcs.length > 1) {
             const projectImg     = el.querySelector('.project-img');
             const projectImgNext = el.querySelector('.project-img-next');
             let cycleTimer    = null;
@@ -1312,39 +1317,60 @@
             }
 
             function resetTocover() {
-              /* Hide overlay instantly — no transition */
+
+              clearTimeout(swapTimer);
+
               projectImgNext.style.transition = 'none';
               projectImgNext.style.opacity    = '0';
               projectImgNext.src              = '';
-              /* Snap base layer back to cover instantly */
-              projectImg.style.transition     = 'none';
-              projectImg.src                  = p.cover;
-              /* Re-enable CSS hover transitions on next tick */
-              requestAnimationFrame(() => requestAnimationFrame(() => {
-                projectImg.style.transition = '';
-              }));
+
+              projectImg.src = p.cover;
+
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  projectImg.style.transition     = '';
+                  projectImgNext.style.transition = '';
+                });
+              });
             }
 
             /* Cross-fade overlay in, then quietly swap base layer once invisible */
             function crossFadeTo(src) {
               if (!isHovering) return;
               clearTimeout(swapTimer);
-              projectImgNext.src              = src;
-              projectImgNext.style.transition = 'none';
-              projectImgNext.style.opacity    = '0';
-              /* Double rAF ensures the browser registers the opacity:0 before transitioning */
-              requestAnimationFrame(() => requestAnimationFrame(() => {
+
+              const preload = new Image();
+
+              preload.onload = () => {
                 if (!isHovering) return;
-                projectImgNext.style.transition = 'opacity 1s ease';
-                projectImgNext.style.opacity    = '1';
-                /* After fade completes, commit src to base layer and hide overlay */
-                swapTimer = setTimeout(() => {
-                  if (!isHovering) return;
-                  projectImg.src              = src;
-                  projectImgNext.style.transition = 'none';
-                  projectImgNext.style.opacity    = '0';
-                }, 1050);
-              }));
+
+                projectImgNext.src              = src;
+                projectImgNext.style.transition = 'none';
+                projectImgNext.style.opacity    = '0';
+
+                requestAnimationFrame(() => {
+                  requestAnimationFrame(() => {
+
+                    if (!isHovering) return;
+
+                    projectImgNext.style.transition = 'opacity 1.4s ease';
+                    projectImgNext.style.opacity    = '1';
+
+                    swapTimer = setTimeout(() => {
+
+                      if (!isHovering) return;
+
+                      projectImg.src                  = src;
+                      projectImgNext.style.transition = 'none';
+                      projectImgNext.style.opacity    = '0';
+
+                    }, 1450);
+
+                  });
+                });
+              };
+
+              preload.src = src;
             }
 
             el.addEventListener('mouseenter', () => {
@@ -1357,8 +1383,8 @@
                 cycleInterval = setInterval(() => {
                   cycleIdx = cycleIdx + 1 >= imgSrcs.length ? 1 : cycleIdx + 1;
                   crossFadeTo(imgSrcs[cycleIdx]);
-                }, 2000);
-              }, 800);
+                }, 3600);
+              }, 1400);
             });
 
             el.addEventListener('mouseleave', () => {
@@ -1474,12 +1500,14 @@
         if (inertiaID) { cancelAnimationFrame(inertiaID); inertiaID = null; }
       }
 
-      function endDrag() {
+      function stopDragging() {
         if (!dragging) return;
         dragging = false;
+        filmGrid.classList.remove('is-dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
         filmGrid.style.userSelect = '';
         filmGrid.style.cursor = '';
-        setTimeout(() => filmGrid.classList.remove('is-dragging'), 150);
 
         /* Apply momentum */
         const frameVel = velocity * 16;
@@ -1499,6 +1527,7 @@
       }
 
       filmGrid.addEventListener('mousedown', e => {
+        if (e.button !== 0) return;
         stopInertia();
         hideFilmPreviews();
         filmGrid.classList.add('is-dragging');
@@ -1509,6 +1538,8 @@
         velocity    = 0;
         lastX       = e.pageX;
         lastT       = Date.now();
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor     = 'grabbing';
         filmGrid.style.userSelect = 'none';
         filmGrid.style.cursor     = 'grabbing';
       });
@@ -1527,10 +1558,9 @@
         filmGrid.scrollLeft = scrollStart - dx;
       });
 
-      document.addEventListener('mouseup', endDrag);
-      /* Safety net — if mouse leaves the browser window entirely, cancel drag */
-      document.addEventListener('mouseleave', endDrag);
-      window.addEventListener('blur', endDrag);
+      window.addEventListener('mouseup', stopDragging);
+      window.addEventListener('mouseleave', stopDragging);
+      window.addEventListener('blur', stopDragging);
 
       /* Swallow click after drag so gallery doesn't open */
       filmGrid.addEventListener('click', e => {
