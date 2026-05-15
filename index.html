@@ -688,7 +688,6 @@
     <li><a href="#photography">Photography</a></li>
     <li><a href="#videography">Videography</a></li>
     <li><a href="#film">Film</a></li>
-    <li><a href="#grading">Grade</a></li>
     <li><a href="#about">About</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
@@ -727,6 +726,7 @@
   </section>
 
   <!-- ── FILM ─────────────────────────────────────────────── -->
+  <section id="film" class="work-section">
     <div id="film-section-inner">
       <div class="section-header fi" id="hdr-film">
         <h2 class="section-title">Film</h2>
@@ -1099,21 +1099,34 @@
         else io.observe(el);
       });
 
-      /* Auto-fetch Vimeo thumbnail if cover image is missing */
+      /* Auto-try cover format variants (avif → webp → jpg) then Vimeo oEmbed */
       grid.querySelectorAll('.project').forEach((el, i) => {
         const p   = projects[i];
         const img = el.querySelector('.project-img');
         if (!img) return;
-        img.addEventListener('error', async () => {
+
+        const coverVariants = [
+          p.folder + 'cover.avif',
+          p.folder + 'cover.webp',
+          p.folder + 'cover.jpg'
+        ].filter(v => v !== p.cover); /* skip the one already tried */
+
+        let variantIdx = 0;
+        img.addEventListener('error', async function onErr() {
+          /* Try next cover format variant first */
+          if (variantIdx < coverVariants.length) {
+            img.src = coverVariants[variantIdx++];
+            return;
+          }
+          /* All cover variants failed — try Vimeo oEmbed thumbnail */
+          img.removeEventListener('error', onErr);
           const vimeoItem = (p.gallery || []).find(g => g.vimeo && g.vimeo !== 'YOUR_VIMEO_ID');
           if (!vimeoItem) return;
           try {
             const res  = await fetch(`https://vimeo.com/api/oembed.json?url=https://vimeo.com/${vimeoItem.vimeo}&width=640`);
             const data = await res.json();
-            if (data.thumbnail_url) {
-              img.src = data.thumbnail_url.replace(/_\d+$/, '_640');
-            }
-          } catch (_) { /* leave as broken — dark bg shows through */ }
+            if (data.thumbnail_url) img.src = data.thumbnail_url.replace(/_\d+$/, '_640');
+          } catch (_) {}
         });
       });
       const canHover = window.matchMedia('(hover: hover)').matches;
