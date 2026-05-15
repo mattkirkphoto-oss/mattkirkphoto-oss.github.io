@@ -1,4 +1,6 @@
 [
   { "name": "example-1", "ext": "webp" },
-  { "name": "example-2", "ext": "webp" }
+  { "name": "example-2", "ext": "webp" },
+  { "name": "example-3", "ext": "webp" },
+  { "name": "example-4", "ext": "webp" }
 ]
