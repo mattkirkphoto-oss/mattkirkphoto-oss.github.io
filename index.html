@@ -243,10 +243,20 @@
     .project-img {
       position:absolute; inset:0; width:100%; height:100%;
       object-fit:cover; opacity:.93;
-      transition:opacity .75s ease, transform .95s ease;
+      /* FIX: use a long cross-fade transition so images blend rather than flash through grey */
+      transition:opacity 1.2s ease, transform .95s ease;
       will-change:transform; backface-visibility:hidden;
     }
     .project:hover .project-img { opacity:1; transform:scale(1.032); }
+
+    /* Second image layer used for cross-fading during gallery cycling */
+    .project-img-next {
+      position:absolute; inset:0; width:100%; height:100%;
+      object-fit:cover; opacity:0;
+      transition:opacity 1.2s ease;
+      pointer-events:none;
+    }
+
     .play-label {
       position:absolute; bottom:14px; left:16px;
       font-size:8px; font-weight:400; letter-spacing:0.28em; text-transform:uppercase;
@@ -500,7 +510,7 @@
       position:absolute; inset:0; width:100%; height:100%;
       object-fit:cover; display:block; pointer-events:none;
     }
-    .grade-after-img { clip-path:inset(0 0 0 50%); }
+    .grade-after-img { clip-path:inset(0 50% 0 0); }
     .grade-handle {
       position:absolute; top:0; bottom:0; left:50%;
       transform:translateX(-50%);
@@ -1120,6 +1130,7 @@
         );
       });
     }
+
     const io = new IntersectionObserver(entries => {
       entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); });
     }, { threshold: .06 });
@@ -1142,6 +1153,7 @@
         return `<div class="project fi${i%2===1?' d1':''}" data-section="${section}" data-idx="${i}" role="button" tabindex="0" aria-label="Open ${p.title}">
           <div class="project-thumb">
             <img src="${p.cover}" alt="${p.title}" class="project-img" loading="lazy" decoding="async">
+            <img src="" alt="" class="project-img-next" aria-hidden="true">
             ${hasVideo?'<span class="play-label">&#9654;&ensp;Play</span>':''}
           </div>
           <div class="project-info">
@@ -1186,6 +1198,7 @@
           } catch (_) {}
         });
       });
+
       const canHover = window.matchMedia('(hover: hover)').matches;
       grid.querySelectorAll('.project').forEach((el, i) => {
         const p     = projects[i];
@@ -1216,7 +1229,15 @@
 
             /* Start preloading when card scrolls into view.
                Calculate iframe dimensions to cover the container regardless of
-               the container's aspect ratio or the video's aspect ratio (16:9). */
+               the container's aspect ratio or the video's aspect ratio (16:9).
+
+               FIX: For film/project-1 (Glasshouse) the native video is 2.35:1
+               content inside a 16:9 frame, producing black bars top and bottom.
+               Scale factor = 2.35 / (16/9) = 1.3219 to crop those bars.
+               This is controlled per-project via p.previewScale (set in project.json
+               as "previewScale": 1.3219), defaulting to 1 for all others. */
+            const previewScale = p.previewScale || 1;
+
             const preloadIO = new IntersectionObserver(entries => {
               if (!entries[0].isIntersecting) return;
               previewFrame = document.createElement('iframe');
@@ -1226,23 +1247,22 @@
               previewFrame.tabIndex = -1;
 
               /* Cover calculation: make iframe the size needed for a 16:9 video
-                 to fill the container, then center it (overflow clipped by parent) */
+                 to fill the container, then center it (overflow clipped by parent).
+                 Multiply by previewScale to upscale and crop letterbox bars. */
               const cW = thumb.offsetWidth;
               const cH = thumb.offsetHeight;
               const videoRatio = 16 / 9;
               const containerRatio = cW / cH;
               let fW, fH;
               if (containerRatio > videoRatio) {
-                /* Container wider than video: scale to fill width */
                 fW = cW + 2;
                 fH = Math.ceil(cW / videoRatio) + 2;
               } else {
-                /* Container taller (or equal): scale to fill height */
                 fH = cH + 2;
                 fW = Math.ceil(cH * videoRatio) + 2;
               }
-              previewFrame.style.width  = fW + 'px';
-              previewFrame.style.height = fH + 'px';
+              previewFrame.style.width  = (fW * previewScale) + 'px';
+              previewFrame.style.height = (fH * previewScale) + 'px';
 
               thumb.appendChild(previewFrame);
               preloadIO.unobserve(el);
@@ -1268,39 +1288,69 @@
             });
           }
 
-          /* Photo gallery cycling — hover 2s then fade through gallery images */
+          /* ── PHOTO GALLERY CYCLING ──────────────────────────────────────────
+             On hover, wait 800ms then cross-fade through gallery images every 2s.
+             Skips index 0 (usually a duplicate of the cover).
+             Uses a two-layer approach: project-img stays visible while
+             project-img-next fades in on top — no grey flash between images.
+             On mouse leave, resets back to the original cover. */
           const imgSrcs = (p.gallery || []).filter(g => g.src).map(g => g.src);
           if (!vimeoItem && imgSrcs.length > 1) {
-            const projectImg = el.querySelector('.project-img');
-            let cycleTimer = null, cycleInterval = null, cycleIdx = 0;
+            const projectImg     = el.querySelector('.project-img');
+            const projectImgNext = el.querySelector('.project-img-next');
+            let cycleTimer = null, cycleInterval = null, cycleIdx = 1; /* start at 1 to skip cover dupe */
 
-            function fadeToSrc(src) {
-              projectImg.style.transition = 'opacity 0.35s ease';
-              projectImg.style.opacity = '0';
-              setTimeout(() => {
-                projectImg.src = src;
-                projectImg.style.opacity = '';
-                setTimeout(() => { projectImg.style.transition = ''; }, 400);
-              }, 350);
+            /* Cross-fade to a new src using the overlay layer */
+            function crossFadeTo(src) {
+              projectImgNext.src = src;
+              /* Force reflow so the transition fires even if src didn't change */
+              projectImgNext.style.transition = 'none';
+              projectImgNext.style.opacity    = '0';
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  projectImgNext.style.transition = 'opacity 1.2s ease';
+                  projectImgNext.style.opacity    = '1';
+                  /* Once the overlay is fully visible, swap it into the base layer
+                     and hide it — ready for the next cross-fade */
+                  setTimeout(() => {
+                    projectImg.src              = src;
+                    projectImgNext.style.transition = 'none';
+                    projectImgNext.style.opacity    = '0';
+                  }, 1250);
+                });
+              });
             }
 
             el.addEventListener('mouseenter', () => {
+              /* Preload gallery images */
               imgSrcs.forEach(src => { const img = new Image(); img.src = src; });
+              cycleIdx = 1; /* skip index 0 (cover duplicate) */
               cycleTimer = setTimeout(() => {
-                cycleIdx = 0;
-                fadeToSrc(imgSrcs[cycleIdx]);
+                if (cycleIdx < imgSrcs.length) {
+                  crossFadeTo(imgSrcs[cycleIdx]);
+                }
                 cycleInterval = setInterval(() => {
-                  cycleIdx = (cycleIdx + 1) % imgSrcs.length;
-                  fadeToSrc(imgSrcs[cycleIdx]);
-                }, 1200);
-              }, 2000);
+                  cycleIdx = cycleIdx + 1 >= imgSrcs.length ? 1 : cycleIdx + 1;
+                  crossFadeTo(imgSrcs[cycleIdx]);
+                }, 2000);
+              }, 800);
             });
 
             el.addEventListener('mouseleave', () => {
               clearTimeout(cycleTimer);
               clearInterval(cycleInterval);
               cycleTimer = null; cycleInterval = null;
-              fadeToSrc(p.cover);
+              /* Reset both layers back to original cover */
+              projectImgNext.style.transition = 'none';
+              projectImgNext.style.opacity    = '0';
+              projectImg.style.transition     = 'none';
+              projectImg.src                  = p.cover;
+              /* Re-enable normal hover transitions after a brief tick */
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  projectImg.style.transition = '';
+                });
+              });
             });
           }
         }
@@ -1309,44 +1359,45 @@
         el.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); openGallery.call(el,e); } });
       });
     }
+
     /* ── COLOUR GRADING ── */
     async function loadGrading() {
-  const grid = document.getElementById('grading-grid');
-  if (!grid) return;
-  try {
-    const r = await fetch('colourgrading/manifest.json');
-    if (!r.ok) return;
-    const examples = await r.json();
-    if (!examples.length) return;
+      const grid = document.getElementById('grading-grid');
+      if (!grid) return;
+      try {
+        const r = await fetch('colourgrading/manifest.json');
+        if (!r.ok) return;
+        const examples = await r.json();
+        if (!examples.length) return;
 
-    grid.innerHTML = examples.map(entry => {
-      const name    = typeof entry === 'string' ? entry : entry.name;
-      const ext     = typeof entry === 'object' && entry.ext     ? entry.ext     : 'jpg';
-      const caption = typeof entry === 'object' && entry.caption ? entry.caption : '';
-      return `
-        <div class="grade-item fi">
-          <div class="grade-slider" data-name="${name}">
-            <img class="grade-before-img" src="colourgrading/${name}/before.${ext}" alt="Before">
-            <img class="grade-after-img"  src="colourgrading/${name}/after.${ext}"  alt="After">
-            <div class="grade-handle">
-              <div class="grade-knob">
-                <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
-                  <path d="M4 1L1 5L4 9M10 1L13 5L10 9" stroke="#1c1814" stroke-width="1.2"
-                        stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+        grid.innerHTML = examples.map(entry => {
+          const name    = typeof entry === 'string' ? entry : entry.name;
+          const ext     = typeof entry === 'object' && entry.ext     ? entry.ext     : 'jpg';
+          const caption = typeof entry === 'object' && entry.caption ? entry.caption : '';
+          return `
+            <div class="grade-item fi">
+              <div class="grade-slider" data-name="${name}">
+                <img class="grade-before-img" src="colourgrading/${name}/before.${ext}" alt="Before">
+                <img class="grade-after-img"  src="colourgrading/${name}/after.${ext}"  alt="After">
+                <div class="grade-handle">
+                  <div class="grade-knob">
+                    <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
+                      <path d="M4 1L1 5L4 9M10 1L13 5L10 9" stroke="#1c1814" stroke-width="1.2"
+                            stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+                <span class="grade-label grade-label-l">Before</span>
+                <span class="grade-label grade-label-r">After</span>
               </div>
-            </div>
-            <span class="grade-label grade-label-l">Before</span>
-            <span class="grade-label grade-label-r">After</span>
-          </div>
-          ${caption ? `<p class="grade-caption">${caption}</p>` : ''}
-        </div>`;
-    }).join('');
+              ${caption ? `<p class="grade-caption">${caption}</p>` : ''}
+            </div>`;
+        }).join('');
 
-    grid.querySelectorAll('.grade-item').forEach(el => io.observe(el));
-    grid.querySelectorAll('.grade-slider').forEach(el => initGradeSlider(el));
-  } catch(_) {}
-}
+        grid.querySelectorAll('.grade-item').forEach(el => io.observe(el));
+        grid.querySelectorAll('.grade-slider').forEach(el => initGradeSlider(el));
+      } catch(_) {}
+    }
 
     function initGradeSlider(slider) {
       const afterImg = slider.querySelector('.grade-after-img');
@@ -1356,8 +1407,8 @@
       function setPos(clientX) {
         const r   = slider.getBoundingClientRect();
         const pct = Math.min(Math.max((clientX - r.left) / r.width * 100, 0), 100);
-        /* Clip from left — consistent with CSS initial state inset(0 0 0 50%) */
-        afterImg.style.clipPath = `inset(0 0 0 ${pct}%)`;
+        /* Drag right = reveal more of the graded (after) image */
+        afterImg.style.clipPath = `inset(0 ${100 - pct}% 0 0)`;
         handle.style.left       = pct + '%';
       }
 
@@ -1394,7 +1445,14 @@
       }, { passive: true });
     }
 
-    /* Film section — momentum drag scroll */
+    /* ── FILM SECTION — momentum drag scroll ────────────────────────────────
+       FIX: dragging state was tracked with a module-level boolean that could
+       get stuck if mouseup fired outside the window (e.g. releasing over
+       another tab, an iframe, or an OS dialog). Fixed by:
+         1. Listening to 'mouseleave' on the document to cancel drag
+         2. Using 'pointerdown/pointermove/pointerup' with setPointerCapture
+            so the browser guarantees we receive the up event even if the
+            pointer leaves the window entirely. */
     if (filmGrid) {
       let dragging = false, dragMoved = false;
       let startX, scrollStart;
@@ -1409,27 +1467,53 @@
         if (inertiaID) { cancelAnimationFrame(inertiaID); inertiaID = null; }
       }
 
-      filmGrid.addEventListener('mousedown', e => {
+      function endDrag() {
+        if (!dragging) return;
+        dragging = false;
+        filmGrid.classList.remove('is-dragging');
+        filmGrid.style.userSelect = '';
+        filmGrid.style.cursor = '';
+
+        /* Apply momentum */
+        const frameVel = velocity * 16;
+        if (Math.abs(frameVel) > 0.8) {
+          let v = frameVel;
+          function coast() {
+            filmGrid.scrollLeft += v;
+            v *= 0.95;
+            if (Math.abs(v) > 0.5) {
+              inertiaID = requestAnimationFrame(coast);
+            } else {
+              inertiaID = null;
+            }
+          }
+          inertiaID = requestAnimationFrame(coast);
+        }
+      }
+
+      filmGrid.addEventListener('pointerdown', e => {
+        /* Only handle primary mouse button */
+        if (e.button !== undefined && e.button !== 0) return;
         stopInertia();
         hideFilmPreviews();
+        filmGrid.setPointerCapture(e.pointerId);
         filmGrid.classList.add('is-dragging');
-        dragging   = true;
-        dragMoved  = false;
-        startX     = e.pageX;
+        dragging    = true;
+        dragMoved   = false;
+        startX      = e.pageX;
         scrollStart = filmGrid.scrollLeft;
-        velocity   = 0;
-        lastX      = e.pageX;
-        lastT      = Date.now();
+        velocity    = 0;
+        lastX       = e.pageX;
+        lastT       = Date.now();
         filmGrid.style.userSelect = 'none';
-        filmGrid.style.cursor = 'grabbing';
+        filmGrid.style.cursor     = 'grabbing';
       });
 
-      document.addEventListener('mousemove', e => {
+      filmGrid.addEventListener('pointermove', e => {
         if (!dragging) return;
         const dx = e.pageX - startX;
         if (Math.abs(dx) > 4) dragMoved = true;
 
-        /* Track velocity as px/ms, keep a rolling smoothed average */
         const now = Date.now();
         const dt  = Math.max(now - lastT, 1);
         velocity  = velocity * 0.6 + ((lastX - e.pageX) / dt) * 0.4;
@@ -1439,30 +1523,10 @@
         filmGrid.scrollLeft = scrollStart - dx;
       });
 
-      document.addEventListener('mouseup', () => {
-        if (!dragging) return;
-        dragging = false;
-        filmGrid.style.userSelect = '';
-        filmGrid.style.cursor = '';
-        /* Small delay before re-enabling previews so they don't flash on release */
-        setTimeout(() => filmGrid.classList.remove('is-dragging'), 150);
-
-        /* Apply momentum — scroll continues with decaying velocity */
-        const frameVel = velocity * 16; /* px per frame at 60fps */
-        if (Math.abs(frameVel) > 0.8) {
-          let v = frameVel;
-          function coast() {
-            filmGrid.scrollLeft += v;
-            v *= 0.95; /* friction: higher = longer coast */
-            if (Math.abs(v) > 0.5) {
-              inertiaID = requestAnimationFrame(coast);
-            } else {
-              inertiaID = null;
-            }
-          }
-          inertiaID = requestAnimationFrame(coast);
-        }
-      });
+      filmGrid.addEventListener('pointerup',     endDrag);
+      filmGrid.addEventListener('pointercancel', endDrag);
+      /* Safety net — if pointer somehow escapes capture, end drag */
+      filmGrid.addEventListener('lostpointercapture', endDrag);
 
       /* Swallow click after drag so gallery doesn't open */
       filmGrid.addEventListener('click', e => {
