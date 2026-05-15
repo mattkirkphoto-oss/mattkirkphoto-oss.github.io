@@ -1290,45 +1290,70 @@
 
           /* ── PHOTO GALLERY CYCLING ──────────────────────────────────────────
              On hover, wait 800ms then cross-fade through gallery images every 2s.
-             Skips index 0 (usually a duplicate of the cover).
-             Uses a two-layer approach: project-img stays visible while
-             project-img-next fades in on top — no grey flash between images.
-             On mouse leave, resets back to the original cover. */
+             Skips index 0 (first gallery entry, usually a duplicate of the cover).
+             Uses a two-layer approach: project-img (base) stays visible while
+             project-img-next (overlay) fades in on top — no grey flash.
+             On mouse leave, cancels everything and resets instantly to cover. */
           const imgSrcs = (p.gallery || []).filter(g => g.src).map(g => g.src);
           if (!vimeoItem && imgSrcs.length > 1) {
             const projectImg     = el.querySelector('.project-img');
             const projectImgNext = el.querySelector('.project-img-next');
-            let cycleTimer = null, cycleInterval = null, cycleIdx = 1; /* start at 1 to skip cover dupe */
+            let cycleTimer    = null;
+            let cycleInterval = null;
+            let swapTimer     = null; /* pending base-layer swap after fade completes */
+            let cycleIdx      = 1;   /* start at 1 to skip cover duplicate */
+            let isHovering    = false;
 
-            /* Cross-fade to a new src using the overlay layer */
-            function crossFadeTo(src) {
-              projectImgNext.src = src;
-              /* Force reflow so the transition fires even if src didn't change */
+            function cancelAll() {
+              clearTimeout(cycleTimer);
+              clearInterval(cycleInterval);
+              clearTimeout(swapTimer);
+              cycleTimer = cycleInterval = swapTimer = null;
+            }
+
+            function resetTocover() {
+              /* Hide overlay instantly — no transition */
               projectImgNext.style.transition = 'none';
               projectImgNext.style.opacity    = '0';
-              requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                  projectImgNext.style.transition = 'opacity 1.2s ease';
-                  projectImgNext.style.opacity    = '1';
-                  /* Once the overlay is fully visible, swap it into the base layer
-                     and hide it — ready for the next cross-fade */
-                  setTimeout(() => {
-                    projectImg.src              = src;
-                    projectImgNext.style.transition = 'none';
-                    projectImgNext.style.opacity    = '0';
-                  }, 1250);
-                });
-              });
+              projectImgNext.src              = '';
+              /* Snap base layer back to cover instantly */
+              projectImg.style.transition     = 'none';
+              projectImg.src                  = p.cover;
+              /* Re-enable CSS hover transitions on next tick */
+              requestAnimationFrame(() => requestAnimationFrame(() => {
+                projectImg.style.transition = '';
+              }));
+            }
+
+            /* Cross-fade overlay in, then quietly swap base layer once invisible */
+            function crossFadeTo(src) {
+              if (!isHovering) return;
+              clearTimeout(swapTimer);
+              projectImgNext.src              = src;
+              projectImgNext.style.transition = 'none';
+              projectImgNext.style.opacity    = '0';
+              /* Double rAF ensures the browser registers the opacity:0 before transitioning */
+              requestAnimationFrame(() => requestAnimationFrame(() => {
+                if (!isHovering) return;
+                projectImgNext.style.transition = 'opacity 1s ease';
+                projectImgNext.style.opacity    = '1';
+                /* After fade completes, commit src to base layer and hide overlay */
+                swapTimer = setTimeout(() => {
+                  if (!isHovering) return;
+                  projectImg.src              = src;
+                  projectImgNext.style.transition = 'none';
+                  projectImgNext.style.opacity    = '0';
+                }, 1050);
+              }));
             }
 
             el.addEventListener('mouseenter', () => {
-              /* Preload gallery images */
+              isHovering = true;
               imgSrcs.forEach(src => { const img = new Image(); img.src = src; });
-              cycleIdx = 1; /* skip index 0 (cover duplicate) */
+              cycleIdx = 1;
               cycleTimer = setTimeout(() => {
-                if (cycleIdx < imgSrcs.length) {
-                  crossFadeTo(imgSrcs[cycleIdx]);
-                }
+                if (!isHovering) return;
+                crossFadeTo(imgSrcs[cycleIdx]);
                 cycleInterval = setInterval(() => {
                   cycleIdx = cycleIdx + 1 >= imgSrcs.length ? 1 : cycleIdx + 1;
                   crossFadeTo(imgSrcs[cycleIdx]);
@@ -1337,20 +1362,9 @@
             });
 
             el.addEventListener('mouseleave', () => {
-              clearTimeout(cycleTimer);
-              clearInterval(cycleInterval);
-              cycleTimer = null; cycleInterval = null;
-              /* Reset both layers back to original cover */
-              projectImgNext.style.transition = 'none';
-              projectImgNext.style.opacity    = '0';
-              projectImg.style.transition     = 'none';
-              projectImg.src                  = p.cover;
-              /* Re-enable normal hover transitions after a brief tick */
-              requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                  projectImg.style.transition = '';
-                });
-              });
+              isHovering = false;
+              cancelAll();
+              resetTocover();
             });
           }
         }
@@ -1445,14 +1459,7 @@
       }, { passive: true });
     }
 
-    /* ── FILM SECTION — momentum drag scroll ────────────────────────────────
-       FIX: dragging state was tracked with a module-level boolean that could
-       get stuck if mouseup fired outside the window (e.g. releasing over
-       another tab, an iframe, or an OS dialog). Fixed by:
-         1. Listening to 'mouseleave' on the document to cancel drag
-         2. Using 'pointerdown/pointermove/pointerup' with setPointerCapture
-            so the browser guarantees we receive the up event even if the
-            pointer leaves the window entirely. */
+    /* ── FILM SECTION — momentum drag scroll ── */
     if (filmGrid) {
       let dragging = false, dragMoved = false;
       let startX, scrollStart;
@@ -1470,9 +1477,9 @@
       function endDrag() {
         if (!dragging) return;
         dragging = false;
-        filmGrid.classList.remove('is-dragging');
         filmGrid.style.userSelect = '';
         filmGrid.style.cursor = '';
+        setTimeout(() => filmGrid.classList.remove('is-dragging'), 150);
 
         /* Apply momentum */
         const frameVel = velocity * 16;
@@ -1491,12 +1498,9 @@
         }
       }
 
-      filmGrid.addEventListener('pointerdown', e => {
-        /* Only handle primary mouse button */
-        if (e.button !== undefined && e.button !== 0) return;
+      filmGrid.addEventListener('mousedown', e => {
         stopInertia();
         hideFilmPreviews();
-        filmGrid.setPointerCapture(e.pointerId);
         filmGrid.classList.add('is-dragging');
         dragging    = true;
         dragMoved   = false;
@@ -1509,7 +1513,7 @@
         filmGrid.style.cursor     = 'grabbing';
       });
 
-      filmGrid.addEventListener('pointermove', e => {
+      document.addEventListener('mousemove', e => {
         if (!dragging) return;
         const dx = e.pageX - startX;
         if (Math.abs(dx) > 4) dragMoved = true;
@@ -1523,10 +1527,10 @@
         filmGrid.scrollLeft = scrollStart - dx;
       });
 
-      filmGrid.addEventListener('pointerup',     endDrag);
-      filmGrid.addEventListener('pointercancel', endDrag);
-      /* Safety net — if pointer somehow escapes capture, end drag */
-      filmGrid.addEventListener('lostpointercapture', endDrag);
+      document.addEventListener('mouseup', endDrag);
+      /* Safety net — if mouse leaves the browser window entirely, cancel drag */
+      document.addEventListener('mouseleave', endDrag);
+      window.addEventListener('blur', endDrag);
 
       /* Swallow click after drag so gallery doesn't open */
       filmGrid.addEventListener('click', e => {
