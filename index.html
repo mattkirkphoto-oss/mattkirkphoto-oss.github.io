@@ -245,6 +245,7 @@
       position:absolute; inset:0; width:100%; height:100%;
       object-fit:cover; opacity:.93;
       background: #0a0a0a;
+      z-index:1;
       /* FIX: use a long cross-fade transition so images blend rather than flash through grey */
       transition:opacity 1.2s ease, transform .95s ease;
       will-change:transform; backface-visibility:hidden;
@@ -256,6 +257,7 @@
       position:absolute; inset:0; width:100%; height:100%;
       object-fit:cover; opacity:0;
       background: #0a0a0a;
+      z-index:2;
       transition:opacity 1.2s ease;
       pointer-events:none;
     }
@@ -378,8 +380,11 @@
       transform:translate(-50%,-50%);
       border:0; pointer-events:none;
       opacity:0; transition:opacity 0.7s ease;
+      z-index:3;
     }
     .preview-frame.loaded { opacity:1; }
+    /* Fade the static cover out when the video preview takes over */
+    .project-thumb:has(.preview-frame.loaded) .project-img { opacity:0 !important; transition:opacity 0.7s ease !important; }
     .g-arrow {
       position:absolute; top:50%; transform:translateY(-50%);
       background:none; border:none; cursor:pointer; font-family:var(--f);
@@ -1305,9 +1310,14 @@
             const projectImgNext = el.querySelector('.project-img-next');
             let cycleTimer    = null;
             let cycleInterval = null;
-            let swapTimer     = null; /* pending base-layer swap after fade completes */
-            let cycleIdx      = 1;   /* start at 1 to skip cover duplicate */
+            let swapTimer     = null;
+            let cycleIdx      = 1;
             let isHovering    = false;
+
+            /* Persistent cached copy of the cover — resetTocover never triggers
+               a fresh network request; the browser reuses the decoded image. */
+            const coverCache = new Image();
+            coverCache.src = p.cover;
 
             function cancelAll() {
               clearTimeout(cycleTimer);
@@ -1317,18 +1327,27 @@
             }
 
             function resetTocover() {
-
               clearTimeout(swapTimer);
 
+              /* Kill overlay instantly */
               projectImgNext.style.transition = 'none';
               projectImgNext.style.opacity    = '0';
               projectImgNext.src              = '';
 
-              projectImg.src = p.cover;
+              /* Restore base layer from cache — no network round-trip */
+              projectImg.src = coverCache.src;
+
+              /* Lock transform at scale(1) so the CSS hover scale rule
+                 can't fire and cause a jolt when transitions re-enable */
+              projectImg.style.transition = 'none';
+              projectImg.style.transform  = 'scale(1)';
 
               requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
+                  /* Re-enable CSS transitions and clear inline transform
+                     so hover scale works normally on the next mouseenter */
                   projectImg.style.transition     = '';
+                  projectImg.style.transform      = '';
                   projectImgNext.style.transition = '';
                 });
               });
