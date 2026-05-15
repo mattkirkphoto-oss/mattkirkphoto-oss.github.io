@@ -520,6 +520,11 @@
     }
     .grade-label-l { left:14px; }
     .grade-label-r { right:14px; }
+    .grade-caption {
+      padding-top:11px; border-top:1px solid var(--rule);
+      font-size:9px; font-weight:300; letter-spacing:0.18em;
+      color:var(--mid);
+    }
 
     #about { border-top:1px solid var(--rule); }
     .about-wrap { max-width:1440px; margin:0 auto; padding:88px 44px; display:grid; grid-template-columns:300px 1fr; gap:88px; align-items:start; }
@@ -1264,29 +1269,31 @@
     if (!examples.length) return;
 
     grid.innerHTML = examples.map(entry => {
-      const name = typeof entry === 'string' ? entry : entry.name;
-      const ext  = typeof entry === 'object' && entry.ext ? entry.ext : 'jpg';
+      const name    = typeof entry === 'string' ? entry : entry.name;
+      const ext     = typeof entry === 'object' && entry.ext     ? entry.ext     : 'jpg';
+      const caption = typeof entry === 'object' && entry.caption ? entry.caption : '';
       return `
-        <div class="grade-slider fi" data-name="${name}">
-          <img class="grade-before-img" src="colourgrading/${name}/before.${ext}" alt="Before">
-          <img class="grade-after-img"  src="colourgrading/${name}/after.${ext}"  alt="After">
-          <div class="grade-handle">
-            <div class="grade-knob">
-              <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
-                <path d="M4 1L1 5L4 9M10 1L13 5L10 9" stroke="#1c1814" stroke-width="1.2"
-                      stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
+        <div class="grade-item fi">
+          <div class="grade-slider" data-name="${name}">
+            <img class="grade-before-img" src="colourgrading/${name}/before.${ext}" alt="Before">
+            <img class="grade-after-img"  src="colourgrading/${name}/after.${ext}"  alt="After">
+            <div class="grade-handle">
+              <div class="grade-knob">
+                <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
+                  <path d="M4 1L1 5L4 9M10 1L13 5L10 9" stroke="#1c1814" stroke-width="1.2"
+                        stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
             </div>
+            <span class="grade-label grade-label-l">Before</span>
+            <span class="grade-label grade-label-r">After</span>
           </div>
-          <span class="grade-label grade-label-l">Before</span>
-          <span class="grade-label grade-label-r">After</span>
+          ${caption ? `<p class="grade-caption">${caption}</p>` : ''}
         </div>`;
     }).join('');
 
-    grid.querySelectorAll('.grade-slider').forEach(el => {
-      io.observe(el);
-      initGradeSlider(el);
-    });
+    grid.querySelectorAll('.grade-item').forEach(el => io.observe(el));
+    grid.querySelectorAll('.grade-slider').forEach(el => initGradeSlider(el));
   } catch(_) {}
 }
 
