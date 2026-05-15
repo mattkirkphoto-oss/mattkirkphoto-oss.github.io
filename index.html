@@ -470,6 +470,51 @@
     .about-body { font-size:15px; font-weight:200; line-height:1.92; color:rgba(242,237,229,0.95); }
     .about-body p + p { margin-top:20px; }
 
+    /* Skills toggle */
+    #skills-toggle {
+      margin-top:32px; padding-top:20px;
+      border-top:1px solid var(--rule);
+    }
+    #skills-btn {
+      background:none; border:none; cursor:pointer;
+      font-family:var(--f); font-size:9px; font-weight:300;
+      letter-spacing:0.28em; text-transform:uppercase;
+      color:var(--mid); transition:color .25s; padding:0;
+      display:flex; align-items:center; gap:10px;
+    }
+    #skills-btn:hover { color:var(--text); }
+    #skills-btn::after {
+      content:'↓'; font-size:10px; display:inline-block;
+      transition:transform .3s var(--ease);
+    }
+    #skills-btn.open::after { transform:rotate(180deg); }
+    #skills-panel {
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:8px 48px;
+      max-height:0; overflow:hidden;
+      transition:max-height .4s var(--ease), opacity .3s ease, margin-top .3s ease;
+      opacity:0; margin-top:0;
+    }
+    #skills-panel.open {
+      max-height:300px; opacity:1; margin-top:20px;
+    }
+    .skills-group ul {
+      list-style:none; padding:0; margin:0;
+      display:flex; flex-direction:column; gap:7px;
+    }
+    .skills-label {
+      display:block; font-size:8px; font-weight:400;
+      letter-spacing:0.32em; text-transform:uppercase;
+      color:var(--mid); margin-bottom:10px;
+    }
+    .skills-group ul li {
+      font-size:9px; font-weight:200; letter-spacing:0.12em;
+      color:rgba(242,237,229,0.72); line-height:1.5;
+    }
+    @media (max-width:600px) {
+      #skills-panel { grid-template-columns:1fr; }
+    }
+
     #contact { border-top:1px solid var(--rule); }
     .contact-wrap { max-width:1440px; margin:0 auto; padding:88px 44px 72px; display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:end; }
     .contact-label { font-size:9px; font-weight:300; letter-spacing:0.38em; text-transform:uppercase; color:var(--mid); margin-bottom:18px; display:block; }
@@ -661,6 +706,31 @@
           <p>Matt Kirkham is a Cambridge-based photographer, videographer, and filmmaker available for commercial and creative commissions.</p>
           <p>His work spans theatre, events and portraiture photography, brand and commercial video, and independent film — taking projects from shoot through to final grade. A BFI Film Academy alumnus, he is a committee member of Silver Street Productions, a production company at Queens' College, Cambridge.</p>
           <p>Based in Cambridge and available for commissions across the UK. Get in touch to discuss your project.</p>
+        </div>
+
+        <div id="skills-toggle">
+          <button id="skills-btn">Skills &amp; Tools</button>
+          <div id="skills-panel">
+            <div class="skills-group">
+              <span class="skills-label">Skills</span>
+              <ul>
+                <li>Camera operation</li>
+                <li>Colour grading</li>
+                <li>Art department</li>
+                <li>Director of Photography</li>
+              </ul>
+            </div>
+            <div class="skills-group">
+              <span class="skills-label">Software</span>
+              <ul>
+                <li>DaVinci Resolve Studio</li>
+                <li>Premiere Pro</li>
+                <li>Photoshop</li>
+                <li>Lightroom</li>
+                <li>Blender</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -882,21 +952,62 @@
     const nav = document.getElementById('nav');
     window.addEventListener('scroll', () => { nav.classList.toggle('scrolled', scrollY > 40); }, { passive: true });
     const toggle = document.getElementById('navToggle');
-    const links  = document.getElementById('navLinks');
-    function closeNav() { links.classList.remove('open'); toggle.textContent = 'Menu'; document.body.style.overflow = ''; }
+
+    let navOverlay = null;
+    function openNav() {
+      if (navOverlay) return;
+      navOverlay = document.createElement('div');
+      navOverlay.style.cssText = [
+        'position:fixed', 'inset:0', 'z-index:99999',
+        'background:#0a0a0a',
+        'display:flex', 'flex-direction:column',
+        'align-items:center', 'justify-content:center', 'gap:32px'
+      ].join(';');
+
+      const items = [
+        ['#photography','Photography'], ['#videography','Videography'],
+        ['#film','Film'], ['#about','About'], ['#contact','Contact']
+      ];
+      items.forEach(([href, label]) => {
+        const a = document.createElement('a');
+        a.href = href; a.textContent = label;
+        a.style.cssText = [
+          'font-family:Manrope,sans-serif', 'font-size:12px', 'font-weight:300',
+          'letter-spacing:0.3em', 'text-transform:uppercase',
+          'color:#f2ede5', 'text-decoration:none', 'opacity:0.85'
+        ].join(';');
+        a.addEventListener('click', closeNav);
+        navOverlay.appendChild(a);
+      });
+
+      document.body.appendChild(navOverlay);
+      document.body.style.overflow = 'hidden';
+      toggle.textContent = 'Close';
+    }
+
+    function closeNav() {
+      if (!navOverlay) return;
+      document.body.removeChild(navOverlay);
+      navOverlay = null;
+      document.body.style.overflow = '';
+      toggle.textContent = 'Menu';
+    }
+
     toggle.addEventListener('click', e => {
       e.stopPropagation();
-      const open = links.classList.toggle('open');
-      toggle.textContent = open ? 'Close' : 'Menu';
-      document.body.style.overflow = open ? 'hidden' : '';
+      navOverlay ? closeNav() : openNav();
     });
-    links.querySelectorAll('a').forEach(a => a.addEventListener('click', closeNav));
-    /* Close menu when tapping outside on mobile */
     document.addEventListener('click', e => {
-      if (links.classList.contains('open') && !nav.contains(e.target)) closeNav();
+      if (navOverlay && !navOverlay.contains(e.target) && e.target !== toggle) closeNav();
     });
 
-    /* ── SCROLL FADE ── */
+    /* ── SKILLS TOGGLE ── */
+    const skillsBtn   = document.getElementById('skills-btn');
+    const skillsPanel = document.getElementById('skills-panel');
+    skillsBtn.addEventListener('click', () => {
+      const open = skillsPanel.classList.toggle('open');
+      skillsBtn.classList.toggle('open', open);
+    });
     const io = new IntersectionObserver(entries => {
       entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); });
     }, { threshold: .06 });
