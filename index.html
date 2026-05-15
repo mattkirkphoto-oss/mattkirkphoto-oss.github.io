@@ -142,10 +142,16 @@
       font-size:11px; letter-spacing:0.28em; text-transform:uppercase;
       color:var(--text); text-decoration:none; opacity:1;
     }
-    .nav-links { list-style:none; display:flex; gap:32px; align-items:center; }
+    /* Nav links sit at body level to avoid stacking context issues on mobile.
+       On desktop: fixed top-right. On mobile: hidden until toggled. */
+    .nav-links {
+      list-style:none; display:flex; gap:32px; align-items:center;
+      position:fixed; top:0; right:44px; height:56px;
+      margin:0; padding:0; z-index:99;
+    }
     .nav-links a {
       font-size:9px; font-weight:300; letter-spacing:0.28em; text-transform:uppercase;
-      color:var(--text); text-decoration:none; opacity:.68; transition:opacity .25s;
+      color:#f2ede5; text-decoration:none; opacity:.68; transition:opacity .25s;
     }
     .nav-links a:hover { opacity:1; }
     .nav-toggle {
@@ -481,14 +487,14 @@
     @media (max-width:900px) {
 
       /* ── NAV ── */
-      .nav-links { display:none; }
+      .nav-links { display:none; right:0; }
       .nav-toggle { display:block; }
       #nav { padding:0 22px; }
       .nav-links.open {
         display:flex; flex-direction:column;
         position:fixed; top:0; left:0; width:100%; height:100%;
         background:var(--bg); justify-content:center; align-items:center;
-        gap:32px; z-index:9100;
+        gap:32px; z-index:9500;
       }
       .nav-links.open a { font-size:12px; opacity:.85; color:var(--text); letter-spacing:0.3em; }
 
@@ -587,15 +593,17 @@
 
   <nav id="nav">
     <a href="#hero" class="nav-logo">Matt Kirkham</a>
-    <ul class="nav-links" id="navLinks">
-      <li><a href="#photography">Photography</a></li>
-      <li><a href="#videography">Videography</a></li>
-      <li><a href="#film">Film</a></li>
-      <li><a href="#about">About</a></li>
-      <li><a href="#contact">Contact</a></li>
-    </ul>
     <button class="nav-toggle" id="navToggle" aria-label="Menu">Menu</button>
   </nav>
+
+  <!-- Mobile nav overlay — outside nav to avoid stacking context issues -->
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#photography">Photography</a></li>
+    <li><a href="#videography">Videography</a></li>
+    <li><a href="#film">Film</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
 
   <section id="hero">
     <div class="hero-fallback"></div>
