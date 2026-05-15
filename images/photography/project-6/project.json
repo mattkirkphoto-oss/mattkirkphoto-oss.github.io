@@ -4,5 +4,6 @@
   "year": "2026",
   "category": "Events",
   "description": "Photography from the premiere screening of 'The Only Fruit', as published in Varsity Magazine.",
+  "cover": "cover.webp",
   "gallery": ["001.webp", "002.webp", "003.webp", "004.webp", "005.webp"]
 }
