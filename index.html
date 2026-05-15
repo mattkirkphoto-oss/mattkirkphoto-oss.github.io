@@ -485,11 +485,12 @@
       .nav-toggle { display:block; }
       #nav { padding:0 22px; }
       .nav-links.open {
-        display:flex; flex-direction:column; position:fixed; inset:0;
+        display:flex; flex-direction:column;
+        position:fixed; top:0; left:0; width:100%; height:100%;
         background:var(--bg); justify-content:center; align-items:center;
-        gap:32px; z-index:190;
+        gap:32px; z-index:9100;
       }
-      .nav-links.open a { font-size:12px; opacity:.85; letter-spacing:0.3em; }
+      .nav-links.open a { font-size:12px; opacity:.85; color:var(--text); letter-spacing:0.3em; }
 
       /* ── HERO ── */
       #hero-content { left:22px; bottom:32px; }
