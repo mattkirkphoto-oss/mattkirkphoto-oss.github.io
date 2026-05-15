@@ -1349,6 +1349,7 @@
     const filmHint     = document.getElementById('film-scroll-hint');
     if (filmGrid && filmProgress) {
       filmGrid.addEventListener('scroll', () => {
+        hideFilmPreviews();
         const max = filmGrid.scrollWidth - filmGrid.clientWidth;
         const pct = max > 0 ? filmGrid.scrollLeft / max : 0;
         filmProgress.style.transform = `scaleX(${pct})`;
@@ -1363,12 +1364,17 @@
       let velocity = 0, lastX = 0, lastT = 0;
       let inertiaID = null;
 
+      function hideFilmPreviews() {
+        filmGrid.querySelectorAll('.preview-frame').forEach(f => f.classList.remove('loaded'));
+      }
+
       function stopInertia() {
         if (inertiaID) { cancelAnimationFrame(inertiaID); inertiaID = null; }
       }
 
       filmGrid.addEventListener('mousedown', e => {
         stopInertia();
+        hideFilmPreviews();
         dragging   = true;
         dragMoved  = false;
         startX     = e.pageX;
