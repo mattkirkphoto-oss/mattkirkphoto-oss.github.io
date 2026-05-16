@@ -290,7 +290,7 @@
     }
     #grid-film::-webkit-scrollbar { display:none; }
     #grid-film .project { flex:0 0 clamp(420px, 46vw, 640px); }
-    #grid-film.is-dragging .preview-frame { opacity:0 !important; transition:none !important; }
+    #grid-film.is-dragging .preview-frame { display:none !important; }
     /* 1.85:1 flat widescreen ratio for film thumbnails — 1÷1.85 = 54.05% */
     #grid-film .project-thumb::before { padding-top: 54.05%; }
     #film-progress-wrap { height:1px; background:var(--rule); margin:20px 44px 0; position:relative; overflow:hidden; }
@@ -1538,7 +1538,9 @@
       function stopDragging(e) {
         if (!dragging) return;
         dragging = false;
-        filmGrid.classList.remove('is-dragging');
+        /* Keep is-dragging briefly so display:none on preview frames persists
+           through the click event that fires right after pointerup */
+        setTimeout(() => filmGrid.classList.remove('is-dragging'), 150);
         document.body.style.userSelect = '';
         document.body.style.cursor = '';
         filmGrid.style.userSelect = '';
@@ -1612,9 +1614,16 @@
       window.addEventListener('blur', () => { if (dragging) stopDragging({ pointerId: null }); });
 
       /* Swallow click after drag so gallery doesn't open */
+      /* Film grid click — swallow after drag; delegation fallback if iframe absorbed the mousedown */
       filmGrid.addEventListener('click', e => {
-        if (dragMoved) { dragMoved = false; e.stopPropagation(); e.preventDefault(); }
-      }, true);
+        if (dragMoved) { dragMoved = false; return; }
+        if (e.defaultPrevented) return; /* already handled by element's own click handler */
+        const projectEl = e.target.closest('.project[data-idx]');
+        if (!projectEl) return;
+        const p = resolvedProjects['film']?.[parseInt(projectEl.dataset.idx)];
+        if (!p) return;
+        openGallery({ currentTarget: projectEl, preventDefault() {} });
+      });
     }
 
     /* ── GALLERY ── */
