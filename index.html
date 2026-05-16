@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Matt Kirkham</title>
   <meta name="description" content="Photography and film — Matt Kirkham, Cambridge.">
 
@@ -128,7 +128,9 @@
 
     #nav {
       position:fixed; top:0; left:0; right:0; z-index:100;
-      padding:0 44px; height:56px;
+      padding:0 44px; padding-left:max(44px, env(safe-area-inset-left));
+      padding-right:max(44px, env(safe-area-inset-right));
+      height:56px;
       display:flex; align-items:center; justify-content:space-between;
       transition: background .5s, border-color .5s;
       border-bottom:1px solid transparent;
@@ -239,7 +241,6 @@
     .project-thumb {
       position:relative; overflow:hidden; background:var(--bg2);
       transform:translateZ(0); outline:1px solid rgba(229,224,216,0.1);
-      isolation: isolate;
     }
     .project-thumb::before { content:''; display:block; padding-top:66%; }
     .project-img {
@@ -402,10 +403,10 @@
     #g-desc {
       flex-shrink:0; padding:14px 44px; border-bottom:1px solid var(--rule);
       font-size:9px; font-weight:200; letter-spacing:0.1em; color:var(--mid); line-height:1.8;
-      display:none; overflow:hidden; max-height:500px;
+      overflow:hidden; max-height:0; opacity:0;
       transition:max-height .35s ease, opacity .3s ease, padding .3s ease;
     }
-    #g-desc.show { display:block; }
+    #g-desc.show { max-height:500px; opacity:1; }
 
     /* Mobile: truncate long descriptions with a Read more toggle */
     @media (max-width:900px) {
@@ -720,6 +721,18 @@
     .social-a:hover { opacity:1; }
     .copy { font-size:9px; font-weight:200; letter-spacing:0.14em; text-transform:uppercase; color:var(--mid); opacity:.6; }
 
+    #back-top {
+      position:fixed; bottom:32px; right:36px; z-index:200;
+      background:none; border:1px solid var(--rule); border-radius:50%;
+      width:40px; height:40px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      opacity:0; pointer-events:none;
+      transition:opacity .4s ease, border-color .25s;
+      color:var(--mid); font-size:14px; line-height:1;
+    }
+    #back-top.vis { opacity:1; pointer-events:all; }
+    #back-top:hover { border-color:var(--mid); color:var(--text); }
+
     .fi { opacity:0; transform:translateY(20px); transition:opacity .8s ease, transform .8s ease; }
     .fi.vis { opacity:1; transform:translateY(0); }
     .fi.d1 { transition-delay:.1s; }
@@ -837,6 +850,8 @@
 
   <div id="cur"></div>
   <div id="cur-ring"><span id="cur-label">View</span></div>
+
+  <button id="back-top" aria-label="Back to top">↑</button>
 
   <nav id="nav">
     <a href="#hero" class="nav-logo">Matt Kirkham</a>
@@ -1205,9 +1220,34 @@
       ring.style.display = 'none';
     }
 
-    /* ── NAV ── */
+    /* ── NAV scroll state + active section + back-to-top ── */
     const nav = document.getElementById('nav');
-    window.addEventListener('scroll', () => { nav.classList.toggle('scrolled', scrollY > 40); }, { passive: true });
+    const backTop = document.getElementById('back-top');
+    const navSections = ['photography','videography','film','about','contact'];
+    const navLinkEls  = {};
+    document.querySelectorAll('.nav-links a').forEach(a => {
+      const id = a.getAttribute('href').replace('#','');
+      navLinkEls[id] = a;
+    });
+
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', scrollY > 40);
+      /* Back to top visibility */
+      if (backTop) backTop.classList.toggle('vis', scrollY > 600);
+      /* Active nav section */
+      let current = '';
+      for (const id of navSections) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= 80) current = id;
+      }
+      Object.entries(navLinkEls).forEach(([id, a]) => {
+        a.style.opacity = (id === current) ? '1' : '';
+      });
+    }, { passive: true });
+
+    if (backTop) {
+      backTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    }
     const toggle = document.getElementById('navToggle');
 
     let navOverlay = null;
