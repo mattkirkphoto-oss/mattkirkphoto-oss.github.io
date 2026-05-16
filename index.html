@@ -1603,27 +1603,24 @@
     let filmDragging = false; /* shared flag — cycling code checks this before touching DOM */
 
     /* ── FILM SECTION ──────────────────────────────────────────────────────
-       of what element is under the cursor (solves Vimeo iframe interference).
-       Click vs drag: if total movement < 6px AND duration < 300ms → click.
-       Momentum: velocity tracked per frame, coasted after release.
+       Root cause: browser cancels pointer capture mid-drag (touch-action:pan-x
+       tells it the gesture is available for native handling). After capture
+       loss, pointermove no longer fires on filmGrid — scroll freezes.
+       Fix: document-level fallback listeners catch moves/ups when captureActive
+       is false, keeping scroll going regardless of browser gesture handling.
     ────────────────────────────────────────────────────────────────────── */
     const filmGrid     = document.getElementById('grid-film');
     const filmProgress = document.getElementById('film-progress');
     const filmHint     = document.getElementById('film-scroll-hint');
 
     if (filmGrid) {
-      let ptId        = null;   /* captured pointer id */
-      let startX      = 0;      /* clientX at pointerdown */
-      let startScroll = 0;      /* scrollLeft at pointerdown */
-      let startTime   = 0;      /* ms at pointerdown */
-      let totalMoved  = 0;      /* absolute px moved since pointerdown */
-      let velocity    = 0;      /* px/ms — positive = user dragged left */
-      let lastX       = 0;
-      let lastT       = 0;
-      let inertiaID   = null;
+      let ptId          = null;
+      let startX        = 0, startScroll = 0, startTime = 0;
+      let totalMoved    = 0, velocity = 0, lastX = 0, lastT = 0;
+      let inertiaID     = null;
+      let captureActive = false;
 
-      const CLICK_PX = 6;    /* movement budget for a tap/click */
-      const CLICK_MS = 300;  /* max duration for a tap/click */
+      const CLICK_PX = 6, CLICK_MS = 300;
 
       function stopCoast() {
         if (inertiaID) { cancelAnimationFrame(inertiaID); inertiaID = null; }
@@ -1635,80 +1632,95 @@
         inertiaID = Math.abs(v) > 0.5 ? requestAnimationFrame(() => coast(v)) : null;
       }
 
-      filmGrid.addEventListener('pointerdown', e => {
-        if (e.button !== 0) return;
-        stopCoast();
-        filmGrid.setPointerCapture(e.pointerId);
-        ptId        = e.pointerId;
-        startX      = e.clientX;
-        startScroll = filmGrid.scrollLeft;
-        startTime   = Date.now();
-        totalMoved  = 0;
-        velocity    = 0;
-        lastX       = e.clientX;
-        lastT       = startTime;
-        filmGrid.classList.add('is-dragging');
-        filmDragging = true;
-        filmGrid.style.userSelect = 'none';
-      });
-
-      filmGrid.addEventListener('pointermove', e => {
-        if (ptId === null || e.pointerId !== ptId) return;
-        const dx  = e.clientX - startX;
+      function updateScroll(clientX) {
+        const dx  = clientX - startX;
         const now = Date.now();
         const dt  = Math.max(now - lastT, 1);
-        /* Velocity in px/ms, averaged with previous frame */
-        velocity  = velocity * 0.5 + ((lastX - e.clientX) / dt) * 0.5;
-        lastX     = e.clientX;
-        lastT     = now;
+        velocity  = velocity * 0.5 + ((lastX - clientX) / dt) * 0.5;
+        lastX = clientX; lastT = now;
         totalMoved = Math.abs(dx);
         filmGrid.scrollLeft = startScroll - dx;
-      });
+      }
 
-      function endDrag(e) {
-        if (ptId === null || e.pointerId !== ptId) return;
+      function endDrag(clientX, clientY) {
+        if (ptId === null) return;
         const duration = Date.now() - startTime;
         const isClick  = totalMoved < CLICK_PX && duration < CLICK_MS;
-
         try { filmGrid.releasePointerCapture(ptId); } catch(_) {}
-        ptId = null;
+        ptId = null; captureActive = false;
         filmGrid.style.userSelect = '';
         filmDragging = false;
-        /* Keep is-dragging briefly so preview display:none outlasts any synthetic click */
         setTimeout(() => filmGrid.classList.remove('is-dragging'), 200);
-
         if (isClick) {
-          /* elementFromPoint after releasing capture gives the actual element */
-          const hit = document.elementFromPoint(e.clientX, e.clientY);
+          const hit = document.elementFromPoint(clientX, clientY);
           const projectEl = hit?.closest('.project[data-idx]');
           if (projectEl) {
             const p = resolvedProjects['film']?.[parseInt(projectEl.dataset.idx)];
             if (p) openGallery({ currentTarget: projectEl, preventDefault() {} });
           }
         } else {
-          /* Momentum coast: velocity px/ms × ~16ms per frame */
           const frameV = velocity * 16;
           if (Math.abs(frameV) > 1) coast(frameV);
         }
       }
 
-      filmGrid.addEventListener('pointerup',     endDrag);
+      filmGrid.addEventListener('gotpointercapture',  () => { captureActive = true; });
+      filmGrid.addEventListener('lostpointercapture', () => { captureActive = false; });
+
+      filmGrid.addEventListener('pointerdown', e => {
+        if (e.button !== 0) return;
+        stopCoast();
+        filmGrid.setPointerCapture(e.pointerId);
+        ptId = e.pointerId;
+        startX = e.clientX; startScroll = filmGrid.scrollLeft;
+        startTime = Date.now(); totalMoved = 0; velocity = 0;
+        lastX = e.clientX; lastT = startTime;
+        filmGrid.classList.add('is-dragging');
+        filmDragging = true;
+        filmGrid.style.userSelect = 'none';
+      });
+
+      /* Primary: fires while capture is held by filmGrid */
+      filmGrid.addEventListener('pointermove', e => {
+        if (ptId === null || e.pointerId !== ptId) return;
+        updateScroll(e.clientX);
+      });
+
+      /* Fallback: browser stole capture (touch-action); document still receives events */
+      document.addEventListener('pointermove', e => {
+        if (ptId === null || e.pointerId !== ptId || captureActive) return;
+        updateScroll(e.clientX);
+      }, { passive: true });
+
+      filmGrid.addEventListener('pointerup', e => {
+        if (ptId === null || e.pointerId !== ptId) return;
+        endDrag(e.clientX, e.clientY);
+      });
+
+      /* Fallback pointerup after capture loss */
+      document.addEventListener('pointerup', e => {
+        if (ptId === null || e.pointerId !== ptId || captureActive) return;
+        endDrag(e.clientX, e.clientY);
+      });
+
       filmGrid.addEventListener('pointercancel', () => {
         if (ptId === null) return;
         try { filmGrid.releasePointerCapture(ptId); } catch(_) {}
-        ptId = null;
+        ptId = null; captureActive = false;
         filmGrid.style.userSelect = '';
-        filmGrid.classList.remove('is-dragging');
-      });
-      window.addEventListener('blur', () => {
-        if (ptId === null) return;
-        try { filmGrid.releasePointerCapture(ptId); } catch(_) {}
-        ptId = null;
-        filmGrid.style.userSelect = '';
+        filmDragging = false;
         filmGrid.classList.remove('is-dragging');
       });
 
-      /* Progress bar + scroll hint */
+      window.addEventListener('blur', () => {
+        if (ptId === null) return;
+        try { filmGrid.releasePointerCapture(ptId); } catch(_) {}
+        ptId = null; captureActive = false;
+        filmGrid.style.userSelect = '';
+        filmDragging = false;
+        filmGrid.classList.remove('is-dragging');
+      });
+
       filmGrid.addEventListener('scroll', () => {
         const max = filmGrid.scrollWidth - filmGrid.clientWidth;
         if (filmProgress && max > 0) filmProgress.style.transform = `scaleX(${filmGrid.scrollLeft / max})`;
