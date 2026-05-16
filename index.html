@@ -999,13 +999,14 @@
         });
         return {
           folder,
-          cover:        folder + (meta.cover || 'cover.jpg'),
-          title:        meta.title       || '',
-          caption:      meta.caption     || '',
-          year:         meta.year        || '',
-          category:     meta.category    || '',
-          text:         meta.description || '',
-          previewScale: meta.previewScale || 1,
+          cover:         folder + (meta.cover || 'cover.jpg'),
+          title:         meta.title       || '',
+          caption:       meta.caption     || '',
+          year:          meta.year        || '',
+          category:      meta.category    || '',
+          text:          meta.description || '',
+          previewScale:  meta.previewScale || 1,
+          thumbPosition: meta.thumbPosition || 'center center',
           gallery
         };
       } catch (_) { return null; }
@@ -1210,7 +1211,7 @@
         const hasVideo = p.gallery && p.gallery.some(g => g.vimeo);
         return `<div class="project fi${i%2===1?' d1':''}" data-section="${section}" data-idx="${i}" role="button" tabindex="0" aria-label="Open ${p.title}">
           <div class="project-thumb">
-            <img src="${p.cover}" alt="${p.title}" class="project-img" loading="lazy" decoding="async">
+            <img src="${p.cover}" alt="${p.title}" class="project-img" loading="lazy" decoding="async" style="object-position:${p.thumbPosition}">
             <img src="" alt="" class="project-img-next" aria-hidden="true">
             ${hasVideo?'<span class="play-label">&#9654;&ensp;Play</span>':''}
           </div>
@@ -1410,6 +1411,7 @@
                 if (!isHovering) return;
 
                 projectImgNext.src              = src;
+                projectImgNext.style.objectPosition = p.thumbPosition;
                 projectImgNext.style.transition = 'none';
                 projectImgNext.style.opacity    = '0';
 
@@ -1432,6 +1434,7 @@
                       if (!isHovering) return;
 
                       projectImg.src                  = src;
+                      projectImg.style.objectPosition = p.thumbPosition;
                       projectImgNext.style.transition = 'none';
                       projectImgNext.style.opacity    = '0';
 
