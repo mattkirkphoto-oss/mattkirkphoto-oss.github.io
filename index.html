@@ -301,6 +301,19 @@
       border-left-color:var(--text);
     }
     .film-list-item.active .film-item-title { color:var(--text); }
+    .film-list-item .film-item-title {
+      position:relative; display:inline-block;
+      transition:color .3s, transform .35s var(--ease);
+    }
+    .film-list-item:hover .film-item-title { transform:translateX(4px); }
+    .film-list-item.active .film-item-title { transform:translateX(6px); }
+    /* Index number shown on active */
+    .film-item-idx {
+      font-size:8px; font-weight:200; letter-spacing:0.2em;
+      color:var(--dim); margin-right:10px;
+      transition:color .3s;
+    }
+    .film-list-item.active .film-item-idx { color:var(--mid); }
     .film-item-l { display:flex; flex-direction:column; gap:5px; }
     .film-item-title {
       font-size:9px; font-weight:500; letter-spacing:0.24em; text-transform:uppercase;
@@ -318,7 +331,22 @@
     .film-preview-thumb {
       position:relative; overflow:hidden; background:var(--bg2);
       outline:1px solid rgba(229,224,216,0.1); isolation:isolate;
+      cursor:none;
+      transform-style:preserve-3d;
+      transition:transform 0.5s var(--ease), outline-color 0.3s ease;
     }
+    .film-preview-thumb:hover { outline-color:rgba(229,224,216,0.28); }
+    /* View label that appears on hover */
+    .film-preview-thumb::after {
+      content:'View'; position:absolute;
+      bottom:14px; right:16px; z-index:10;
+      font-family:var(--f); font-size:8px; font-weight:400;
+      letter-spacing:0.28em; text-transform:uppercase;
+      color:var(--text); opacity:0;
+      transition:opacity 0.3s ease;
+      pointer-events:none;
+    }
+    .film-preview-thumb:hover::after { opacity:0.7; }
     .film-preview-thumb::before { content:''; display:block; padding-top:54.05%; }
     .film-preview-img {
       position:absolute; inset:0; width:100%; height:100%;
@@ -506,11 +534,11 @@
     /* Colour grading — collapsible grid */
     #grading-grid {
       display:grid; grid-template-columns:repeat(2,1fr); gap:28px;
-      max-height:0; overflow:hidden;
+      max-height:4000px; overflow:hidden;
       transition:max-height .5s var(--ease), opacity .35s ease, margin-top .35s ease;
-      opacity:0; margin-top:0;
+      opacity:1; margin-top:0;
     }
-    #grading-grid.open { max-height:2000px; opacity:1; margin-top:0; }
+    #grading-grid.closed { max-height:0; opacity:0; }
     #grading-toggle-btn {
       background:none; border:none; cursor:pointer;
       font-family:var(--f); font-size:9px; font-weight:300;
@@ -523,7 +551,7 @@
       content:'↓'; font-size:10px;
       transition:transform .3s var(--ease); display:inline-block;
     }
-    #grading-toggle-btn.open::after { transform:rotate(180deg); }
+    #grading-toggle-btn.closed::after { transform:rotate(180deg); }
 
     .grade-slider {
       position:relative; overflow:hidden; background:var(--bg2);
@@ -903,7 +931,7 @@
     <div class="grade-inner">
       <div class="section-header fi" id="hdr-grading">
         <h2 class="section-title">Colour Grading</h2>
-        <button id="grading-toggle-btn">Show work</button>
+        <button id="grading-toggle-btn">Hide work</button>
       </div>
       <div id="grading-grid"></div>
     </div>
@@ -1243,11 +1271,13 @@
     const gradingToggleBtn = document.getElementById('grading-toggle-btn');
     const gradingGridEl    = document.getElementById('grading-grid');
     if (gradingToggleBtn && gradingGridEl) {
+      /* Starts open — button says Hide work */
+      gradingToggleBtn.textContent = 'Hide work';
       gradingToggleBtn.addEventListener('click', () => {
-        const open = gradingGridEl.classList.toggle('open');
-        gradingToggleBtn.classList.toggle('open', open);
-        gradingToggleBtn.textContent = open ? 'Hide' : 'Show work';
-        if (open) requestAnimationFrame(() =>
+        const closed = gradingGridEl.classList.toggle('closed');
+        gradingToggleBtn.classList.toggle('closed', closed);
+        gradingToggleBtn.textContent = closed ? 'Show work' : 'Hide work';
+        if (!closed) requestAnimationFrame(() =>
           gradingGridEl.querySelectorAll('.grade-slider').forEach(initGradeSlider)
         );
       });
@@ -1296,11 +1326,10 @@
           p.folder + 'cover.webp',
           p.folder + 'cover.jpg'
         ];
-        /* Start from the next variant after the one already tried */
-        let variantIdx = coverVariants.findIndex(v => v === p.cover) + 1;
-        if (variantIdx <= 0) variantIdx = 0;
+        let variantIdx = 0;
         img.addEventListener('error', async function onErr() {
-          /* Try next cover format variant first */
+          /* Skip any variant that matches the src already tried */
+          while (variantIdx < coverVariants.length && coverVariants[variantIdx] === img.src) variantIdx++;
           if (variantIdx < coverVariants.length) {
             img.src = coverVariants[variantIdx++];
             return;
