@@ -384,8 +384,6 @@
       z-index:3;
     }
     .preview-frame.loaded { opacity:1; }
-    /* Fade the static cover out when the video preview takes over */
-    .project-thumb:has(.preview-frame.loaded) .project-img { opacity:0 !important; transition:opacity 0.7s ease !important; }
     .g-arrow {
       position:absolute; top:50%; transform:translateY(-50%);
       background:none; border:none; cursor:pointer; font-family:var(--f);
@@ -1324,7 +1322,7 @@
               buildFrame();
               hoverTimer = setTimeout(() => {
                 if (previewFrame) previewFrame.classList.add('loaded');
-              }, 100);
+              }, 350);
             });
             el.addEventListener('mouseleave', () => {
               clearTimeout(hoverTimer);
@@ -1470,7 +1468,11 @@
           }
         }
 
-        el.addEventListener('click', openGallery);
+        /* Film gallery opens via pointer-capture endDrag — no separate click needed.
+           All other sections use standard click. */
+        if (section !== 'film') {
+          el.addEventListener('click', openGallery);
+        }
         el.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); openGallery.call(el,e); } });
       });
     }
@@ -1546,6 +1548,7 @@
     }
 
     loadGrading();
+    init();
 
     /* ── GRADING LIGHTBOX ── */
     const gradeLightbox      = document.getElementById('grade-lightbox');
@@ -1592,136 +1595,116 @@
       const caption = item.querySelector('.grade-caption')?.textContent || '';
       openGradeLightbox(before, after, caption);
     });
-    init();
-
+    /* ── FILM SECTION ──────────────────────────────────────────────────────
+       of what element is under the cursor (solves Vimeo iframe interference).
+       Click vs drag: if total movement < 6px AND duration < 300ms → click.
+       Momentum: velocity tracked per frame, coasted after release.
+    ────────────────────────────────────────────────────────────────────── */
     const filmGrid     = document.getElementById('grid-film');
     const filmProgress = document.getElementById('film-progress');
     const filmHint     = document.getElementById('film-scroll-hint');
-    if (filmGrid && filmProgress) {
-      filmGrid.addEventListener('scroll', () => {
-        hideFilmPreviews();
-        const max = filmGrid.scrollWidth - filmGrid.clientWidth;
-        const pct = max > 0 ? filmGrid.scrollLeft / max : 0;
-        filmProgress.style.transform = `scaleX(${pct})`;
-        if (filmHint && pct > 0.02) filmHint.classList.add('hidden');
-      }, { passive: true });
-    }
 
-    /* ── FILM SECTION — momentum drag scroll ── */
     if (filmGrid) {
-      let dragging = false, dragMoved = false;
-      let startX, scrollStart;
-      let velocity = 0, lastX = 0, lastT = 0;
-      let inertiaID = null;
+      let ptId        = null;   /* captured pointer id */
+      let startX      = 0;      /* clientX at pointerdown */
+      let startScroll = 0;      /* scrollLeft at pointerdown */
+      let startTime   = 0;      /* ms at pointerdown */
+      let totalMoved  = 0;      /* absolute px moved since pointerdown */
+      let velocity    = 0;      /* px/ms — positive = user dragged left */
+      let lastX       = 0;
+      let lastT       = 0;
+      let inertiaID   = null;
 
-      function hideFilmPreviews() {
-        /* Remove any active video preview iframes — clean DOM = smooth scroll */
-        filmGrid.querySelectorAll('.preview-frame').forEach(f => {
-          f.classList.remove('loaded');
-          /* Remove the iframe immediately so it can't interfere with scroll compositing */
-          f.remove();
-        });
-        /* Reset any active photo cycling overlays */
-        filmGrid.querySelectorAll('.project-img-next').forEach(img => {
-          img.style.opacity = '0';
-          img.style.transition = 'none';
-          img.style.transform = '';
-        });
-      }
+      const CLICK_PX = 6;    /* movement budget for a tap/click */
+      const CLICK_MS = 300;  /* max duration for a tap/click */
 
-      function stopInertia() {
+      function stopCoast() {
         if (inertiaID) { cancelAnimationFrame(inertiaID); inertiaID = null; }
       }
 
-      function stopDragging(e) {
-        if (!dragging) return;
-        dragging = false;
-        /* Keep is-dragging briefly so display:none on preview frames persists
-           through the click event that fires right after pointerup */
-        setTimeout(() => filmGrid.classList.remove('is-dragging'), 150);
-        document.body.style.userSelect = '';
-        document.body.style.cursor = '';
-        filmGrid.style.userSelect = '';
-        filmGrid.style.cursor = '';
-        /* Release pointer capture */
-        try { filmGrid.releasePointerCapture(e.pointerId); } catch(_) {}
-
-        /* Apply momentum */
-        const frameVel = velocity * 16;
-        if (Math.abs(frameVel) > 0.8) {
-          let v = frameVel;
-          function coast() {
-            filmGrid.scrollLeft += v;
-            v *= 0.95;
-            if (Math.abs(v) > 0.5) {
-              inertiaID = requestAnimationFrame(coast);
-            } else {
-              inertiaID = null;
-            }
-          }
-          inertiaID = requestAnimationFrame(coast);
-        }
+      function coast(v) {
+        filmGrid.scrollLeft += v;
+        v *= 0.94;
+        inertiaID = Math.abs(v) > 0.5 ? requestAnimationFrame(() => coast(v)) : null;
       }
 
       filmGrid.addEventListener('pointerdown', e => {
         if (e.button !== 0) return;
-        stopInertia();
-        hideFilmPreviews();
-        /* Capture all pointer events to filmGrid — this survives iframe boundaries */
+        stopCoast();
         filmGrid.setPointerCapture(e.pointerId);
-        filmGrid.classList.add('is-dragging');
-        dragging    = true;
-        dragMoved   = false;
-        startX      = e.pageX;
-        scrollStart = filmGrid.scrollLeft;
+        ptId        = e.pointerId;
+        startX      = e.clientX;
+        startScroll = filmGrid.scrollLeft;
+        startTime   = Date.now();
+        totalMoved  = 0;
         velocity    = 0;
-        lastX       = e.pageX;
-        lastT       = Date.now();
-        document.body.style.userSelect = 'none';
-        document.body.style.cursor     = 'grabbing';
+        lastX       = e.clientX;
+        lastT       = startTime;
+        filmGrid.classList.add('is-dragging');
         filmGrid.style.userSelect = 'none';
-        filmGrid.style.cursor     = 'grabbing';
-      });
-
-      /* pointermove via capture can be throttled over iframes — use document
-         mousemove for full-frequency scroll tracking, pointer capture only for
-         ensuring pointerup always fires regardless of iframe focus */
-      document.addEventListener('mousemove', e => {
-        if (!dragging) return;
-        const dx = e.pageX - startX;
-        if (Math.abs(dx) > 4) dragMoved = true;
-
-        const now = Date.now();
-        const dt  = Math.max(now - lastT, 1);
-        velocity  = velocity * 0.6 + ((lastX - e.pageX) / dt) * 0.4;
-        lastX = e.pageX;
-        lastT = now;
-
-        filmGrid.scrollLeft = scrollStart - dx;
       });
 
       filmGrid.addEventListener('pointermove', e => {
-        /* Keep pointermove listener so pointer capture stays active,
-           but actual scroll logic runs in the document mousemove above */
-        e.preventDefault();
+        if (ptId === null || e.pointerId !== ptId) return;
+        const dx  = e.clientX - startX;
+        const now = Date.now();
+        const dt  = Math.max(now - lastT, 1);
+        /* Velocity in px/ms, averaged with previous frame */
+        velocity  = velocity * 0.5 + ((lastX - e.clientX) / dt) * 0.5;
+        lastX     = e.clientX;
+        lastT     = now;
+        totalMoved = Math.abs(dx);
+        filmGrid.scrollLeft = startScroll - dx;
       });
 
-      filmGrid.addEventListener('pointerup',     stopDragging);
-      filmGrid.addEventListener('pointercancel', stopDragging);
-      /* Safety nets for edge cases */
-      window.addEventListener('blur', () => { if (dragging) stopDragging({ pointerId: null }); });
+      function endDrag(e) {
+        if (ptId === null || e.pointerId !== ptId) return;
+        const duration = Date.now() - startTime;
+        const isClick  = totalMoved < CLICK_PX && duration < CLICK_MS;
 
-      /* Swallow click after drag so gallery doesn't open */
-      /* Film grid click — swallow after drag; delegation fallback if iframe absorbed the mousedown */
-      filmGrid.addEventListener('click', e => {
-        if (dragMoved) { dragMoved = false; return; }
-        if (e.defaultPrevented) return; /* already handled by element's own click handler */
-        const projectEl = e.target.closest('.project[data-idx]');
-        if (!projectEl) return;
-        const p = resolvedProjects['film']?.[parseInt(projectEl.dataset.idx)];
-        if (!p) return;
-        openGallery({ currentTarget: projectEl, preventDefault() {} });
+        try { filmGrid.releasePointerCapture(ptId); } catch(_) {}
+        ptId = null;
+        filmGrid.style.userSelect = '';
+        /* Keep is-dragging briefly so preview display:none outlasts any synthetic click */
+        setTimeout(() => filmGrid.classList.remove('is-dragging'), 200);
+
+        if (isClick) {
+          /* elementFromPoint after releasing capture gives the actual element */
+          const hit = document.elementFromPoint(e.clientX, e.clientY);
+          const projectEl = hit?.closest('.project[data-idx]');
+          if (projectEl) {
+            const p = resolvedProjects['film']?.[parseInt(projectEl.dataset.idx)];
+            if (p) openGallery({ currentTarget: projectEl, preventDefault() {} });
+          }
+        } else {
+          /* Momentum coast: velocity px/ms × ~16ms per frame */
+          const frameV = velocity * 16;
+          if (Math.abs(frameV) > 1) coast(frameV);
+        }
+      }
+
+      filmGrid.addEventListener('pointerup',     endDrag);
+      filmGrid.addEventListener('pointercancel', () => {
+        if (ptId === null) return;
+        try { filmGrid.releasePointerCapture(ptId); } catch(_) {}
+        ptId = null;
+        filmGrid.style.userSelect = '';
+        filmGrid.classList.remove('is-dragging');
       });
+      window.addEventListener('blur', () => {
+        if (ptId === null) return;
+        try { filmGrid.releasePointerCapture(ptId); } catch(_) {}
+        ptId = null;
+        filmGrid.style.userSelect = '';
+        filmGrid.classList.remove('is-dragging');
+      });
+
+      /* Progress bar + scroll hint */
+      filmGrid.addEventListener('scroll', () => {
+        const max = filmGrid.scrollWidth - filmGrid.clientWidth;
+        if (filmProgress && max > 0) filmProgress.style.transform = `scaleX(${filmGrid.scrollLeft / max})`;
+        if (filmHint) filmHint.classList.toggle('hidden', filmGrid.scrollLeft > 20);
+      }, { passive: true });
     }
 
     /* ── GALLERY ── */
