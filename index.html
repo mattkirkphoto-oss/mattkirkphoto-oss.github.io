@@ -1199,71 +1199,56 @@
             thumb.style.transform  = '';
           });
 
-          /* Preload video preview when project enters viewport — iframe loads silently
-             so by the time the user hovers the video is already playing in the background */
+          /* Video hover preview — created on mouseenter, destroyed on mouseleave.
+             No preloading: DOM stays clean during scroll so there are no compositing
+             layers from iframes to cause jank. */
           const vimeoItem = (p.gallery || []).find(g => g.vimeo && g.vimeo !== 'YOUR_VIMEO_ID');
           if (vimeoItem) {
             let previewFrame = null;
             let hoverTimer   = null;
-
-            /* Start preloading when card scrolls into view.
-               Calculate iframe dimensions to cover the container regardless of
-               the container's aspect ratio or the video's aspect ratio (16:9).
-
-               FIX: For film/project-1 (Glasshouse) the native video is 2.35:1
-               content inside a 16:9 frame, producing black bars top and bottom.
-               Scale factor = 2.35 / (16/9) = 1.3219 to crop those bars.
-               This is controlled per-project via p.previewScale (set in project.json
-               as "previewScale": 1.3219), defaulting to 1 for all others. */
+            let destroyTimer = null;
             const previewScale = p.previewScale || 1;
 
-            const preloadIO = new IntersectionObserver(entries => {
-              if (!entries[0].isIntersecting) return;
-              previewFrame = document.createElement('iframe');
-              previewFrame.className = 'preview-frame';
-              previewFrame.src = `https://player.vimeo.com/video/${vimeoItem.vimeo}?background=1&autoplay=1&loop=1&muted=1`;
-              previewFrame.allow = 'autoplay';
-              previewFrame.tabIndex = -1;
-
-              /* Cover calculation: make iframe the size needed for a 16:9 video
-                 to fill the container, then center it (overflow clipped by parent).
-                 Multiply by previewScale to upscale and crop letterbox bars. */
+            function buildFrame() {
+              if (previewFrame) return;
               const cW = thumb.offsetWidth;
               const cH = thumb.offsetHeight;
               const videoRatio = 16 / 9;
               const containerRatio = cW / cH;
               let fW, fH;
               if (containerRatio > videoRatio) {
-                fW = cW + 2;
-                fH = Math.ceil(cW / videoRatio) + 2;
+                fW = cW + 2; fH = Math.ceil(cW / videoRatio) + 2;
               } else {
-                fH = cH + 2;
-                fW = Math.ceil(cH * videoRatio) + 2;
+                fH = cH + 2; fW = Math.ceil(cH * videoRatio) + 2;
               }
+              previewFrame = document.createElement('iframe');
+              previewFrame.className = 'preview-frame';
+              previewFrame.src = `https://player.vimeo.com/video/${vimeoItem.vimeo}?background=1&autoplay=1&loop=1&muted=1`;
+              previewFrame.allow = 'autoplay';
+              previewFrame.tabIndex = -1;
               previewFrame.style.width  = (fW * previewScale) + 'px';
               previewFrame.style.height = (fH * previewScale) + 'px';
-
               thumb.appendChild(previewFrame);
-              preloadIO.unobserve(el);
-            }, { threshold: 0.1 });
-            preloadIO.observe(el);
-
-            /* On touch devices — show preview when card is mostly visible, hide when not */
-            if (!canHover && vimeoItem) {
-              const mobilePreviewIO = new IntersectionObserver(entries => {
-                if (entries[0].isIntersecting && previewFrame) previewFrame.classList.add('loaded');
-                else if (previewFrame) previewFrame.classList.remove('loaded');
-              }, { threshold: 0.75 });
-              mobilePreviewIO.observe(el);
             }
+
+            function destroyFrame() {
+              if (!previewFrame) return;
+              previewFrame.remove();
+              previewFrame = null;
+            }
+
             el.addEventListener('mouseenter', () => {
+              clearTimeout(destroyTimer);
+              buildFrame();
               hoverTimer = setTimeout(() => {
                 if (previewFrame) previewFrame.classList.add('loaded');
-              }, 50);
+              }, 100);
             });
             el.addEventListener('mouseleave', () => {
               clearTimeout(hoverTimer);
               if (previewFrame) previewFrame.classList.remove('loaded');
+              /* Destroy after fade-out so there's no iframe during scroll */
+              destroyTimer = setTimeout(destroyFrame, 750);
             });
           }
 
@@ -1501,7 +1486,18 @@
       let inertiaID = null;
 
       function hideFilmPreviews() {
-        filmGrid.querySelectorAll('.preview-frame').forEach(f => f.classList.remove('loaded'));
+        /* Remove any active video preview iframes — clean DOM = smooth scroll */
+        filmGrid.querySelectorAll('.preview-frame').forEach(f => {
+          f.classList.remove('loaded');
+          /* Remove the iframe immediately so it can't interfere with scroll compositing */
+          f.remove();
+        });
+        /* Reset any active photo cycling overlays */
+        filmGrid.querySelectorAll('.project-img-next').forEach(img => {
+          img.style.opacity = '0';
+          img.style.transition = 'none';
+          img.style.transform = '';
+        });
       }
 
       function stopInertia() {
