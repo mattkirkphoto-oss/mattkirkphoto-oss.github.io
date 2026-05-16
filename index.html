@@ -287,7 +287,7 @@
       overflow-x:auto; overflow-y:visible;
       scrollbar-width:none;
       padding-right:44px; padding-bottom:2px;
-      touch-action: pan-y;
+      touch-action: none;
     }
     #grid-film::-webkit-scrollbar { display:none; }
     #grid-film .project { flex:0 0 clamp(420px, 46vw, 640px); }
@@ -1720,6 +1720,16 @@
         filmDragging = false;
         filmGrid.classList.remove('is-dragging');
       });
+
+      /* Trackpad two-finger horizontal swipe — handled via wheel since touch-action:none
+         disables native scroll. Only intercept when gesture is primarily horizontal. */
+      filmGrid.addEventListener('wheel', e => {
+        const dx = Math.abs(e.deltaX), dy = Math.abs(e.deltaY);
+        if (dx > dy) {
+          e.preventDefault();
+          filmGrid.scrollLeft += e.deltaX;
+        }
+      }, { passive: false });
 
       filmGrid.addEventListener('scroll', () => {
         const max = filmGrid.scrollWidth - filmGrid.clientWidth;
