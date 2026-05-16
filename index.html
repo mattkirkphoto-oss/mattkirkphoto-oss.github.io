@@ -1798,28 +1798,38 @@
         previewTitle.textContent = p.title;
         previewMeta.textContent  = p.year + ' · ' + p.category;
 
-        /* Load cover with avif → webp → jpg fallback */
+        /* Load cover directly into previewImg with avif → webp → jpg fallback.
+           We set src directly (not via an Image() proxy) so the element itself
+           triggers load/error and opacity transitions fire correctly. */
         previewImg.classList.remove('loaded');
-        const img = new Image();
-        img.onload = () => {
-          previewImg.src = img.src;
-          previewImg.classList.add('loaded');
+        previewImg.src = '';
 
-          /* After cover loads, start gallery cycling if this is a photo project */
-          const vimeoItem = (p.gallery || []).find(g => g.vimeo && g.vimeo !== 'YOUR_VIMEO_ID');
-          if (!vimeoItem) {
-            const imgSrcs = (p.gallery || []).filter(g => g.src).map(g => g.src);
-            if (imgSrcs.length > 1) startCycling(imgSrcs);
-          }
-        };
-        const variants = [p.folder + 'cover.avif', p.folder + 'cover.webp', p.folder + 'cover.jpg'];
+        const variants = [
+          p.folder + 'cover.avif',
+          p.folder + 'cover.webp',
+          p.folder + 'cover.jpg'
+        ];
         let vi = 0;
-        function tryNext() {
+
+        function tryVariant() {
           if (vi >= variants.length) return;
-          img.onerror = () => { vi++; tryNext(); };
-          img.src = variants[vi++];
+          const src = variants[vi++];
+          previewImg.onerror = tryVariant;
+          previewImg.onload  = () => {
+            previewImg.onerror = null;
+            previewImg.onload  = null;
+            previewImg.classList.add('loaded');
+
+            /* Start gallery cycling for photo-only projects */
+            const vimeo = (p.gallery || []).find(g => g.vimeo && g.vimeo !== 'YOUR_VIMEO_ID');
+            if (!vimeo) {
+              const imgSrcs = (p.gallery || []).filter(g => g.src).map(g => g.src);
+              if (imgSrcs.length > 1) startCycling(imgSrcs);
+            }
+          };
+          previewImg.src = src;
         }
-        tryNext();
+        tryVariant();
 
         /* Vimeo preview frame */
         clearTimeout(hoverTimer);
