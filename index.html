@@ -1535,7 +1535,7 @@
         if (inertiaID) { cancelAnimationFrame(inertiaID); inertiaID = null; }
       }
 
-      function stopDragging() {
+      function stopDragging(e) {
         if (!dragging) return;
         dragging = false;
         filmGrid.classList.remove('is-dragging');
@@ -1543,6 +1543,8 @@
         document.body.style.cursor = '';
         filmGrid.style.userSelect = '';
         filmGrid.style.cursor = '';
+        /* Release pointer capture */
+        try { filmGrid.releasePointerCapture(e.pointerId); } catch(_) {}
 
         /* Apply momentum */
         const frameVel = velocity * 16;
@@ -1561,10 +1563,12 @@
         }
       }
 
-      filmGrid.addEventListener('mousedown', e => {
+      filmGrid.addEventListener('pointerdown', e => {
         if (e.button !== 0) return;
         stopInertia();
         hideFilmPreviews();
+        /* Capture all pointer events to filmGrid — this survives iframe boundaries */
+        filmGrid.setPointerCapture(e.pointerId);
         filmGrid.classList.add('is-dragging');
         dragging    = true;
         dragMoved   = false;
@@ -1579,7 +1583,7 @@
         filmGrid.style.cursor     = 'grabbing';
       });
 
-      document.addEventListener('mousemove', e => {
+      filmGrid.addEventListener('pointermove', e => {
         if (!dragging) return;
         const dx = e.pageX - startX;
         if (Math.abs(dx) > 4) dragMoved = true;
@@ -1593,9 +1597,10 @@
         filmGrid.scrollLeft = scrollStart - dx;
       });
 
-      window.addEventListener('mouseup', stopDragging);
-      window.addEventListener('mouseleave', stopDragging);
-      window.addEventListener('blur', stopDragging);
+      filmGrid.addEventListener('pointerup',     stopDragging);
+      filmGrid.addEventListener('pointercancel', stopDragging);
+      /* Safety nets for edge cases */
+      window.addEventListener('blur', () => { if (dragging) stopDragging({ pointerId: null }); });
 
       /* Swallow click after drag so gallery doesn't open */
       filmGrid.addEventListener('click', e => {
