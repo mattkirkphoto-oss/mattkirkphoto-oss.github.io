@@ -1437,17 +1437,20 @@
                   }
                   if (data.event === 'timeupdate' || data.method === 'timeupdate') {
                     window.removeEventListener('message', onMsg);
-                    if (previewFrame) fadeVideoIn();
+                    isPlaying = true;
+                    if (el.matches(':hover') || previewFrame?.matches(':hover')) fadeVideoIn();
                   }
                 } catch (_) {}
               };
               window.addEventListener('message', onMsg);
 
-              /* Fallback — if postMessage never fires (e.g. blocked), fade in after 1.2s */
+              /* Fallback — fade in after delay if postMessage never fires */
+              const fallbackMs = section === 'videography' ? 800 : 1200;
               hoverTimer = setTimeout(() => {
                 window.removeEventListener('message', onMsg);
-                fadeVideoIn();
-              }, 1200);
+                isPlaying = true;
+                if (el.matches(':hover')) fadeVideoIn();
+              }, fallbackMs);
             }
 
             function destroyFrame() {
@@ -1461,16 +1464,32 @@
               }
             }
 
+            let isPlaying = false; /* true once timeupdate fires — video is live */
+
             el.addEventListener('mouseenter', () => {
               clearTimeout(destroyTimer);
               buildFrame();
+              /* If already playing (preloaded), fade in immediately */
+              if (isPlaying) fadeVideoIn();
             });
             el.addEventListener('mouseleave', () => {
               clearTimeout(hoverTimer);
               fadeVideoOut();
               /* Destroy after fade completes */
               destroyTimer = setTimeout(destroyFrame, 750);
+              isPlaying = false;
             });
+
+            /* For videography, preload when card enters viewport so video is
+               already playing by the time the user hovers */
+            if (section === 'videography') {
+              const preloadIO = new IntersectionObserver(entries => {
+                if (!entries[0].isIntersecting) return;
+                buildFrame();
+                preloadIO.unobserve(el);
+              }, { threshold: 0.15 });
+              preloadIO.observe(el);
+            }
           }
 
           /* ── PHOTO GALLERY CYCLING ──────────────────────────────────────────
@@ -1841,7 +1860,22 @@
         let vi = 0;
 
         function tryVariant() {
-          if (vi >= variants.length) return;
+          if (vi >= variants.length) {
+            /* All local covers failed — fetch Vimeo oEmbed thumbnail */
+            const vimeoFallback = (p.gallery || []).find(g => g.vimeo && g.vimeo !== 'YOUR_VIMEO_ID');
+            if (vimeoFallback) {
+              fetch(`https://vimeo.com/api/oembed.json?url=https://vimeo.com/${vimeoFallback.vimeo}&width=1280`)
+                .then(r => r.json())
+                .then(data => {
+                  if (data.thumbnail_url) {
+                    const url = data.thumbnail_url.replace(/_\d+$/, '_1280');
+                    previewImg.onload = () => { previewImg.onload = null; previewImg.classList.add('loaded'); };
+                    previewImg.src = url;
+                  }
+                }).catch(() => {});
+            }
+            return;
+          }
           const src = variants[vi++];
           previewImg.onerror = tryVariant;
           previewImg.onload  = () => {
@@ -1933,24 +1967,32 @@
           });
         }
 
-        el.addEventListener('mouseenter', () => { curView(); showPreview(i); });
+        el.addEventListener('mouseenter', () => { curView(); });
         el.addEventListener('mouseleave', () => curOff());
         el.addEventListener('click', () => {
-          const fake = document.createElement('div');
-          fake.dataset.section = 'film';
-          fake.dataset.idx = i;
-          openGallery({ preventDefault() {}, currentTarget: fake });
+          /* Click list item = switch active project */
+          showPreview(i);
         });
         el.addEventListener('keydown', e => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            const fake = document.createElement('div');
-            fake.dataset.section = 'film';
-            fake.dataset.idx = i;
-            openGallery({ preventDefault() {}, currentTarget: fake });
+            showPreview(i);
           }
         });
       });
+
+      /* Clicking the preview thumb opens the gallery for the active project */
+      if (previewThumb) {
+        previewThumb.style.cursor = 'pointer';
+        previewThumb.addEventListener('click', () => {
+          const p = projects[activeIdx];
+          if (!p) return;
+          const fake = document.createElement('div');
+          fake.dataset.section = 'film';
+          fake.dataset.idx = activeIdx;
+          openGallery({ preventDefault() {}, currentTarget: fake });
+        });
+      }
 
       /* Show first project immediately */
       if (projects.length) showPreview(0);
