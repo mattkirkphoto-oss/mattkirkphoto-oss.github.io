@@ -1603,22 +1603,21 @@
     let filmDragging = false; /* shared flag — cycling code checks this before touching DOM */
 
     /* ── FILM SECTION ──────────────────────────────────────────────────────
-       Root cause: browser cancels pointer capture mid-drag (touch-action:pan-x
-       tells it the gesture is available for native handling). After capture
-       loss, pointermove no longer fires on filmGrid — scroll freezes.
-       Fix: document-level fallback listeners catch moves/ups when captureActive
-       is false, keeping scroll going regardless of browser gesture handling.
+       Uses mouse events (not pointer events) — Chrome fires pointercancel
+       when scrollLeft is updated on an overflow:auto container, killing
+       pointer capture. Mouse events are immune to this and need no capture —
+       document-level mousemove/mouseup always fire regardless of what's under
+       the cursor, so iframes and other elements cannot intercept them.
     ────────────────────────────────────────────────────────────────────── */
     const filmGrid     = document.getElementById('grid-film');
     const filmProgress = document.getElementById('film-progress');
     const filmHint     = document.getElementById('film-scroll-hint');
 
     if (filmGrid) {
-      let ptId          = null;
-      let startX        = 0, startScroll = 0, startTime = 0;
-      let totalMoved    = 0, velocity = 0, lastX = 0, lastT = 0;
-      let inertiaID     = null;
-      let captureActive = false;
+      let dragging   = false;
+      let startX     = 0, startScroll = 0, startTime = 0;
+      let totalMoved = 0, velocity = 0, lastX = 0, lastT = 0;
+      let inertiaID  = null;
 
       const CLICK_PX = 6, CLICK_MS = 300;
 
@@ -1642,17 +1641,39 @@
         filmGrid.scrollLeft = startScroll - dx;
       }
 
-      function endDrag(clientX, clientY) {
-        if (ptId === null) return;
+      filmGrid.addEventListener('mousedown', e => {
+        if (e.button !== 0) return;
+        stopCoast();
+        dragging    = true;
+        startX      = e.clientX;
+        startScroll = filmGrid.scrollLeft;
+        startTime   = Date.now();
+        totalMoved  = 0; velocity = 0;
+        lastX = e.clientX; lastT = startTime;
+        filmGrid.classList.add('is-dragging');
+        filmDragging = true;
+        filmGrid.style.userSelect      = 'none';
+        document.body.style.userSelect = 'none';
+      });
+
+      /* document-level — fires even when cursor is over iframes or any child */
+      document.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        updateScroll(e.clientX);
+      });
+
+      document.addEventListener('mouseup', e => {
+        if (!dragging || e.button !== 0) return;
         const duration = Date.now() - startTime;
         const isClick  = totalMoved < CLICK_PX && duration < CLICK_MS;
-        try { filmGrid.releasePointerCapture(ptId); } catch(_) {}
-        ptId = null; captureActive = false;
-        filmGrid.style.userSelect = '';
+        dragging = false;
+        filmGrid.style.userSelect      = '';
+        document.body.style.userSelect = '';
         filmDragging = false;
         setTimeout(() => filmGrid.classList.remove('is-dragging'), 200);
+
         if (isClick) {
-          const hit = document.elementFromPoint(clientX, clientY);
+          const hit = document.elementFromPoint(e.clientX, e.clientY);
           const projectEl = hit?.closest('.project[data-idx]');
           if (projectEl) {
             const p = resolvedProjects['film']?.[parseInt(projectEl.dataset.idx)];
@@ -1662,73 +1683,21 @@
           const frameV = velocity * 16;
           if (Math.abs(frameV) > 1) coast(frameV);
         }
-      }
-
-      filmGrid.addEventListener('gotpointercapture',  () => { captureActive = true; });
-      filmGrid.addEventListener('lostpointercapture', () => { captureActive = false; });
-
-      filmGrid.addEventListener('pointerdown', e => {
-        if (e.button !== 0) return;
-        stopCoast();
-        filmGrid.setPointerCapture(e.pointerId);
-        ptId = e.pointerId;
-        startX = e.clientX; startScroll = filmGrid.scrollLeft;
-        startTime = Date.now(); totalMoved = 0; velocity = 0;
-        lastX = e.clientX; lastT = startTime;
-        filmGrid.classList.add('is-dragging');
-        filmDragging = true;
-        filmGrid.style.userSelect = 'none';
-      });
-
-      /* Primary: fires while capture is held by filmGrid */
-      filmGrid.addEventListener('pointermove', e => {
-        if (ptId === null || e.pointerId !== ptId) return;
-        updateScroll(e.clientX);
-      });
-
-      /* Fallback: browser stole capture (touch-action); document still receives events */
-      document.addEventListener('pointermove', e => {
-        if (ptId === null || e.pointerId !== ptId || captureActive) return;
-        updateScroll(e.clientX);
-      }, { passive: true });
-
-      filmGrid.addEventListener('pointerup', e => {
-        if (ptId === null || e.pointerId !== ptId) return;
-        endDrag(e.clientX, e.clientY);
-      });
-
-      /* Fallback pointerup after capture loss */
-      document.addEventListener('pointerup', e => {
-        if (ptId === null || e.pointerId !== ptId || captureActive) return;
-        endDrag(e.clientX, e.clientY);
-      });
-
-      filmGrid.addEventListener('pointercancel', () => {
-        if (ptId === null) return;
-        try { filmGrid.releasePointerCapture(ptId); } catch(_) {}
-        ptId = null; captureActive = false;
-        filmGrid.style.userSelect = '';
-        filmDragging = false;
-        filmGrid.classList.remove('is-dragging');
       });
 
       window.addEventListener('blur', () => {
-        if (ptId === null) return;
-        try { filmGrid.releasePointerCapture(ptId); } catch(_) {}
-        ptId = null; captureActive = false;
-        filmGrid.style.userSelect = '';
+        if (!dragging) return;
+        dragging = false;
+        filmGrid.style.userSelect      = '';
+        document.body.style.userSelect = '';
         filmDragging = false;
         filmGrid.classList.remove('is-dragging');
       });
 
-      /* Trackpad two-finger horizontal swipe — handled via wheel since touch-action:none
-         disables native scroll. Only intercept when gesture is primarily horizontal. */
+      /* Trackpad two-finger horizontal swipe */
       filmGrid.addEventListener('wheel', e => {
         const dx = Math.abs(e.deltaX), dy = Math.abs(e.deltaY);
-        if (dx > dy) {
-          e.preventDefault();
-          filmGrid.scrollLeft += e.deltaX;
-        }
+        if (dx > dy) { e.preventDefault(); filmGrid.scrollLeft += e.deltaX; }
       }, { passive: false });
 
       filmGrid.addEventListener('scroll', () => {
