@@ -279,30 +279,63 @@
     .p-caption { font-size:9px; font-weight:200; letter-spacing:0.08em; color:var(--mid); line-height:1.75; }
     .info-r { text-align:right; font-size:9px; font-weight:200; letter-spacing:0.1em; color:var(--mid); line-height:1.75; white-space:nowrap; }
 
-    #film-section-inner { max-width:none; padding:88px 0 88px 44px; }
-    #film-section-inner .section-header,
-    #film-scroll-hint { max-width:1440px; padding-right:44px; }
-    #grid-film {
-      display:flex; flex-direction:row; gap:20px;
-      overflow-x:auto; overflow-y:visible;
-      scrollbar-width:none;
-      padding-right:44px; padding-bottom:2px;
-      touch-action: none;
+    /* ── FILM — list + preview layout ── */
+    .film-inner { max-width:1440px; margin:0 auto; padding:88px 44px; }
+    .film-layout {
+      display:grid; grid-template-columns:1fr 1fr; gap:28px; align-items:start;
     }
-    #grid-film::-webkit-scrollbar { display:none; }
-    #grid-film .project { flex:0 0 clamp(420px, 46vw, 640px); }
-    #grid-film.is-dragging .preview-frame { display:none !important; }
-    #grid-film.is-dragging .project-img-next { display:none !important; }
-    #grid-film.is-dragging .project-img { transform:none !important; transition:none !important; }
-    /* 1.85:1 flat widescreen ratio for film thumbnails — 1÷1.85 = 54.05% */
-    #grid-film .project-thumb::before { padding-top: 54.05%; }
-    #film-progress-wrap { height:1px; background:var(--rule); margin:20px 44px 0; position:relative; overflow:hidden; }
-    #film-progress { position:absolute; inset:0; background:rgba(242,237,229,0.35); transform-origin:left; transform:scaleX(0); transition:transform 0.08s linear; }
-    #film-scroll-hint {
-      font-size:9px; font-weight:300; letter-spacing:0.28em; text-transform:uppercase;
-      color:var(--mid); text-align:right; padding:0 44px 20px 44px; transition:opacity 0.5s ease;
+    .film-list {
+      list-style:none; display:flex; flex-direction:column;
+      border-top:1px solid var(--rule);
     }
-    #film-scroll-hint.hidden { opacity:0; }
+    .film-list-item {
+      display:flex; justify-content:space-between; align-items:baseline;
+      padding:18px 0; border-bottom:1px solid var(--rule);
+      cursor:none; transition:opacity .25s;
+    }
+    .film-list-item:not(.active) { opacity:0.45; }
+    .film-list-item.active { opacity:1; }
+    .film-item-l { display:flex; flex-direction:column; gap:4px; }
+    .film-item-title {
+      font-size:9px; font-weight:500; letter-spacing:0.24em; text-transform:uppercase; color:var(--text);
+    }
+    .film-item-caption {
+      font-size:9px; font-weight:200; letter-spacing:0.08em; color:var(--mid); line-height:1.75;
+    }
+    .film-item-r {
+      font-size:9px; font-weight:200; letter-spacing:0.1em; color:var(--mid); text-align:right; white-space:nowrap;
+    }
+    .film-preview {
+      position:sticky; top:80px;
+    }
+    .film-preview-thumb {
+      position:relative; overflow:hidden; background:var(--bg2);
+      outline:1px solid rgba(229,224,216,0.1); isolation:isolate;
+    }
+    .film-preview-thumb::before { content:''; display:block; padding-top:54.05%; }
+    .film-preview-img {
+      position:absolute; inset:0; width:100%; height:100%;
+      object-fit:cover; opacity:0; z-index:1;
+      transition:opacity 0.5s ease;
+    }
+    .film-preview-img.loaded { opacity:0.93; }
+    .film-preview-info {
+      display:flex; justify-content:space-between; align-items:baseline;
+      padding-top:12px; border-top:1px solid var(--rule); margin-top:12px;
+    }
+    .film-preview-title {
+      font-size:9px; font-weight:500; letter-spacing:0.24em; text-transform:uppercase; color:var(--text);
+    }
+    .film-preview-meta {
+      font-size:9px; font-weight:200; letter-spacing:0.1em; color:var(--mid);
+    }
+    .film-preview-thumb .preview-frame {
+      position:absolute; top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      border:0; pointer-events:none;
+      opacity:0; transition:opacity 0.5s ease; z-index:3;
+    }
+    .film-preview-thumb .preview-frame.loaded { opacity:1; }
 
     #gallery {
       position:fixed; inset:0; z-index:500; background:rgba(8,8,8,.98);
@@ -680,17 +713,9 @@
       .info-r { font-size:10px; }
 
       /* ── FILM SECTION ── */
-      #film-section-inner { padding:56px 22px; }
-      /* Reset the desktop padding-right on film header */
-      #film-section-inner .section-header { padding-right:0; max-width:none; }
-      #grid-film {
-        display:grid; flex-direction:unset; grid-template-columns:1fr;
-        overflow-x:visible; padding-right:0; gap:36px;
-        touch-action:auto;
-      }
-      #grid-film .project { flex:none; }
-      #film-progress-wrap { display:none; }
-      #film-scroll-hint { display:none; }
+      .film-inner { padding:56px 22px; }
+      .film-layout { grid-template-columns:1fr; }
+      .film-preview { position:static; display:none; }
 
       /* ── GRADING ── */
       #grading-grid { grid-template-columns:1fr; }
@@ -1027,7 +1052,8 @@
       await Promise.all(['photography', 'videography', 'film'].map(async section => {
         const projects = await Promise.all(PROJECTS_DEF[section].map(fetchProject));
         resolvedProjects[section] = projects.filter(Boolean);
-        renderGrid(section);
+        if (section === 'film') renderFilmList();
+        else renderGrid(section);
       }));
     }
 
@@ -1206,14 +1232,9 @@
     }, { threshold: .06 });
     document.querySelectorAll('.fi').forEach(el => io.observe(el));
 
-    /* Film grid — bidirectional observer so cards re-animate every time they scroll in */
-    const filmGridEl = document.getElementById('grid-film');
-    const filmIO = filmGridEl ? new IntersectionObserver(entries => {
-      entries.forEach(e => e.target.classList.toggle('vis', e.isIntersecting));
-    }, { threshold: 0.15, root: filmGridEl }) : null;
-
     /* ── RENDER PROJECTS ── */
     function renderGrid(section) {
+      if (section === 'film') return; /* film uses renderFilmList instead */
       const grid     = document.getElementById('grid-' + section);
       if (!grid) return;
       const projects = resolvedProjects[section] || [];
@@ -1609,111 +1630,129 @@
       const caption = item.querySelector('.grade-caption')?.textContent || '';
       openGradeLightbox(before, after, caption);
     });
-    let filmDragging = false; /* shared flag — cycling code checks this before touching DOM */
+    let filmDragging = false; /* kept for cycling code compatibility */
 
-    /* ── FILM SECTION ──────────────────────────────────────────────────────
-       Uses mouse events (not pointer events) — Chrome fires pointercancel
-       when scrollLeft is updated on an overflow:auto container, killing
-       pointer capture. Mouse events are immune to this and need no capture —
-       document-level mousemove/mouseup always fire regardless of what's under
-       the cursor, so iframes and other elements cannot intercept them.
-    ────────────────────────────────────────────────────────────────────── */
-    const filmGrid     = document.getElementById('grid-film');
-    const filmProgress = document.getElementById('film-progress');
-    const filmHint     = document.getElementById('film-scroll-hint');
+    /* ── FILM LIST + PREVIEW ─────────────────────────────────────────────── */
+    function renderFilmList() {
+      const list        = document.getElementById('film-list');
+      const previewImg  = document.getElementById('film-preview-img');
+      const previewTitle = document.getElementById('film-preview-title');
+      const previewMeta  = document.getElementById('film-preview-meta');
+      const previewThumb = document.getElementById('film-preview-thumb');
+      if (!list) return;
 
-    if (filmGrid) {
-      let dragging   = false;
-      let startX     = 0, startScroll = 0, startTime = 0;
-      let totalMoved = 0, velocity = 0, lastX = 0, lastT = 0;
-      let inertiaID  = null;
+      const projects = resolvedProjects['film'] || [];
+      if (!projects.length) return;
 
-      const CLICK_PX = 6, CLICK_MS = 300;
+      let activeIdx = 0;
+      let previewFrame = null;
+      let hoverTimer   = null;
+      let destroyTimer = null;
 
-      function stopCoast() {
-        if (inertiaID) { cancelAnimationFrame(inertiaID); inertiaID = null; }
+      function destroyFrame() {
+        if (!previewFrame) return;
+        previewFrame.remove();
+        previewFrame = null;
       }
 
-      function coast(v) {
-        filmGrid.scrollLeft += v;
-        v *= 0.94;
-        inertiaID = Math.abs(v) > 0.5 ? requestAnimationFrame(() => coast(v)) : null;
-      }
+      function showPreview(idx) {
+        const p = projects[idx];
+        if (!p) return;
 
-      function updateScroll(clientX) {
-        const dx  = clientX - startX;
-        const now = Date.now();
-        const dt  = Math.max(now - lastT, 1);
-        velocity  = velocity * 0.5 + ((lastX - clientX) / dt) * 0.5;
-        lastX = clientX; lastT = now;
-        totalMoved = Math.abs(dx);
-        filmGrid.scrollLeft = startScroll - dx;
-      }
+        /* Update info */
+        previewTitle.textContent = p.title;
+        previewMeta.textContent  = p.year + ' · ' + p.category;
 
-      filmGrid.addEventListener('mousedown', e => {
-        if (e.button !== 0) return;
-        stopCoast();
-        dragging    = true;
-        startX      = e.clientX;
-        startScroll = filmGrid.scrollLeft;
-        startTime   = Date.now();
-        totalMoved  = 0; velocity = 0;
-        lastX = e.clientX; lastT = startTime;
-        filmGrid.classList.add('is-dragging');
-        filmDragging = true;
-        filmGrid.style.userSelect      = 'none';
-        document.body.style.userSelect = 'none';
-      });
-
-      /* document-level — fires even when cursor is over iframes or any child */
-      document.addEventListener('mousemove', e => {
-        if (!dragging) return;
-        updateScroll(e.clientX);
-      });
-
-      document.addEventListener('mouseup', e => {
-        if (!dragging || e.button !== 0) return;
-        const duration = Date.now() - startTime;
-        const isClick  = totalMoved < CLICK_PX && duration < CLICK_MS;
-        dragging = false;
-        filmGrid.style.userSelect      = '';
-        document.body.style.userSelect = '';
-        filmDragging = false;
-        setTimeout(() => filmGrid.classList.remove('is-dragging'), 200);
-
-        if (isClick) {
-          const hit = document.elementFromPoint(e.clientX, e.clientY);
-          const projectEl = hit?.closest('.project[data-idx]');
-          if (projectEl) {
-            const p = resolvedProjects['film']?.[parseInt(projectEl.dataset.idx)];
-            if (p) openGallery({ currentTarget: projectEl, preventDefault() {} });
-          }
-        } else {
-          const frameV = velocity * 16;
-          if (Math.abs(frameV) > 1) coast(frameV);
+        /* Swap image */
+        previewImg.classList.remove('loaded');
+        const img = new Image();
+        img.onload = () => {
+          previewImg.src = img.src;
+          previewImg.classList.add('loaded');
+        };
+        /* Try avif → webp → jpg fallback chain */
+        const variants = [p.folder + 'cover.avif', p.folder + 'cover.webp', p.folder + 'cover.jpg'];
+        let vi = 0;
+        function tryNext() {
+          if (vi >= variants.length) return;
+          img.onerror = () => { vi++; tryNext(); };
+          img.src = variants[vi++];
         }
+        tryNext();
+
+        /* Vimeo preview frame */
+        clearTimeout(hoverTimer);
+        clearTimeout(destroyTimer);
+        destroyFrame();
+
+        const vimeoItem = (p.gallery || []).find(g => g.vimeo && g.vimeo !== 'YOUR_VIMEO_ID');
+        if (vimeoItem) {
+          const previewScale = p.previewScale || 1;
+          const cW = previewThumb.offsetWidth;
+          const cH = previewThumb.offsetHeight;
+          const vR = 16 / 9;
+          const cR = cW / cH;
+          let fW, fH;
+          if (cR > vR) { fW = cW + 2; fH = Math.ceil(cW / vR) + 2; }
+          else         { fH = cH + 2; fW = Math.ceil(cH * vR) + 2; }
+          previewFrame = document.createElement('iframe');
+          previewFrame.className = 'preview-frame';
+          previewFrame.src = `https://player.vimeo.com/video/${vimeoItem.vimeo}?background=1&autoplay=1&loop=1&muted=1`;
+          previewFrame.allow = 'autoplay';
+          previewFrame.tabIndex = -1;
+          previewFrame.style.width  = (fW * previewScale) + 'px';
+          previewFrame.style.height = (fH * previewScale) + 'px';
+          previewThumb.appendChild(previewFrame);
+          hoverTimer = setTimeout(() => {
+            if (previewFrame) previewFrame.classList.add('loaded');
+          }, 300);
+        }
+
+        /* Mark active list item */
+        list.querySelectorAll('.film-list-item').forEach((el, i) => {
+          el.classList.toggle('active', i === idx);
+        });
+        activeIdx = idx;
+      }
+
+      /* Build list */
+      list.innerHTML = projects.map((p, i) => `
+        <li class="film-list-item fi${i === 0 ? ' active' : ''}" data-idx="${i}" role="button" tabindex="0" aria-label="Open ${p.title}">
+          <div class="film-item-l">
+            <span class="film-item-title">${p.title}</span>
+            <span class="film-item-caption">${p.caption}</span>
+          </div>
+          <div class="film-item-r">${p.year}<br>${p.category}</div>
+        </li>
+      `).join('');
+
+      /* Wire hover + click on list items */
+      list.querySelectorAll('.film-list-item').forEach((el, i) => {
+        io.observe(el);
+        el.addEventListener('mouseenter', () => { curView(); showPreview(i); });
+        el.addEventListener('mouseleave', () => curOff());
+        el.addEventListener('click', () => {
+          const p = projects[i];
+          if (!p) return;
+          /* Build a fake element so openGallery can find the project */
+          const fake = document.createElement('div');
+          fake.dataset.section = 'film';
+          fake.dataset.idx = i;
+          openGallery({ preventDefault() {}, currentTarget: fake });
+        });
+        el.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            const fake = document.createElement('div');
+            fake.dataset.section = 'film';
+            fake.dataset.idx = i;
+            openGallery({ preventDefault() {}, currentTarget: fake });
+          }
+        });
       });
 
-      window.addEventListener('blur', () => {
-        if (!dragging) return;
-        dragging = false;
-        filmGrid.style.userSelect      = '';
-        document.body.style.userSelect = '';
-        filmDragging = false;
-        filmGrid.classList.remove('is-dragging');
-      });
-
-      /* Trackpad two-finger horizontal swipe */
-      filmGrid.addEventListener('wheel', e => {
-        const dx = Math.abs(e.deltaX), dy = Math.abs(e.deltaY);
-        if (dx > dy) { e.preventDefault(); filmGrid.scrollLeft += e.deltaX; }
-      }, { passive: false });
-
-      filmGrid.addEventListener('scroll', () => {
-        const max = filmGrid.scrollWidth - filmGrid.clientWidth;
-        if (filmProgress && max > 0) filmProgress.style.transform = `scaleX(${filmGrid.scrollLeft / max})`;
-        if (filmHint) filmHint.classList.toggle('hidden', filmGrid.scrollLeft > 20);
-      }, { passive: true });
+      /* Show first project in preview immediately */
+      if (projects.length) showPreview(0);
     }
 
     /* ── GALLERY ── */
