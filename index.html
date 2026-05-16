@@ -1119,7 +1119,7 @@
       await Promise.all(['photography', 'videography', 'film'].map(async section => {
         const projects = await Promise.all(PROJECTS_DEF[section].map(fetchProject));
         resolvedProjects[section] = projects.filter(Boolean);
-        if (section === 'film') { renderFilmList(); renderGrid('film'); }
+        if (section === 'film') { renderFilmList(); }
         else renderGrid(section);
       }));
     }
@@ -1328,8 +1328,8 @@
 
     /* ── RENDER PROJECTS ── */
     function renderGrid(section) {
-      const gridId = section === 'film' ? 'grid-film-mobile' : 'grid-' + section;
-      const grid     = document.getElementById(gridId);
+      if (section === 'film') return;
+      const grid     = document.getElementById('grid-' + section);
       if (!grid) return;
       const projects = resolvedProjects[section] || [];
       if (!projects.length) return;
@@ -2081,7 +2081,51 @@
         });
       }
 
-      /* Show first project immediately */
+      /* ── MOBILE GRID — identical to videography, shown only on mobile ── */
+      const mobileGrid = document.getElementById('grid-film-mobile');
+      if (mobileGrid && projects.length) {
+        mobileGrid.innerHTML = projects.map((p, i) => {
+          const hasVideo = (p.gallery || []).some(g => g.vimeo);
+          return `<div class="project fi${i % 2 === 1 ? ' d1' : ''}" data-section="film" data-idx="${i}" role="button" tabindex="0" aria-label="Open ${p.title}">
+            <div class="project-thumb">
+              <img src="${p.cover}" alt="${p.title}" class="project-img" loading="lazy" decoding="async" style="object-position:${p.thumbPosition}">
+              <img src="" alt="" class="project-img-next" aria-hidden="true">
+              ${hasVideo ? '<span class="play-label">&#9654;&ensp;Play</span>' : ''}
+            </div>
+            <div class="project-info">
+              <div class="info-l"><span class="p-title">${p.title}</span><span class="p-caption">${p.caption}</span></div>
+              <div class="info-r">${p.year}<br>${p.category}</div>
+            </div>
+          </div>`;
+        }).join('');
+
+        mobileGrid.querySelectorAll('.project').forEach((el, i) => {
+          io.observe(el);
+          const p   = projects[i];
+          const img = el.querySelector('.project-img');
+          if (img) {
+            const variants = [p.folder+'cover.avif', p.folder+'cover.webp', p.folder+'cover.jpg']
+              .filter(v => v !== p.cover);
+            let vi = 0;
+            img.addEventListener('error', async function onErr() {
+              while (vi < variants.length && variants[vi] === img.src) vi++;
+              if (vi < variants.length) { img.src = variants[vi++]; return; }
+              img.removeEventListener('error', onErr);
+              const vimeoItem = (p.gallery || []).find(g => g.vimeo && g.vimeo !== 'YOUR_VIMEO_ID');
+              if (vimeoItem) {
+                try {
+                  const res  = await fetch(`https://vimeo.com/api/oembed.json?url=https://vimeo.com/${vimeoItem.vimeo}&width=640`);
+                  const data = await res.json();
+                  if (data.thumbnail_url) img.src = data.thumbnail_url.replace(/_\d+$/, '_640');
+                } catch(_) {}
+              }
+            });
+          }
+          el.addEventListener('click', () => openGallery({ currentTarget: el, preventDefault() {} }));
+        });
+      }
+
+      /* Show first project in desktop preview immediately */
       if (projects.length) showPreview(0);
     }
 
