@@ -1,8 +1,17 @@
 {
-  "title": "Film Title",
-  "caption": "Short Film",
+  "title": "Shades of Red",
+  "caption": "Short Film — 2026",
   "year": "2026",
   "category": "Narrative",
-  "description": "",
-  "gallery": [{ "vimeo": "YOUR_VIMEO_ID" }]
+  "cover": "cover.webp",
+  "description": "Short film. Dir. Millie Hine. DOP. Matt Kirkham. Produced by Silver Street Productions, 2026.",
+  "gallery": [
+    "cover.webp",
+    "001.webp",
+    "002.webp",
+    "003.webp",
+    "004.webp",
+    "005.webp",
+    "006.webp"
+  ]
 }

@@ -282,28 +282,35 @@
     /* ── FILM — list + preview layout ── */
     .film-inner { max-width:1440px; margin:0 auto; padding:88px 44px; }
     .film-layout {
-      display:grid; grid-template-columns:1fr 1fr; gap:28px; align-items:start;
+      display:grid; grid-template-columns:2fr 5fr; gap:0; align-items:start;
     }
     .film-list {
       list-style:none; display:flex; flex-direction:column;
-      border-top:1px solid var(--rule);
+      border-top:1px solid var(--rule); padding-right:44px;
     }
     .film-list-item {
       display:flex; justify-content:space-between; align-items:baseline;
-      padding:18px 0; border-bottom:1px solid var(--rule);
-      cursor:none; transition:opacity .25s;
+      padding:20px 0 20px 16px; border-bottom:1px solid var(--rule);
+      cursor:none; transition:opacity .3s, border-left-color .3s;
+      border-left:1px solid transparent; margin-left:-1px;
+      position:relative;
     }
-    .film-list-item:not(.active) { opacity:0.45; }
-    .film-list-item.active { opacity:1; }
-    .film-item-l { display:flex; flex-direction:column; gap:4px; }
+    .film-list-item:not(.active) { opacity:0.35; }
+    .film-list-item.active {
+      opacity:1;
+      border-left-color:var(--text);
+    }
+    .film-list-item.active .film-item-title { color:var(--text); }
+    .film-item-l { display:flex; flex-direction:column; gap:5px; }
     .film-item-title {
-      font-size:9px; font-weight:500; letter-spacing:0.24em; text-transform:uppercase; color:var(--text);
+      font-size:9px; font-weight:500; letter-spacing:0.24em; text-transform:uppercase;
+      color:var(--mid); transition:color .3s;
     }
     .film-item-caption {
-      font-size:9px; font-weight:200; letter-spacing:0.08em; color:var(--mid); line-height:1.75;
+      font-size:9px; font-weight:200; letter-spacing:0.08em; color:var(--dim); line-height:1.75;
     }
     .film-item-r {
-      font-size:9px; font-weight:200; letter-spacing:0.1em; color:var(--mid); text-align:right; white-space:nowrap;
+      font-size:9px; font-weight:200; letter-spacing:0.1em; color:var(--dim); text-align:right; white-space:nowrap;
     }
     .film-preview {
       position:sticky; top:80px;
@@ -319,6 +326,12 @@
       transition:opacity 0.5s ease;
     }
     .film-preview-img.loaded { opacity:0.93; }
+    .film-preview-img-next {
+      position:absolute; inset:0; width:100%; height:100%;
+      object-fit:cover; opacity:0; z-index:2;
+      transition:opacity 1.4s ease;
+      pointer-events:none;
+    }
     .film-preview-info {
       display:flex; justify-content:space-between; align-items:baseline;
       padding-top:12px; border-top:1px solid var(--rule); margin-top:12px;
@@ -844,6 +857,7 @@
         <div class="film-preview" id="film-preview">
           <div class="film-preview-thumb" id="film-preview-thumb">
             <img class="film-preview-img" id="film-preview-img" src="" alt="">
+            <img class="film-preview-img-next" id="film-preview-img-next" src="" alt="" aria-hidden="true">
           </div>
           <div class="film-preview-info" id="film-preview-info">
             <span class="film-preview-title" id="film-preview-title"></span>
@@ -1634,20 +1648,34 @@
 
     /* ── FILM LIST + PREVIEW ─────────────────────────────────────────────── */
     function renderFilmList() {
-      const list        = document.getElementById('film-list');
-      const previewImg  = document.getElementById('film-preview-img');
-      const previewTitle = document.getElementById('film-preview-title');
-      const previewMeta  = document.getElementById('film-preview-meta');
-      const previewThumb = document.getElementById('film-preview-thumb');
+      const list          = document.getElementById('film-list');
+      const previewImg    = document.getElementById('film-preview-img');
+      const previewImgNext = document.getElementById('film-preview-img-next');
+      const previewTitle  = document.getElementById('film-preview-title');
+      const previewMeta   = document.getElementById('film-preview-meta');
+      const previewThumb  = document.getElementById('film-preview-thumb');
       if (!list) return;
 
       const projects = resolvedProjects['film'] || [];
       if (!projects.length) return;
 
-      let activeIdx = 0;
+      let activeIdx    = 0;
       let previewFrame = null;
       let hoverTimer   = null;
       let destroyTimer = null;
+
+      /* Cycling state */
+      let cycleTimer    = null;
+      let cycleInterval = null;
+      let swapTimer     = null;
+      let cycleIdx      = 1;
+
+      function cancelCycle() {
+        clearTimeout(cycleTimer);
+        clearInterval(cycleInterval);
+        clearTimeout(swapTimer);
+        cycleTimer = cycleInterval = swapTimer = null;
+      }
 
       function destroyFrame() {
         if (!previewFrame) return;
@@ -1655,22 +1683,70 @@
         previewFrame = null;
       }
 
+      /* Cross-fade next overlay, then commit to base layer */
+      function crossFadePreviewTo(src) {
+        clearTimeout(swapTimer);
+        const preload = new Image();
+        preload.onload = () => {
+          previewImgNext.src              = src;
+          previewImgNext.style.transition = 'none';
+          previewImgNext.style.opacity    = '0';
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            previewImgNext.style.transition = 'opacity 1.4s ease';
+            previewImgNext.style.opacity    = '1';
+            swapTimer = setTimeout(() => {
+              previewImg.src                   = src;
+              previewImgNext.style.transition  = 'none';
+              previewImgNext.style.opacity     = '0';
+            }, 1450);
+          }));
+        };
+        preload.src = src;
+      }
+
+      function startCycling(imgSrcs) {
+        cancelCycle();
+        if (imgSrcs.length < 2) return;
+        cycleIdx = 1;
+        /* Preload all gallery images */
+        imgSrcs.forEach(src => { const img = new Image(); img.src = src; });
+        cycleTimer = setTimeout(() => {
+          crossFadePreviewTo(imgSrcs[cycleIdx]);
+          cycleInterval = setInterval(() => {
+            cycleIdx = cycleIdx + 1 >= imgSrcs.length ? 1 : cycleIdx + 1;
+            crossFadePreviewTo(imgSrcs[cycleIdx]);
+          }, 3600);
+        }, 1400);
+      }
+
       function showPreview(idx) {
         const p = projects[idx];
         if (!p) return;
+
+        /* Cancel any in-progress cycling */
+        cancelCycle();
+        previewImgNext.style.transition = 'none';
+        previewImgNext.style.opacity    = '0';
+        previewImgNext.src              = '';
 
         /* Update info */
         previewTitle.textContent = p.title;
         previewMeta.textContent  = p.year + ' · ' + p.category;
 
-        /* Swap image */
+        /* Load cover with avif → webp → jpg fallback */
         previewImg.classList.remove('loaded');
         const img = new Image();
         img.onload = () => {
           previewImg.src = img.src;
           previewImg.classList.add('loaded');
+
+          /* After cover loads, start gallery cycling if this is a photo project */
+          const vimeoItem = (p.gallery || []).find(g => g.vimeo && g.vimeo !== 'YOUR_VIMEO_ID');
+          if (!vimeoItem) {
+            const imgSrcs = (p.gallery || []).filter(g => g.src).map(g => g.src);
+            if (imgSrcs.length > 1) startCycling(imgSrcs);
+          }
         };
-        /* Try avif → webp → jpg fallback chain */
         const variants = [p.folder + 'cover.avif', p.folder + 'cover.webp', p.folder + 'cover.jpg'];
         let vi = 0;
         function tryNext() {
@@ -1726,15 +1802,12 @@
         </li>
       `).join('');
 
-      /* Wire hover + click on list items */
+      /* Wire hover + click */
       list.querySelectorAll('.film-list-item').forEach((el, i) => {
         io.observe(el);
         el.addEventListener('mouseenter', () => { curView(); showPreview(i); });
         el.addEventListener('mouseleave', () => curOff());
         el.addEventListener('click', () => {
-          const p = projects[i];
-          if (!p) return;
-          /* Build a fake element so openGallery can find the project */
           const fake = document.createElement('div');
           fake.dataset.section = 'film';
           fake.dataset.idx = i;
@@ -1751,7 +1824,7 @@
         });
       });
 
-      /* Show first project in preview immediately */
+      /* Show first project immediately */
       if (projects.length) showPreview(0);
     }
 
