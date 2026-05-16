@@ -292,6 +292,8 @@
     #grid-film::-webkit-scrollbar { display:none; }
     #grid-film .project { flex:0 0 clamp(420px, 46vw, 640px); }
     #grid-film.is-dragging .preview-frame { display:none !important; }
+    #grid-film.is-dragging .project-img-next { display:none !important; }
+    #grid-film.is-dragging .project-img { transform:none !important; transition:none !important; }
     /* 1.85:1 flat widescreen ratio for film thumbnails — 1÷1.85 = 54.05% */
     #grid-film .project-thumb::before { padding-top: 54.05%; }
     #film-progress-wrap { height:1px; background:var(--rule); margin:20px 44px 0; position:relative; overflow:hidden; }
@@ -1408,7 +1410,7 @@
               const preload = new Image();
 
               preload.onload = () => {
-                if (!isHovering) return;
+                if (!isHovering || filmDragging) return;
 
                 projectImgNext.src              = src;
                 projectImgNext.style.objectPosition = p.thumbPosition;
@@ -1424,14 +1426,14 @@
                 requestAnimationFrame(() => {
                   requestAnimationFrame(() => {
 
-                    if (!isHovering) return;
+                    if (!isHovering || filmDragging) return;
 
                     projectImgNext.style.transition = 'opacity 1.4s ease';
                     projectImgNext.style.opacity    = '1';
 
                     swapTimer = setTimeout(() => {
 
-                      if (!isHovering) return;
+                      if (!isHovering || filmDragging) return;
 
                       projectImg.src                  = src;
                       projectImg.style.objectPosition = p.thumbPosition;
@@ -1598,6 +1600,8 @@
       const caption = item.querySelector('.grade-caption')?.textContent || '';
       openGradeLightbox(before, after, caption);
     });
+    let filmDragging = false; /* shared flag — cycling code checks this before touching DOM */
+
     /* ── FILM SECTION ──────────────────────────────────────────────────────
        of what element is under the cursor (solves Vimeo iframe interference).
        Click vs drag: if total movement < 6px AND duration < 300ms → click.
@@ -1644,6 +1648,7 @@
         lastX       = e.clientX;
         lastT       = startTime;
         filmGrid.classList.add('is-dragging');
+        filmDragging = true;
         filmGrid.style.userSelect = 'none';
       });
 
@@ -1668,6 +1673,7 @@
         try { filmGrid.releasePointerCapture(ptId); } catch(_) {}
         ptId = null;
         filmGrid.style.userSelect = '';
+        filmDragging = false;
         /* Keep is-dragging briefly so preview display:none outlasts any synthetic click */
         setTimeout(() => filmGrid.classList.remove('is-dragging'), 200);
 
