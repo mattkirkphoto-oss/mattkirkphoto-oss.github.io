@@ -382,7 +382,7 @@
       top:50%; left:50%;
       transform:translate(-50%,-50%);
       border:0; pointer-events:none;
-      opacity:0; transition:opacity 0.7s ease;
+      opacity:0; transition:opacity 0.35s ease;
       z-index:3;
     }
     .preview-frame.loaded { opacity:1; }
@@ -1325,7 +1325,7 @@
               buildFrame();
               hoverTimer = setTimeout(() => {
                 if (previewFrame) previewFrame.classList.add('loaded');
-              }, 350);
+              }, 80);
             });
             el.addEventListener('mouseleave', () => {
               clearTimeout(hoverTimer);
