@@ -1,18 +1,10 @@
 {
-  "title": "Shades of Red",
-  "caption": "Short Film — 2026",
+  "title": "Glasshouse",
+  "caption": "Silver Street Productions, 2026",
   "year": "2026",
   "category": "Narrative",
   "cover": "cover.webp",
-  "description": "Short film. Dir. Millie Hine. DOP. Matt Kirkham. Produced by Silver Street Productions, 2026.",
-  "gallery": [
-    "cover.webp",
-    "001.webp",
-    "002.webp",
-    "003.webp",
-    "004.webp",
-    "005.webp",
-    "006.webp",
-    "007.webp"
-  ]
+  "previewScale": 1.33,
+  "description": "Short film. Directed by Charlie McGuire, Director of Photography Matt Kirkham, Producer Aidan Collins. Produced by Silver Street Productions and Cambridge Arts Initiative and Collective. Shot on location, 2026.",
+  "gallery": ["001.webp", { "vimeo": "1192833965" }, "002.webp", "003.webp", "004.webp", "005.webp"]
 }
