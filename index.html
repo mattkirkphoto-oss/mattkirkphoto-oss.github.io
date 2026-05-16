@@ -515,6 +515,70 @@
       color:var(--mid);
     }
 
+    /* Expand button inside each slider */
+    .grade-expand-btn {
+      position:absolute; bottom:10px; right:10px; z-index:4;
+      background:none; border:none; cursor:pointer; padding:4px;
+      opacity:0; transition:opacity .25s;
+      color:rgba(242,237,229,0.7); font-size:11px; line-height:1;
+    }
+    .grade-slider:hover .grade-expand-btn { opacity:1; }
+
+    /* Grading lightbox */
+    #grade-lightbox {
+      position:fixed; inset:0; z-index:600;
+      background:rgba(8,8,8,.97);
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:16px;
+      opacity:0; pointer-events:none;
+      transition:opacity .35s ease;
+    }
+    #grade-lightbox.open { opacity:1; pointer-events:all; }
+    #grade-lightbox-slider {
+      width:min(90vw, 1200px);
+      position:relative; overflow:hidden; background:var(--bg2);
+      cursor:col-resize; user-select:none;
+    }
+    #grade-lightbox-slider::before { content:''; display:block; padding-top:56.25%; }
+    #grade-lightbox-slider .grade-before-img,
+    #grade-lightbox-slider .grade-after-img {
+      position:absolute; inset:0; width:100%; height:100%;
+      object-fit:cover; display:block; pointer-events:none;
+    }
+    #grade-lightbox-slider .grade-after-img { clip-path:inset(0 50% 0 0); }
+    #grade-lightbox-slider .grade-handle {
+      position:absolute; top:0; bottom:0; left:50%;
+      transform:translateX(-50%);
+      width:1px; background:rgba(242,237,229,0.9); z-index:3;
+    }
+    #grade-lightbox-slider .grade-knob {
+      position:absolute; top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      width:36px; height:36px; border-radius:50%;
+      background:rgba(242,237,229,0.95);
+      display:flex; align-items:center; justify-content:center;
+    }
+    #grade-lightbox-slider .grade-label {
+      position:absolute; bottom:14px; z-index:2;
+      font-size:9px; font-weight:300; letter-spacing:0.22em;
+      text-transform:uppercase; color:rgba(242,237,229,0.6);
+      pointer-events:none;
+    }
+    #grade-lightbox-slider .grade-label-l { left:16px; }
+    #grade-lightbox-slider .grade-label-r { right:16px; }
+    #grade-lightbox-caption {
+      font-size:9px; font-weight:300; letter-spacing:0.18em;
+      color:var(--mid); text-align:center;
+    }
+    #grade-lightbox-close {
+      position:absolute; top:20px; right:24px;
+      background:none; border:none; cursor:pointer;
+      font-family:var(--f); font-size:9px; font-weight:300;
+      letter-spacing:0.24em; text-transform:uppercase;
+      color:var(--text); opacity:.68; transition:opacity .25s; padding:8px;
+    }
+    #grade-lightbox-close:hover { opacity:1; }
+
     #about { border-top:1px solid var(--rule); }
     .about-wrap { max-width:1440px; margin:0 auto; padding:88px 44px; display:grid; grid-template-columns:300px 1fr; gap:88px; align-items:start; }
     .about-l { position:sticky; top:80px; }
@@ -757,6 +821,24 @@
   </section>
 
   <!-- ── COLOUR GRADING ──────────────────────────────────── -->
+  <!-- ── COLOUR GRADING LIGHTBOX ─────────────────────────── -->
+  <div id="grade-lightbox" role="dialog" aria-modal="true" aria-label="Colour grading comparison">
+    <button id="grade-lightbox-close">Close</button>
+    <div id="grade-lightbox-slider">
+      <img class="grade-before-img" src="" alt="Before">
+      <img class="grade-after-img"  src="" alt="After">
+      <div class="grade-handle"><div class="grade-knob">
+        <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
+          <path d="M4 1L1 5L4 9M10 1L13 5L10 9" stroke="#1c1814" stroke-width="1.2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div></div>
+      <span class="grade-label grade-label-l">Before</span>
+      <span class="grade-label grade-label-r">After</span>
+    </div>
+    <p id="grade-lightbox-caption"></p>
+  </div>
+
   <section id="grading">
     <div class="grade-inner">
       <div class="section-header fi" id="hdr-grading">
@@ -1422,6 +1504,7 @@
                 </div>
                 <span class="grade-label grade-label-l">Before</span>
                 <span class="grade-label grade-label-r">After</span>
+                <button class="grade-expand-btn" aria-label="Expand" title="Expand">⤢</button>
               </div>
               ${caption ? `<p class="grade-caption">${caption}</p>` : ''}
             </div>`;
@@ -1463,6 +1546,52 @@
     }
 
     loadGrading();
+
+    /* ── GRADING LIGHTBOX ── */
+    const gradeLightbox      = document.getElementById('grade-lightbox');
+    const gradeLightboxSlider = document.getElementById('grade-lightbox-slider');
+    const gradeLightboxCaption = document.getElementById('grade-lightbox-caption');
+    const gradeLightboxClose  = document.getElementById('grade-lightbox-close');
+
+    function openGradeLightbox(beforeSrc, afterSrc, caption) {
+      const beforeImg = gradeLightboxSlider.querySelector('.grade-before-img');
+      const afterImg  = gradeLightboxSlider.querySelector('.grade-after-img');
+      beforeImg.src = beforeSrc;
+      afterImg.src  = afterSrc;
+      afterImg.style.clipPath = 'inset(0 50% 0 0)';
+      gradeLightboxSlider.querySelector('.grade-handle').style.left = '50%';
+      gradeLightboxCaption.textContent = caption || '';
+      gradeLightboxCaption.style.display = caption ? '' : 'none';
+      gradeLightbox.classList.add('open');
+      document.body.style.overflow = 'hidden';
+      initGradeSlider(gradeLightboxSlider);
+    }
+
+    function closeGradeLightbox() {
+      gradeLightbox.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    gradeLightboxClose.addEventListener('click', closeGradeLightbox);
+    gradeLightbox.addEventListener('click', e => {
+      if (e.target === gradeLightbox) closeGradeLightbox();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && gradeLightbox.classList.contains('open')) closeGradeLightbox();
+    });
+
+    /* Delegate expand button clicks from grading grid */
+    document.getElementById('grading-grid').addEventListener('click', e => {
+      const btn = e.target.closest('.grade-expand-btn');
+      if (!btn) return;
+      e.stopPropagation();
+      const slider  = btn.closest('.grade-slider');
+      const item    = btn.closest('.grade-item');
+      const before  = slider.querySelector('.grade-before-img').src;
+      const after   = slider.querySelector('.grade-after-img').src;
+      const caption = item.querySelector('.grade-caption')?.textContent || '';
+      openGradeLightbox(before, after, caption);
+    });
     init();
 
     const filmGrid     = document.getElementById('grid-film');
