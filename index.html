@@ -1345,20 +1345,22 @@
                   projectImg.style.opacity    = '0.93';
                   /* After fade-in, release inline styles so CSS hover works again */
                   setTimeout(() => {
-                    projectImg.style.transition = '';
-                    projectImg.style.opacity    = '';
-                    projectImg.style.transform  = '';
-                    projectImgNext.src          = '';
+                    projectImg.style.transition     = '';
+                    projectImg.style.opacity        = '';
+                    projectImg.style.transform      = '';
+                    projectImgNext.src              = '';
                     projectImgNext.style.transition = '';
+                    projectImgNext.style.transform  = '';
                   }, 520);
                 }, 320);
               } else {
                 /* Already on cover — just release inline styles */
                 setTimeout(() => {
-                  projectImg.style.transition = '';
-                  projectImg.style.transform  = '';
-                  projectImgNext.src          = '';
+                  projectImg.style.transition     = '';
+                  projectImg.style.transform      = '';
+                  projectImgNext.src              = '';
                   projectImgNext.style.transition = '';
+                  projectImgNext.style.transform  = '';
                 }, 650);
               }
             }
@@ -1380,6 +1382,8 @@
                 /* Pin base layer scale so CSS hover rule can't jolt it mid-cycle */
                 projectImg.style.transform  = 'scale(1.032)';
                 projectImg.style.transition = 'none';
+                /* Match scale on overlay so sizes are identical when overlay fades out */
+                projectImgNext.style.transform = 'scale(1.032)';
 
                 requestAnimationFrame(() => {
                   requestAnimationFrame(() => {
