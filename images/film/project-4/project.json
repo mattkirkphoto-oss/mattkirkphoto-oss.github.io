@@ -1,23 +1,8 @@
 {
-  "title": "I Think Something's Wrong",
-  "caption": "Short Film — 2023",
-  "year": "2023",
-  "category": "Narrative",
-  "cover": "cover.webp",
-  "description": "A coming-of-age short film. Directed and shot by Matt Kirkham, written and directed by Lola Malone.",
-  "gallery": [
-    "cover.webp",
-    "001.webp",
-    "002.webp",
-    "003.webp",
-    "004.webp",
-    "005.webp",
-    "006.webp",
-    "007.webp",
-    "008.webp",
-    "009.webp",
-    "010.webp",
-    "011.webp",
-    "012.webp"
-  ]
+  "title": "Bathwater",
+  "caption": "BATS Theatre Society, 2025",
+  "year": "2025",
+  "category": "Theatre",
+  "description": "Trailer for Bathwater, a theatre production by BATS Theatre Society. Directed, shot and edited by Matt Kirkham.",
+  "gallery": [{ "vimeo": "1191867904" }]
 }
