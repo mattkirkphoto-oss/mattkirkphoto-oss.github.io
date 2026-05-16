@@ -1583,7 +1583,10 @@
         filmGrid.style.cursor     = 'grabbing';
       });
 
-      filmGrid.addEventListener('pointermove', e => {
+      /* pointermove via capture can be throttled over iframes — use document
+         mousemove for full-frequency scroll tracking, pointer capture only for
+         ensuring pointerup always fires regardless of iframe focus */
+      document.addEventListener('mousemove', e => {
         if (!dragging) return;
         const dx = e.pageX - startX;
         if (Math.abs(dx) > 4) dragMoved = true;
@@ -1595,6 +1598,12 @@
         lastT = now;
 
         filmGrid.scrollLeft = scrollStart - dx;
+      });
+
+      filmGrid.addEventListener('pointermove', e => {
+        /* Keep pointermove listener so pointer capture stays active,
+           but actual scroll logic runs in the document mousemove above */
+        e.preventDefault();
       });
 
       filmGrid.addEventListener('pointerup',     stopDragging);
