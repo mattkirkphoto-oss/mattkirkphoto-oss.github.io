@@ -18,8 +18,8 @@
   <meta property="og:type"        content="website">
   <meta property="og:title"       content="Matt Kirkham — Photographer &amp; Filmmaker">
   <meta property="og:description" content="Photography and film based in Cambridge.">
-  <meta property="og:image"       content="https://YOUR_DOMAIN/images/og-cover.jpg">
-  <meta property="og:url"         content="https://YOUR_DOMAIN">
+  <meta property="og:image"       content="https://mattkirkham.com/images/og-cover.jpg">
+  <meta property="og:url"         content="https://mattkirkham.com">
   <meta name="twitter:card"       content="summary_large_image">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,6 +39,7 @@
     }
 
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    img { -webkit-touch-callout:none; }
     html { scroll-behavior: smooth; }
     body {
       background: var(--bg);
@@ -248,7 +249,7 @@
       z-index:1;
       /* FIX: use a long cross-fade transition so images blend rather than flash through grey */
       transition:opacity 1.2s ease, transform .95s ease;
-      will-change:transform; backface-visibility:hidden;
+      backface-visibility:hidden;
     }
     .project:hover .project-img { opacity:1; transform:scale(1.032); }
 
@@ -451,34 +452,6 @@
       50%      { opacity:.8;  transform:translate(-50%,-50%) scaleX(1); }
     }
 
-    /* ── SHOWREEL ──────────────────────────────────────────── */
-    #showreel { background:#0a0a0a; }
-    #showreel-inner { max-width:1440px; margin:0 auto; padding:72px 44px; }
-    #showreel-label {
-      display:flex; justify-content:space-between; align-items:baseline;
-      margin-bottom:28px; padding-bottom:18px;
-      border-bottom:1px solid rgba(242,237,229,0.16);
-    }
-    #showreel-label span {
-      font-size:9px; font-weight:300; letter-spacing:0.35em;
-      text-transform:uppercase; color:rgba(242,237,229,0.55);
-    }
-    #showreel-embed {
-      position:relative; padding-top:56.25%;
-      overflow:hidden; background:#000;
-    }
-    #showreel-embed iframe {
-      position:absolute; inset:0; width:100%; height:100%; border:0;
-    }
-    #showreel-placeholder {
-      position:absolute; inset:0;
-      display:flex; align-items:center; justify-content:center;
-    }
-    #showreel-placeholder span {
-      font-size:9px; font-weight:300; letter-spacing:0.28em;
-      text-transform:uppercase; color:rgba(242,237,229,0.2);
-    }
-
     /* ── COLOUR GRADING ────────────────────────────────────── */
     #grading { border-top:1px solid var(--rule); }
     .grade-inner { max-width:1440px; margin:0 auto; padding:88px 44px; }
@@ -503,9 +476,6 @@
       transition:transform .3s var(--ease); display:inline-block;
     }
     #grading-toggle-btn.open::after { transform:rotate(180deg); }
-
-    /* Prevent long-press image context menu / Google visual search on mobile */
-    img { -webkit-touch-callout:none; }
 
     .grade-slider {
       position:relative; overflow:hidden; background:var(--bg2);
@@ -972,7 +942,6 @@
     /* ── TAB TITLE + GRAIN PAUSE ── */
     document.title = 'MATT KIRKHAM';
     document.addEventListener('visibilitychange', () => {
-      document.title = 'MATT KIRKHAM';
       /* Pause grain animation when tab is hidden — no point animating off-screen */
       document.getElementById('grain').style.animationPlayState =
         document.hidden ? 'paused' : 'running';
@@ -1833,13 +1802,14 @@
     gPrev.addEventListener('click', () => { if (gIdx>0) renderGalleryItem(--gIdx); });
     gNext.addEventListener('click', () => { if (gIdx<gItems.length-1) renderGalleryItem(++gIdx); });
     gExpandBtn.addEventListener('click', () => setExpanded(!gallery.classList.contains('expanded')));
-    document.getElementById('g-stage').addEventListener('click', e => {
+    const gStage = document.getElementById('g-stage');
+    gStage.addEventListener('click', e => {
       if (gallery.classList.contains('expanded')) return;
-      if (e.target===document.getElementById('g-stage')||e.target===gMedia) closeGallery();
+      if (e.target===gStage||e.target===gMedia) closeGallery();
     });
     let touchX = 0;
-    document.getElementById('g-stage').addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, {passive:true});
-    document.getElementById('g-stage').addEventListener('touchend', e => {
+    gStage.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, {passive:true});
+    gStage.addEventListener('touchend', e => {
       const dx = e.changedTouches[0].clientX - touchX;
       if (Math.abs(dx)<40) return;
       if (dx<0 && gIdx<gItems.length-1) renderGalleryItem(++gIdx);
