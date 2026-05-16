@@ -1328,30 +1328,39 @@
             }
 
             function resetTocover() {
-              clearTimeout(swapTimer);
+              cancelAll();
 
-              /* Kill overlay instantly */
-              projectImgNext.style.transition = 'none';
+              /* Fade the overlay back out smoothly */
+              projectImgNext.style.transition = 'opacity 0.6s ease';
               projectImgNext.style.opacity    = '0';
-              projectImgNext.src              = '';
 
-              /* Restore base layer to whichever format actually loaded */
-              if (resolvedCoverSrc) projectImg.src = resolvedCoverSrc;
-
-              /* Lock transform at scale(1) so the CSS hover scale rule
-                 can't fire and cause a jolt when transitions re-enable */
-              projectImg.style.transition = 'none';
-              projectImg.style.transform  = 'scale(1)';
-
-              requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                  /* Re-enable CSS transitions and clear inline transform
-                     so hover scale works normally on the next mouseenter */
-                  projectImg.style.transition     = '';
-                  projectImg.style.transform      = '';
+              /* Crossfade the base layer back to cover */
+              if (resolvedCoverSrc && projectImg.src !== resolvedCoverSrc) {
+                /* Fade base out, swap src, fade back in */
+                projectImg.style.transition = 'opacity 0.3s ease';
+                projectImg.style.opacity    = '0';
+                setTimeout(() => {
+                  projectImg.src = resolvedCoverSrc;
+                  projectImg.style.transition = 'opacity 0.5s ease';
+                  projectImg.style.opacity    = '0.93';
+                  /* After fade-in, release inline styles so CSS hover works again */
+                  setTimeout(() => {
+                    projectImg.style.transition = '';
+                    projectImg.style.opacity    = '';
+                    projectImg.style.transform  = '';
+                    projectImgNext.src          = '';
+                    projectImgNext.style.transition = '';
+                  }, 520);
+                }, 320);
+              } else {
+                /* Already on cover — just release inline styles */
+                setTimeout(() => {
+                  projectImg.style.transition = '';
+                  projectImg.style.transform  = '';
+                  projectImgNext.src          = '';
                   projectImgNext.style.transition = '';
-                });
-              });
+                }, 650);
+              }
             }
 
             /* Cross-fade overlay in, then quietly swap base layer once invisible */
@@ -1367,6 +1376,10 @@
                 projectImgNext.src              = src;
                 projectImgNext.style.transition = 'none';
                 projectImgNext.style.opacity    = '0';
+
+                /* Pin base layer scale so CSS hover rule can't jolt it mid-cycle */
+                projectImg.style.transform  = 'scale(1.032)';
+                projectImg.style.transition = 'none';
 
                 requestAnimationFrame(() => {
                   requestAnimationFrame(() => {
