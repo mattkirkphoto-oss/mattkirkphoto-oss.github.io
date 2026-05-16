@@ -1314,10 +1314,11 @@
             let cycleIdx      = 1;
             let isHovering    = false;
 
-            /* Persistent cached copy of the cover — resetTocover never triggers
-               a fresh network request; the browser reuses the decoded image. */
-            const coverCache = new Image();
-            coverCache.src = p.cover;
+            /* Read the cover src from the live <img> element on first mouseenter,
+               after the format-fallback chain (.avif → .webp → .jpg) has settled.
+               p.cover holds the original path which may have 404'd — projectImg.src
+               is whatever actually loaded successfully. */
+            let resolvedCoverSrc = null;
 
             function cancelAll() {
               clearTimeout(cycleTimer);
@@ -1334,8 +1335,8 @@
               projectImgNext.style.opacity    = '0';
               projectImgNext.src              = '';
 
-              /* Restore base layer from cache — no network round-trip */
-              projectImg.src = coverCache.src;
+              /* Restore base layer to whichever format actually loaded */
+              if (resolvedCoverSrc) projectImg.src = resolvedCoverSrc;
 
               /* Lock transform at scale(1) so the CSS hover scale rule
                  can't fire and cause a jolt when transitions re-enable */
@@ -1394,6 +1395,8 @@
 
             el.addEventListener('mouseenter', () => {
               isHovering = true;
+              /* Snapshot the src that actually loaded (post-fallback) on first hover */
+              if (!resolvedCoverSrc && projectImg.src) resolvedCoverSrc = projectImg.src;
               imgSrcs.forEach(src => { const img = new Image(); img.src = src; });
               cycleIdx = 1;
               cycleTimer = setTimeout(() => {
