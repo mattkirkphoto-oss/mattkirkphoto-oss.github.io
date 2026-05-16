@@ -349,6 +349,8 @@
       opacity:0; transition:opacity 0.5s ease; z-index:3;
     }
     .film-preview-thumb .preview-frame.loaded { opacity:1; }
+    /* Mobile cards hidden on desktop — only shown via mobile media query */
+    .film-mobile-card { display:none; }
 
     #gallery {
       position:fixed; inset:0; z-index:500; background:rgba(8,8,8,.98);
@@ -728,7 +730,17 @@
       /* ── FILM SECTION ── */
       .film-inner { padding:56px 22px; }
       .film-layout { grid-template-columns:1fr; }
-      .film-preview { position:static; display:none; }
+      .film-preview { display:none; }
+      .film-list { padding-right:0; border-top:none; display:grid; grid-template-columns:1fr 1fr; gap:28px 16px; }
+      .film-list-item { flex-direction:column; padding:0; border:none; border-left:none !important; margin-left:0; opacity:1 !important; }
+      .film-item-l, .film-item-r { display:none; }
+      .film-mobile-card { display:block; }
+      .film-mobile-thumb { position:relative; overflow:hidden; background:var(--bg2); outline:1px solid rgba(229,224,216,0.1); }
+      .film-mobile-thumb::before { content:''; display:block; padding-top:66%; }
+      .film-mobile-thumb img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.93; }
+      .film-mobile-info { padding-top:10px; border-top:1px solid var(--rule); margin-top:0; }
+      .film-mobile-title { display:block; font-size:9px; font-weight:500; letter-spacing:0.24em; text-transform:uppercase; color:var(--text); }
+      .film-mobile-caption { display:block; font-size:9px; font-weight:200; letter-spacing:0.08em; color:var(--mid); line-height:1.75; }
 
       /* ── GRADING ── */
       #grading-grid { grid-template-columns:1fr; }
@@ -1283,9 +1295,10 @@
           p.folder + 'cover.avif',
           p.folder + 'cover.webp',
           p.folder + 'cover.jpg'
-        ].filter(v => v !== p.cover); /* skip the one already tried */
-
-        let variantIdx = 0;
+        ];
+        /* Start from the next variant after the one already tried */
+        let variantIdx = coverVariants.findIndex(v => v === p.cover) + 1;
+        if (variantIdx <= 0) variantIdx = 0;
         img.addEventListener('error', async function onErr() {
           /* Try next cover format variant first */
           if (variantIdx < coverVariants.length) {
@@ -1335,6 +1348,30 @@
             let hoverTimer   = null;
             let destroyTimer = null;
             const previewScale = p.previewScale || 1;
+            const projectImg   = el.querySelector('.project-img');
+
+            function fadeVideoIn() {
+              if (!previewFrame) return;
+              /* Fade video in */
+              previewFrame.style.transition = 'opacity 0.9s ease';
+              previewFrame.style.opacity    = '1';
+              /* Simultaneously fade cover out */
+              if (projectImg) {
+                projectImg.style.transition = 'opacity 0.9s ease, transform .95s ease';
+                projectImg.style.opacity    = '0';
+              }
+            }
+
+            function fadeVideoOut() {
+              if (!previewFrame) return;
+              previewFrame.style.transition = 'opacity 0.7s ease';
+              previewFrame.style.opacity    = '0';
+              /* Fade cover back in */
+              if (projectImg) {
+                projectImg.style.transition = 'opacity 0.7s ease, transform .95s ease';
+                projectImg.style.opacity    = '0.93';
+              }
+            }
 
             function buildFrame() {
               if (previewFrame) return;
@@ -1350,31 +1387,59 @@
               }
               previewFrame = document.createElement('iframe');
               previewFrame.className = 'preview-frame';
+              /* Start fully transparent — we control opacity manually */
+              previewFrame.style.opacity    = '0';
+              previewFrame.style.transition = 'none';
               previewFrame.src = `https://player.vimeo.com/video/${vimeoItem.vimeo}?background=1&autoplay=1&loop=1&muted=1`;
               previewFrame.allow = 'autoplay';
               previewFrame.tabIndex = -1;
               previewFrame.style.width  = (fW * previewScale) + 'px';
               previewFrame.style.height = (fH * previewScale) + 'px';
               thumb.appendChild(previewFrame);
+
+              /* Listen for Vimeo timeupdate — fires once video is actually playing.
+                 Use window message events since postMessage crosses iframe boundary. */
+              const onMsg = e => {
+                try {
+                  const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+                  if (data.player_origin && data.event === 'ready') {
+                    /* Player ready — send play command and wait for timeupdate */
+                    previewFrame.contentWindow?.postMessage(JSON.stringify({ method: 'play' }), '*');
+                  }
+                  if (data.event === 'timeupdate' || data.method === 'timeupdate') {
+                    window.removeEventListener('message', onMsg);
+                    if (previewFrame) fadeVideoIn();
+                  }
+                } catch (_) {}
+              };
+              window.addEventListener('message', onMsg);
+
+              /* Fallback — if postMessage never fires (e.g. blocked), fade in after 1.2s */
+              hoverTimer = setTimeout(() => {
+                window.removeEventListener('message', onMsg);
+                fadeVideoIn();
+              }, 1200);
             }
 
             function destroyFrame() {
               if (!previewFrame) return;
               previewFrame.remove();
               previewFrame = null;
+              /* Ensure cover is fully restored */
+              if (projectImg) {
+                projectImg.style.transition = '';
+                projectImg.style.opacity    = '';
+              }
             }
 
             el.addEventListener('mouseenter', () => {
               clearTimeout(destroyTimer);
               buildFrame();
-              hoverTimer = setTimeout(() => {
-                if (previewFrame) previewFrame.classList.add('loaded');
-              }, 80);
             });
             el.addEventListener('mouseleave', () => {
               clearTimeout(hoverTimer);
-              if (previewFrame) previewFrame.classList.remove('loaded');
-              /* Destroy after fade-out so there's no iframe during scroll */
+              fadeVideoOut();
+              /* Destroy after fade completes */
               destroyTimer = setTimeout(destroyFrame, 750);
             });
           }
@@ -1799,12 +1864,36 @@
             <span class="film-item-caption">${p.caption}</span>
           </div>
           <div class="film-item-r">${p.year}<br>${p.category}</div>
+          <div class="film-mobile-card">
+            <div class="film-mobile-thumb">
+              <img src="${p.cover}" alt="${p.title}" loading="lazy" decoding="async">
+            </div>
+            <div class="film-mobile-info">
+              <span class="film-mobile-title">${p.title}</span>
+              <span class="film-mobile-caption">${p.caption}</span>
+            </div>
+          </div>
         </li>
       `).join('');
+
+      const p_at = idx => projects[idx];
 
       /* Wire hover + click */
       list.querySelectorAll('.film-list-item').forEach((el, i) => {
         io.observe(el);
+
+        /* Mobile card cover fallback (avif → webp → jpg) */
+        const mobileImg = el.querySelector('.film-mobile-thumb img');
+        if (mobileImg) {
+          const variants = [p_at(i).folder + 'cover.avif', p_at(i).folder + 'cover.webp', p_at(i).folder + 'cover.jpg'];
+          let vi = variants.findIndex(v => v === p_at(i).cover) + 1;
+          if (vi <= 0) vi = 0;
+          mobileImg.addEventListener('error', function onErr() {
+            if (vi < variants.length) { mobileImg.src = variants[vi++]; }
+            else mobileImg.removeEventListener('error', onErr);
+          });
+        }
+
         el.addEventListener('mouseenter', () => { curView(); showPreview(i); });
         el.addEventListener('mouseleave', () => curOff());
         el.addEventListener('click', () => {
