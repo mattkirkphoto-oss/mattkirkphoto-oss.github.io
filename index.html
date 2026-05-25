@@ -1421,13 +1421,13 @@
 
             function fadeVideoIn() {
               if (!previewFrame) return;
-              /* Fade video in */
+              /* Fade video in on top of thumbnail — don't fade thumbnail out,
+                 it stays visible underneath and is naturally covered by the video */
               previewFrame.style.transition = 'opacity 0.9s ease';
               previewFrame.style.opacity    = '1';
-              /* Simultaneously fade cover out */
               if (projectImg) {
-                projectImg.style.transition = 'opacity 0.9s ease, transform .95s ease';
-                projectImg.style.opacity    = '0';
+                projectImg.style.transition = '';
+                projectImg.style.opacity    = '';
               }
             }
 
@@ -1435,10 +1435,9 @@
               if (!previewFrame) return;
               previewFrame.style.transition = 'opacity 0.7s ease';
               previewFrame.style.opacity    = '0';
-              /* Fade cover back in */
               if (projectImg) {
-                projectImg.style.transition = 'opacity 0.7s ease, transform .95s ease';
-                projectImg.style.opacity    = '0.93';
+                projectImg.style.transition = '';
+                projectImg.style.opacity    = '';
               }
             }
 
