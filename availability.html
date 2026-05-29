@@ -213,7 +213,17 @@
         </div>
 
         <div id="view-heatmap" style="display:none">
-          <p style="font-size:12px;color:var(--text-tertiary);font-family:'DM Mono',monospace;margin-bottom:0.75rem">Click any day for a breakdown.</p>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem;flex-wrap:wrap">
+            <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary)">
+              <span style="display:inline-flex;gap:2px;align-items:center">
+                <span style="width:14px;height:14px;border-radius:3px;background:rgb(152,211,132);border:2px solid rgb(39,109,17);box-shadow:0 0 0 1px rgba(39,109,17,0.35);display:inline-block"></span>
+                <span style="width:14px;height:14px;border-radius:3px;background:rgb(220,188,132);border:0.5px solid rgba(186,117,23,0.5);display:inline-block"></span>
+                <span style="width:14px;height:14px;border-radius:3px;background:rgb(215,152,152);border:1.5px solid rgb(162,45,45);display:inline-block"></span>
+              </span>
+              All free → partial → none free
+            </span>
+            <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text-tertiary)">Bold border = everyone free &nbsp;·&nbsp; Click any day for breakdown</span>
+          </div>
           <div class="cal-wrapper">
             <div>
               <p class="month-title">August 2026</p>
@@ -607,6 +617,24 @@ function highlightWindow(d1,d2,d3){
   });
 }
 
+function heatColor(ratio){
+  // ratio 1 = all free (green), 0 = all busy (red)
+  // Green: rgb(39,109,17) → Amber: rgb(186,117,23) → Red: rgb(162,45,45)
+  let r,g,b;
+  if(ratio>=0.5){
+    const t=(ratio-0.5)*2; // 0→1 as ratio goes 0.5→1
+    r=Math.round(186-t*(186-39));
+    g=Math.round(117+t*(109-117));
+    b=Math.round(23-t*(23-17));
+  } else {
+    const t=ratio*2; // 0→1 as ratio goes 0→0.5
+    r=Math.round(162+t*(186-162));
+    g=Math.round(45+t*(117-45));
+    b=Math.round(45-t*(45-23));
+  }
+  return {r,g,b};
+}
+
 function renderHeatmap(unavailByPerson,names){
   [['aug-heatmap',8],['sep-heatmap',9]].forEach(([id,month])=>{
     const grid=document.getElementById(id);grid.innerHTML='';
@@ -615,14 +643,35 @@ function renderHeatmap(unavailByPerson,names){
     for(let i=0;i<fd;i++){const e=document.createElement('div');e.className='day-cell empty';grid.appendChild(e);}
     for(let d=1;d<=total;d++){
       const key=dateKey(2026,month,d);
-      const ratio=avail[key]/n;
+      const freeCount=avail[key];
+      const ratio=freeCount/n;
+      const allFree=freeCount===n;
+      const allBusy=freeCount===0;
       const cell=document.createElement('div');
       cell.className='day-cell clickable-heat'+(isWeekend(2026,month,d)?' weekend':'');
       cell.textContent=d;cell.dataset.key=key;
-      const r=Math.round(252-ratio*18);const g=Math.round(235-ratio*(235-243));const b=Math.round(235-ratio*(235-222));
-      const tr=Math.round(247-ratio*(247-39));const tg=Math.round(193-ratio*(193-80));const tb=Math.round(193-ratio*(193-10));
-      cell.style.background=`rgb(${r},${g},${b})`;cell.style.color=`rgb(${tr},${tg},${tb})`;cell.style.borderColor=`rgba(${tr},${tg},${tb},0.3)`;
-      cell.title=`${avail[key]}/${n} free — click for details`;
+
+      const {r,g,b}=heatColor(ratio);
+      // bg slightly lighter, text uses the full colour
+      const bgR=Math.round(r+(255-r)*0.55);
+      const bgG=Math.round(g+(255-g)*0.55);
+      const bgB=Math.round(b+(255-b)*0.55);
+
+      cell.style.background=`rgb(${bgR},${bgG},${bgB})`;
+      cell.style.color=`rgb(${r},${g},${b})`;
+
+      if(allFree){
+        // Bold green border + slight ring to make fully-free pop clearly
+        cell.style.border=`2px solid rgb(${r},${g},${b})`;
+        cell.style.fontWeight='600';
+        cell.style.boxShadow=`0 0 0 1px rgba(${r},${g},${b},0.35)`;
+      } else if(allBusy){
+        cell.style.border=`1.5px solid rgb(${r},${g},${b})`;
+      } else {
+        cell.style.border=`0.5px solid rgba(${r},${g},${b},0.5)`;
+      }
+
+      cell.title=`${freeCount}/${n} free — click for details`;
       cell.addEventListener('click',()=>showDayPopup(key));
       grid.appendChild(cell);
     }
