@@ -27,9 +27,6 @@
     --amber-bg: #FAEEDA;
     --amber-text: #633806;
     --amber-border: #FAC775;
-    --blue-bg: #E6F1FB;
-    --blue-text: #0C447C;
-    --blue-border: #B5D4F4;
     --radius-md: 8px;
     --radius-lg: 12px;
   }
@@ -101,14 +98,8 @@
     outline: none;
     transition: border-color 0.15s;
   }
-
-  input[type="text"]:focus, input[type="password"]:focus {
-    border-color: #378ADD;
-    box-shadow: 0 0 0 3px rgba(55,138,221,0.12);
-  }
-
-  input[type="text"]::placeholder, input[type="password"]::placeholder { color: var(--text-tertiary); }
-
+  input:focus { border-color: #378ADD; box-shadow: 0 0 0 3px rgba(55,138,221,0.12); }
+  input::placeholder { color: var(--text-tertiary); }
   input.wide { min-width: 200px; }
   input.narrow { min-width: 150px; }
 
@@ -126,17 +117,10 @@
     transition: background 0.1s, transform 0.08s;
     white-space: nowrap;
   }
-
   button:hover { background: var(--bg-secondary); }
   button:active { transform: scale(0.97); }
-
-  button.primary {
-    background: var(--text);
-    color: var(--bg-panel);
-    border-color: var(--text);
-  }
+  button.primary { background: var(--text); color: var(--bg-panel); border-color: var(--text); }
   button.primary:hover { opacity: 0.85; }
-
   button.danger { color: var(--red-text); border-color: var(--red-border); }
   button.danger:hover { background: var(--red-bg); }
 
@@ -148,59 +132,33 @@
     color: var(--text-secondary);
     align-items: center;
   }
-
   .legend-dot {
     width: 14px; height: 14px; border-radius: 3px;
     display: inline-block; margin-right: 5px; vertical-align: middle;
   }
 
-  .cal-wrapper {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-  }
+  .cal-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
   @media (max-width: 560px) { .cal-wrapper { grid-template-columns: 1fr; } }
 
   .month-title {
     font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-    margin-bottom: 10px;
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--text-secondary); margin-bottom: 10px;
   }
 
-  .weekday-header {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 2px;
-    margin-bottom: 3px;
-  }
+  .weekday-header { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 3px; }
   .weekday-header span {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    text-align: center;
-    color: var(--text-tertiary);
-    letter-spacing: 0.04em;
-    padding: 2px 0;
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    text-align: center; color: var(--text-tertiary); letter-spacing: 0.04em; padding: 2px 0;
   }
 
-  .cal-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 3px;
-    user-select: none;
-  }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; user-select: none; }
 
   .day-cell {
-    aspect-ratio: 1;
-    border-radius: 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    cursor: pointer;
+    aspect-ratio: 1; border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; cursor: pointer;
     transition: transform 0.07s;
     border: 0.5px solid transparent;
     font-family: 'DM Mono', monospace;
@@ -212,83 +170,50 @@
   .day-cell.unavailable { background: var(--red-bg); color: var(--red-text); border-color: var(--red-border); }
 
   #lock-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(249,248,246,0.94);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 12px;
-    text-align: center;
-    padding: 2rem;
+    display: none; position: fixed; inset: 0;
+    background: rgba(249,248,246,0.94); z-index: 100;
+    align-items: center; justify-content: center;
+    flex-direction: column; gap: 12px; text-align: center; padding: 2rem;
   }
   #lock-overlay.visible { display: flex; }
   #lock-overlay h2 { font-size: 18px; font-weight: 400; margin-bottom: 4px; }
   #lock-overlay p { font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; }
 
   .status-bar {
-    display: none;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    border-radius: var(--radius-md);
-    font-size: 13px;
-    margin-bottom: 1rem;
+    display: none; align-items: center; gap: 8px;
+    padding: 10px 14px; border-radius: var(--radius-md);
+    font-size: 13px; margin-bottom: 1rem;
   }
   .status-bar.success { display: flex; background: var(--green-bg); color: var(--green-text); border: 0.5px solid var(--green-border); }
   .status-bar.error { display: flex; background: var(--red-bg); color: var(--red-text); border: 0.5px solid var(--red-border); }
   .status-bar.info { display: flex; background: var(--amber-bg); color: var(--amber-text); border: 0.5px solid var(--amber-border); }
 
-  .hint {
-    font-size: 12px;
-    color: var(--text-tertiary);
-    font-family: 'DM Mono', monospace;
-    margin-top: -4px;
-    margin-bottom: 1rem;
-  }
+  .hint { font-size: 12px; color: var(--text-tertiary); font-family: 'DM Mono', monospace; margin-top: -4px; margin-bottom: 1rem; }
 
   .people-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1.25rem; }
   .chip {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    background: var(--bg-secondary);
-    border: 0.5px solid var(--border);
-    color: var(--text-secondary);
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    padding: 4px 10px; border-radius: 20px;
+    background: var(--bg-secondary); border: 0.5px solid var(--border);
+    color: var(--text-secondary); display: flex; align-items: center; gap: 6px;
   }
   .chip .dot { width: 8px; height: 8px; border-radius: 50%; }
 
   .tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; }
   .tab {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    height: 32px;
-    padding: 0 12px;
-    cursor: pointer;
-    border-radius: var(--radius-md);
-    border: 0.5px solid var(--border-strong);
-    background: transparent;
-    color: var(--text-secondary);
-    transition: all 0.1s;
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    height: 32px; padding: 0 12px; cursor: pointer;
+    border-radius: var(--radius-md); border: 0.5px solid var(--border-strong);
+    background: transparent; color: var(--text-secondary); transition: all 0.1s;
   }
   .tab.active { background: var(--text); color: var(--bg-panel); border-color: var(--text); }
 
   .windows-list { display: flex; flex-direction: column; gap: 6px; }
   .window-item {
-    padding: 10px 14px;
-    border-radius: var(--radius-md);
+    padding: 10px 14px; border-radius: var(--radius-md);
     border: 0.5px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: flex; align-items: center; justify-content: space-between;
     background: var(--bg-panel);
   }
   .window-item.all-free { background: var(--green-bg); border-color: var(--green-border); }
@@ -296,18 +221,12 @@
   .window-item.all-free .window-date { color: var(--green-text); }
   .window-count { font-size: 12px; color: var(--text-secondary); }
   .window-item.all-free .window-count { color: var(--green-text); font-weight: 500; }
-
   .no-data { font-size: 13px; color: var(--text-tertiary); font-family: 'DM Mono', monospace; padding: 8px 0; }
 
   #admin-section { margin-top: 3rem; padding-top: 2rem; border-top: 0.5px solid var(--border); }
   #admin-panel { display: none; }
   #admin-panel.visible { display: block; }
-
-  .divider {
-    border: none;
-    border-top: 0.5px solid var(--border);
-    margin: 1.25rem 0;
-  }
+  .divider { border: none; border-top: 0.5px solid var(--border); margin: 1.25rem 0; }
 </style>
 </head>
 <body>
@@ -326,23 +245,22 @@
 
   <div id="status-bar" class="status-bar"></div>
 
-  <div class="panel" id="entry-panel">
+  <div class="panel">
     <p class="panel-title">Your availability</p>
-    <p class="instruction">Enter your name and passphrase, then click <strong>Load</strong>. Mark days you're <strong style="color:var(--red-text)">unavailable</strong> by clicking or dragging. Everything starts green. Hit <strong>Save</strong> when done. Use the same passphrase if you come back to edit.</p>
+    <p class="instruction">Enter your name and a passphrase, then click <strong>Load</strong>. Click or drag days to mark when you're <strong style="color:var(--red-text)">unavailable</strong>. Everything starts green. Hit <strong>Save</strong> when done. Use the same name and passphrase to come back and edit.</p>
 
     <div class="form-row">
       <input type="text" class="wide" id="name-input" placeholder="Your name…" maxlength="30" />
       <input type="password" class="narrow" id="pass-input" placeholder="Passphrase…" maxlength="50" />
       <button onclick="loadPerson()">Load</button>
     </div>
-    <p class="hint">Choose any passphrase — you'll need it if you want to come back and edit later.</p>
+    <p class="hint">Pick any passphrase — you'll need it if you want to edit later.</p>
 
     <div id="calendar-section" style="display:none">
       <div class="legend">
         <span><span class="legend-dot" style="background:var(--green-bg);border:0.5px solid var(--green-border)"></span>Available</span>
         <span><span class="legend-dot" style="background:var(--red-bg);border:0.5px solid var(--red-border)"></span>Unavailable</span>
       </div>
-
       <div class="cal-wrapper">
         <div>
           <p class="month-title">August 2026</p>
@@ -355,7 +273,6 @@
           <div class="cal-grid" id="sep-grid"></div>
         </div>
       </div>
-
       <hr class="divider">
       <div class="form-row" style="margin-bottom:0">
         <button class="primary" onclick="savePerson()">Save my availability</button>
@@ -376,16 +293,11 @@
       <div class="panel" style="margin-top:1rem">
         <p class="panel-title">Responses</p>
         <div class="people-chips" id="people-chips"></div>
-
         <div class="tabs">
           <button class="tab active" id="tab-windows" onclick="showTab('windows')">3-day windows</button>
           <button class="tab" id="tab-heatmap" onclick="showTab('heatmap')">Heatmap</button>
         </div>
-
-        <div id="view-windows">
-          <div class="windows-list" id="windows-list"></div>
-        </div>
-
+        <div id="view-windows"><div class="windows-list" id="windows-list"></div></div>
         <div id="view-heatmap" style="display:none">
           <div class="cal-wrapper">
             <div>
@@ -406,15 +318,13 @@
 </div>
 
 <script>
-const BIN_ID = '6a19db8addf5aa59f775ace1';
-const API_KEY = '$2a$10$/yYP2GIZE0nUb3ThlU68MeR288p3Lwa1SIIHm05dVk5ispyPML4uW';
+const DB_URL = 'https://availability-b8252-default-rtdb.europe-west1.firebasedatabase.app';
 const ADMIN_PW = 'admin123';
-const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 const LOCK_TIMEOUT_MS = 5 * 60 * 1000;
 
 let localUnavail = {};
 let currentName = '';
-let currentPass = '';
+let currentPassHash = '';
 let isDragging = false;
 let dragValue = null;
 let lockToken = null;
@@ -453,19 +363,20 @@ async function hashPass(pass) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
-async function fetchData() {
-  const r = await fetch(BASE_URL + '/latest', { headers: { 'X-Access-Key': API_KEY } });
-  if (!r.ok) throw new Error('Fetch failed');
-  return (await r.json()).record;
+async function fbGet(path) {
+  const r = await fetch(`${DB_URL}/${path}.json`);
+  if (!r.ok) throw new Error('Firebase read failed: ' + r.status);
+  return r.json();
 }
 
-async function putData(data) {
-  const r = await fetch(BASE_URL, {
+async function fbSet(path, data) {
+  const r = await fetch(`${DB_URL}/${path}.json`, {
     method: 'PUT',
-    headers: { 'X-Access-Key': API_KEY, 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   });
-  if (!r.ok) throw new Error('Save failed');
+  if (!r.ok) throw new Error('Firebase write failed: ' + r.status);
+  return r.json();
 }
 
 function showStatus(msg, type) {
@@ -483,10 +394,16 @@ async function loadPerson() {
 
   showStatus('Loading…', 'info');
 
-  let data;
-  try { data = await fetchData(); } catch(e) { showStatus('Could not connect. Please try again.', 'error'); return; }
+  let lock, existing;
+  try {
+    lock = await fbGet('lock');
+    existing = await fbGet(`people/${encodeFirebaseKey(name)}`);
+  } catch(e) {
+    showStatus('Could not connect. Please try again.', 'error');
+    console.error(e);
+    return;
+  }
 
-  const lock = data.lock;
   const now = Date.now();
   if (lock && lock.token && lock.name !== name && (now - lock.since) < LOCK_TIMEOUT_MS) {
     document.getElementById('lock-overlay').classList.add('visible');
@@ -495,25 +412,27 @@ async function loadPerson() {
   }
 
   const hash = await hashPass(pass);
-  const existing = data.people && data.people[name];
 
   if (existing) {
     if (existing.passHash !== hash) {
       showStatus('Incorrect passphrase for that name. Try again.', 'error');
       return;
     }
-    localUnavail = { ...existing.unavail };
+    localUnavail = existing.unavail || {};
   } else {
     localUnavail = {};
   }
 
   lockToken = Math.random().toString(36).slice(2);
-  data.lock = { token: lockToken, name, since: now };
-  try { await putData(data); } catch(e) { showStatus('Could not acquire session. Try again.', 'error'); return; }
+  try {
+    await fbSet('lock', { token: lockToken, name, since: now });
+  } catch(e) {
+    showStatus('Could not start session. Try again.', 'error');
+    return;
+  }
 
   currentName = name;
-  currentPass = hash;
-
+  currentPassHash = hash;
   refreshGrids();
   document.getElementById('calendar-section').style.display = 'block';
 
@@ -526,14 +445,17 @@ async function loadPerson() {
   startHeartbeat();
 }
 
+function encodeFirebaseKey(name) {
+  return encodeURIComponent(name).replace(/\./g, '%2E');
+}
+
 function startHeartbeat() {
   clearInterval(heartbeatInterval);
   heartbeatInterval = setInterval(async () => {
     try {
-      const data = await fetchData();
-      if (data.lock && data.lock.token === lockToken) {
-        data.lock.since = Date.now();
-        await putData(data);
+      const lock = await fbGet('lock');
+      if (lock && lock.token === lockToken) {
+        await fbSet('lock', { ...lock, since: Date.now() });
       }
     } catch(e) {}
   }, 60000);
@@ -542,10 +464,9 @@ function startHeartbeat() {
 async function releaseLock() {
   clearInterval(heartbeatInterval);
   try {
-    const data = await fetchData();
-    if (data.lock && data.lock.token === lockToken) {
-      data.lock = null;
-      await putData(data);
+    const lock = await fbGet('lock');
+    if (lock && lock.token === lockToken) {
+      await fbSet('lock', null);
     }
   } catch(e) {}
 }
@@ -554,23 +475,25 @@ async function savePerson() {
   if (!currentName) return;
   showStatus('Saving…', 'info');
 
-  let data;
-  try { data = await fetchData(); } catch(e) { showStatus('Could not connect. Try again.', 'error'); return; }
+  try {
+    await fbSet(`people/${encodeFirebaseKey(currentName)}`, {
+      passHash: currentPassHash,
+      unavail: { ...localUnavail }
+    });
+    await fbSet('lock', null);
+  } catch(e) {
+    showStatus('Save failed. Try again.', 'error');
+    return;
+  }
 
-  if (!data.people) data.people = {};
-  data.people[currentName] = { passHash: currentPass, unavail: { ...localUnavail } };
-  data.lock = null;
   lockToken = null;
-
-  try { await putData(data); } catch(e) { showStatus('Save failed. Try again.', 'error'); return; }
-
   clearInterval(heartbeatInterval);
   showStatus(`Saved — thanks, ${currentName}!`, 'success');
   document.getElementById('calendar-section').style.display = 'none';
   document.getElementById('name-input').value = '';
   document.getElementById('pass-input').value = '';
   currentName = '';
-  currentPass = '';
+  currentPassHash = '';
   localUnavail = {};
   refreshGrids();
 }
@@ -669,9 +592,9 @@ document.getElementById('admin-pw').addEventListener('keydown', e => {
 });
 
 async function loadAdminView() {
-  let data;
-  try { data = await fetchData(); } catch(e) { return; }
-  const people = data.people || {};
+  let people;
+  try { people = await fbGet('people'); } catch(e) { return; }
+  people = people || {};
   const names = Object.keys(people);
   const colors = ['#378ADD','#D85A30','#1D9E75','#D4537E','#7F77DD','#639922','#BA7517','#888780','#E24B4A','#0F6E56'];
 
@@ -683,15 +606,19 @@ async function loadAdminView() {
   names.forEach((name, i) => {
     const chip = document.createElement('div');
     chip.className = 'chip';
-    chip.innerHTML = `<span class="dot" style="background:${colors[i%colors.length]}"></span>${name}`;
+    const displayName = decodeURIComponent(name.replace(/%2E/g, '.'));
+    chip.innerHTML = `<span class="dot" style="background:${colors[i%colors.length]}"></span>${displayName}`;
     chipsEl.appendChild(chip);
   });
 
   const unavailByPerson = {};
-  names.forEach(n => { unavailByPerson[n] = people[n].unavail || {}; });
+  names.forEach(n => {
+    const displayName = decodeURIComponent(n.replace(/%2E/g, '.'));
+    unavailByPerson[displayName] = people[n].unavail || {};
+  });
 
-  renderWindows(unavailByPerson, names);
-  renderHeatmap(unavailByPerson, names);
+  renderWindows(unavailByPerson, Object.keys(unavailByPerson));
+  renderHeatmap(unavailByPerson, Object.keys(unavailByPerson));
 }
 
 function getAvail(unavailByPerson, names) {
