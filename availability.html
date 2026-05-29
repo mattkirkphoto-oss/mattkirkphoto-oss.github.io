@@ -7,234 +7,141 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #f9f8f6;
-    --bg-panel: #ffffff;
-    --bg-secondary: #f2f1ee;
-    --text: #1a1a18;
-    --text-secondary: #6b6a66;
-    --text-tertiary: #9e9d99;
-    --border: rgba(0,0,0,0.1);
-    --border-strong: rgba(0,0,0,0.2);
-    --green-bg: #EAF3DE;
-    --green-text: #27500A;
-    --green-border: #C0DD97;
-    --red-bg: #FCEBEB;
-    --red-text: #A32D2D;
-    --red-border: #F7C1C1;
-    --amber-bg: #FAEEDA;
-    --amber-text: #633806;
-    --amber-border: #FAC775;
-    --radius-md: 8px;
-    --radius-lg: 12px;
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#f9f8f6;--bg-panel:#ffffff;--bg-secondary:#f2f1ee;
+    --text:#1a1a18;--text-secondary:#6b6a66;--text-tertiary:#9e9d99;
+    --border:rgba(0,0,0,0.1);--border-strong:rgba(0,0,0,0.2);
+    --green-bg:#EAF3DE;--green-text:#27500A;--green-border:#C0DD97;
+    --red-bg:#FCEBEB;--red-text:#A32D2D;--red-border:#F7C1C1;
+    --amber-bg:#FAEEDA;--amber-text:#633806;--amber-border:#FAC775;
+    --blue-bg:#E6F1FB;--blue-text:#0C447C;--blue-border:#B5D4F4;
+    --radius-md:8px;--radius-lg:12px;
   }
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:2rem 1rem 4rem;}
+  .container{max-width:900px;margin:0 auto;}
+  .site-header{margin-bottom:2rem;}
+  .site-header h1{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:4px;}
+  .site-header p{font-size:22px;font-weight:300;}
+  .panel{background:var(--bg-panel);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1rem;}
+  .panel-title{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:1.25rem;}
+  .instruction{font-size:14px;color:var(--text-secondary);line-height:1.6;margin-bottom:1.25rem;}
+  .form-row{display:flex;gap:8px;align-items:center;margin-bottom:1rem;flex-wrap:wrap;}
+  input[type="text"],input[type="password"]{height:38px;padding:0 12px;border:0.5px solid var(--border-strong);border-radius:var(--radius-md);font-family:'DM Sans',sans-serif;font-size:14px;background:var(--bg);color:var(--text);outline:none;transition:border-color 0.15s;}
+  input:focus{border-color:#378ADD;box-shadow:0 0 0 3px rgba(55,138,221,0.12);}
+  input::placeholder{color:var(--text-tertiary);}
+  input.wide{min-width:200px;}input.narrow{min-width:150px;}
+  button{height:38px;padding:0 16px;border:0.5px solid var(--border-strong);border-radius:var(--radius-md);font-family:'DM Mono',monospace;font-size:12px;letter-spacing:0.05em;background:var(--bg-panel);color:var(--text);cursor:pointer;transition:background 0.1s,transform 0.08s;white-space:nowrap;}
+  button:hover{background:var(--bg-secondary);}
+  button:active{transform:scale(0.97);}
+  button.primary{background:var(--text);color:var(--bg-panel);border-color:var(--text);}
+  button.primary:hover{opacity:0.85;}
+  button.danger{color:var(--red-text);border-color:var(--red-border);}
+  button.danger:hover{background:var(--red-bg);}
+  button.small{height:28px;padding:0 10px;font-size:11px;}
+  button.amber{color:var(--amber-text);border-color:var(--amber-border);}
+  button.amber:hover{background:var(--amber-bg);}
+  .legend{display:flex;gap:16px;margin-bottom:1.25rem;font-size:13px;color:var(--text-secondary);align-items:center;}
+  .legend-dot{width:14px;height:14px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;}
+  .cal-wrapper{display:grid;grid-template-columns:1fr 1fr;gap:2rem;}
+  @media(max-width:560px){.cal-wrapper{grid-template-columns:1fr;}}
+  .month-title{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:10px;}
+  .weekday-header{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:3px;}
+  .weekday-header span{font-family:'DM Mono',monospace;font-size:10px;text-align:center;color:var(--text-tertiary);letter-spacing:0.04em;padding:2px 0;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;user-select:none;}
+  .day-cell{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;transition:transform 0.07s;border:0.5px solid transparent;font-family:'DM Mono',monospace;position:relative;}
+  .day-cell:active{transform:scale(0.88);}
+  .day-cell.empty{cursor:default;background:transparent!important;border-color:transparent!important;}
+  .day-cell.weekend{opacity:0.5;}
+  .day-cell.available{background:var(--green-bg);color:var(--green-text);border-color:var(--green-border);}
+  .day-cell.unavailable{background:var(--red-bg);color:var(--red-text);border-color:var(--red-border);}
+  .day-cell.highlight-window{outline:2px solid #378ADD;outline-offset:1px;z-index:1;}
+  .day-cell.clickable-heat{cursor:pointer;}
+  .day-cell.clickable-heat:hover{transform:scale(1.08);z-index:2;}
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    padding: 2rem 1rem 4rem;
-  }
 
-  .container { max-width: 860px; margin: 0 auto; }
+  /* Popup */
+  .popup-backdrop{display:none;position:fixed;inset:0;background:rgba(26,26,24,0.35);z-index:200;align-items:center;justify-content:center;}
+  .popup-backdrop.visible{display:flex;}
+  .popup{background:var(--bg-panel);border-radius:var(--radius-lg);border:0.5px solid var(--border);padding:1.5rem;max-width:420px;width:100%;margin:1rem;}
+  .popup h3{font-size:16px;font-weight:500;margin-bottom:0.75rem;}
+  .popup-close{float:right;background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-tertiary);line-height:1;padding:0;height:auto;}
+  .popup-close:hover{color:var(--text);}
+  .person-avail-list{display:flex;flex-direction:column;gap:4px;margin-top:0.75rem;}
+  .person-avail-row{display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 8px;border-radius:var(--radius-md);}
+  .person-avail-row.free{background:var(--green-bg);color:var(--green-text);}
+  .person-avail-row.busy{background:var(--red-bg);color:var(--red-text);}
+  .person-avail-row .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 
-  .site-header { margin-bottom: 2rem; }
-  .site-header h1 {
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-    margin-bottom: 4px;
-  }
-  .site-header p { font-size: 22px; font-weight: 300; }
+  .status-bar{display:none;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--radius-md);font-size:13px;margin-bottom:1rem;}
+  .status-bar.success{display:flex;background:var(--green-bg);color:var(--green-text);border:0.5px solid var(--green-border);}
+  .status-bar.error{display:flex;background:var(--red-bg);color:var(--red-text);border:0.5px solid var(--red-border);}
+  .status-bar.info{display:flex;background:var(--amber-bg);color:var(--amber-text);border:0.5px solid var(--amber-border);}
+  .hint{font-size:12px;color:var(--text-tertiary);font-family:'DM Mono',monospace;margin-top:-4px;margin-bottom:1rem;}
 
-  .panel {
-    background: var(--bg-panel);
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-  }
-
-  .panel-title {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-tertiary);
-    margin-bottom: 1.25rem;
-  }
-
-  .instruction {
-    font-size: 14px;
-    color: var(--text-secondary);
-    line-height: 1.6;
-    margin-bottom: 1.25rem;
-  }
-
-  .form-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-  }
-
-  input[type="text"], input[type="password"] {
-    height: 38px;
-    padding: 0 12px;
-    border: 0.5px solid var(--border-strong);
-    border-radius: var(--radius-md);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    background: var(--bg);
-    color: var(--text);
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  input:focus { border-color: #378ADD; box-shadow: 0 0 0 3px rgba(55,138,221,0.12); }
-  input::placeholder { color: var(--text-tertiary); }
-  input.wide { min-width: 200px; }
-  input.narrow { min-width: 150px; }
-
-  button {
-    height: 38px;
-    padding: 0 16px;
-    border: 0.5px solid var(--border-strong);
-    border-radius: var(--radius-md);
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 0.05em;
-    background: var(--bg-panel);
-    color: var(--text);
-    cursor: pointer;
-    transition: background 0.1s, transform 0.08s;
-    white-space: nowrap;
-  }
-  button:hover { background: var(--bg-secondary); }
-  button:active { transform: scale(0.97); }
-  button.primary { background: var(--text); color: var(--bg-panel); border-color: var(--text); }
-  button.primary:hover { opacity: 0.85; }
-  button.danger { color: var(--red-text); border-color: var(--red-border); }
-  button.danger:hover { background: var(--red-bg); }
-
-  .legend {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 1.25rem;
-    font-size: 13px;
-    color: var(--text-secondary);
-    align-items: center;
-  }
-  .legend-dot {
-    width: 14px; height: 14px; border-radius: 3px;
-    display: inline-block; margin-right: 5px; vertical-align: middle;
-  }
-
-  .cal-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
-  @media (max-width: 560px) { .cal-wrapper { grid-template-columns: 1fr; } }
-
-  .month-title {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px; font-weight: 500;
-    letter-spacing: 0.07em; text-transform: uppercase;
-    color: var(--text-secondary); margin-bottom: 10px;
-  }
-
-  .weekday-header { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 3px; }
-  .weekday-header span {
-    font-family: 'DM Mono', monospace; font-size: 10px;
-    text-align: center; color: var(--text-tertiary); letter-spacing: 0.04em; padding: 2px 0;
-  }
-
-  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; user-select: none; }
-
-  .day-cell {
-    aspect-ratio: 1; border-radius: 5px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; cursor: pointer;
-    transition: transform 0.07s;
-    border: 0.5px solid transparent;
-    font-family: 'DM Mono', monospace;
-  }
-  .day-cell:active { transform: scale(0.88); }
-  .day-cell.empty { cursor: default; background: transparent !important; border-color: transparent !important; }
-  .day-cell.weekend { opacity: 0.5; }
-  .day-cell.available { background: var(--green-bg); color: var(--green-text); border-color: var(--green-border); }
-  .day-cell.unavailable { background: var(--red-bg); color: var(--red-text); border-color: var(--red-border); }
-
-  #lock-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(249,248,246,0.94); z-index: 100;
-    align-items: center; justify-content: center;
-    flex-direction: column; gap: 12px; text-align: center; padding: 2rem;
-  }
-  #lock-overlay.visible { display: flex; }
-  #lock-overlay h2 { font-size: 18px; font-weight: 400; margin-bottom: 4px; }
-  #lock-overlay p { font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; }
-
-  .status-bar {
-    display: none; align-items: center; gap: 8px;
-    padding: 10px 14px; border-radius: var(--radius-md);
-    font-size: 13px; margin-bottom: 1rem;
-  }
-  .status-bar.success { display: flex; background: var(--green-bg); color: var(--green-text); border: 0.5px solid var(--green-border); }
-  .status-bar.error { display: flex; background: var(--red-bg); color: var(--red-text); border: 0.5px solid var(--red-border); }
-  .status-bar.info { display: flex; background: var(--amber-bg); color: var(--amber-text); border: 0.5px solid var(--amber-border); }
-
-  .hint { font-size: 12px; color: var(--text-tertiary); font-family: 'DM Mono', monospace; margin-top: -4px; margin-bottom: 1rem; }
-
-  .people-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1.25rem; }
-  .chip {
-    font-family: 'DM Mono', monospace; font-size: 11px;
-    padding: 4px 10px; border-radius: 20px;
-    background: var(--bg-secondary); border: 0.5px solid var(--border);
-    color: var(--text-secondary); display: flex; align-items: center; gap: 6px;
-  }
-  .chip .dot { width: 8px; height: 8px; border-radius: 50%; }
-
-  .tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; }
-  .tab {
-    font-family: 'DM Mono', monospace; font-size: 11px;
-    letter-spacing: 0.05em; text-transform: uppercase;
-    height: 32px; padding: 0 12px; cursor: pointer;
-    border-radius: var(--radius-md); border: 0.5px solid var(--border-strong);
-    background: transparent; color: var(--text-secondary); transition: all 0.1s;
-  }
-  .tab.active { background: var(--text); color: var(--bg-panel); border-color: var(--text); }
-
-  .windows-list { display: flex; flex-direction: column; gap: 6px; }
-  .window-item {
-    padding: 10px 14px; border-radius: var(--radius-md);
-    border: 0.5px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-    background: var(--bg-panel);
-  }
-  .window-item.all-free { background: var(--green-bg); border-color: var(--green-border); }
-  .window-date { font-family: 'DM Mono', monospace; font-size: 13px; }
-  .window-item.all-free .window-date { color: var(--green-text); }
-  .window-count { font-size: 12px; color: var(--text-secondary); }
-  .window-item.all-free .window-count { color: var(--green-text); font-weight: 500; }
-  .no-data { font-size: 13px; color: var(--text-tertiary); font-family: 'DM Mono', monospace; padding: 8px 0; }
-
-  #admin-section { margin-top: 3rem; padding-top: 2rem; border-top: 0.5px solid var(--border); }
-  #admin-panel { display: none; }
-  #admin-panel.visible { display: block; }
-  .divider { border: none; border-top: 0.5px solid var(--border); margin: 1.25rem 0; }
+  #admin-section{margin-top:3rem;padding-top:2rem;border-top:0.5px solid var(--border);}
+  #admin-panel{display:none;}
+  #admin-panel.visible{display:block;}
+  .people-list{display:flex;flex-direction:column;gap:6px;margin-bottom:1.25rem;}
+  .person-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:var(--radius-md);border:0.5px solid var(--border);background:var(--bg-panel);gap:8px;flex-wrap:wrap;}
+  .person-row.active-view{border-color:#378ADD;background:var(--blue-bg);}
+  .person-info{display:flex;align-items:center;gap:8px;font-size:13px;}
+  .person-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+  .person-actions{display:flex;gap:6px;flex-wrap:wrap;}
+  .tabs{display:flex;gap:4px;margin-bottom:1.25rem;flex-wrap:wrap;}
+  .tab{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.05em;text-transform:uppercase;height:32px;padding:0 12px;cursor:pointer;border-radius:var(--radius-md);border:0.5px solid var(--border-strong);background:transparent;color:var(--text-secondary);transition:all 0.1s;}
+  .tab.active{background:var(--text);color:var(--bg-panel);border-color:var(--text);}
+  .windows-list{display:flex;flex-direction:column;gap:6px;}
+  .window-item{padding:10px 14px;border-radius:var(--radius-md);border:0.5px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;background:var(--bg-panel);cursor:pointer;transition:background 0.1s;gap:8px;}
+  .window-item:hover{background:var(--bg-secondary);}
+  .window-item.all-free{background:var(--green-bg);border-color:var(--green-border);}
+  .window-item.all-free:hover{background:#d8eeca;}
+  .window-item.selected{outline:2px solid #378ADD;}
+  .window-date{font-family:'DM Mono',monospace;font-size:13px;}
+  .window-item.all-free .window-date{color:var(--green-text);}
+  .window-count{font-size:12px;color:var(--text-secondary);white-space:nowrap;}
+  .window-item.all-free .window-count{color:var(--green-text);font-weight:500;}
+  .no-data{font-size:13px;color:var(--text-tertiary);font-family:'DM Mono',monospace;padding:8px 0;}
+  .export-box{background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:var(--radius-md);padding:1rem;font-family:'DM Mono',monospace;font-size:12px;line-height:1.8;color:var(--text);white-space:pre-wrap;word-break:break-word;max-height:400px;overflow-y:auto;margin-bottom:1rem;}
+  .divider{border:none;border-top:0.5px solid var(--border);margin:1.25rem 0;}
+  .view-label{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-tertiary);letter-spacing:0.05em;margin-bottom:0.75rem;}
+  .reset-note{font-size:12px;color:var(--text-tertiary);font-family:'DM Mono',monospace;margin-top:4px;}
 </style>
 </head>
 <body>
 
-<div id="lock-overlay">
-  <h2>Someone else is filling this in</h2>
-  <p>The calendar is locked while another person is entering their availability.<br>Please check back in a few minutes.</p>
-  <button onclick="checkLockAndRetry()">Check again</button>
+<!-- Day detail popup -->
+<div class="popup-backdrop" id="day-popup">
+  <div class="popup">
+    <button class="popup-close" onclick="closePopup('day-popup')">✕</button>
+    <h3 id="day-popup-title"></h3>
+    <div class="person-avail-list" id="day-popup-list"></div>
+  </div>
+</div>
+
+<!-- Window detail popup -->
+<div class="popup-backdrop" id="window-popup">
+  <div class="popup">
+    <button class="popup-close" onclick="closePopup('window-popup')">✕</button>
+    <h3 id="window-popup-title"></h3>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:0.5rem" id="window-popup-sub"></p>
+    <div class="person-avail-list" id="window-popup-list"></div>
+  </div>
+</div>
+
+<!-- Reset passphrase popup -->
+<div class="popup-backdrop" id="reset-popup">
+  <div class="popup">
+    <button class="popup-close" onclick="closePopup('reset-popup')">✕</button>
+    <h3 id="reset-popup-title">Reset passphrase</h3>
+    <p style="font-size:13px;color:var(--text-secondary);margin:0.5rem 0 1rem">Set a new temporary passphrase for this person. Their availability data will not be affected.</p>
+    <div class="form-row" style="margin-bottom:0.5rem">
+      <input type="text" class="wide" id="reset-new-pass" placeholder="New passphrase…" maxlength="50" />
+      <button class="primary" onclick="confirmReset()">Set passphrase</button>
+    </div>
+    <p class="reset-note">Tell them this passphrase so they can log in and set their own.</p>
+    <p id="reset-status" style="font-size:13px;margin-top:0.75rem;display:none"></p>
+  </div>
 </div>
 
 <div class="container">
@@ -247,14 +154,13 @@
 
   <div class="panel">
     <p class="panel-title">Your availability</p>
-    <p class="instruction">Enter your name and a passphrase, then click <strong>Load</strong>. Click or drag days to mark when you're <strong style="color:var(--red-text)">unavailable</strong>. Everything starts green. Hit <strong>Save</strong> when done. Use the same name and passphrase to come back and edit.</p>
-
+    <p class="instruction">Enter your name and a passphrase, then click <strong>Load</strong>. Click or drag to mark days you're <strong style="color:var(--red-text)">unavailable</strong>. Everything starts green. Hit <strong>Save</strong> when done. Use the same name and passphrase to come back and edit.</p>
     <div class="form-row">
-      <input type="text" class="wide" id="name-input" placeholder="Your name…" maxlength="30" />
-      <input type="password" class="narrow" id="pass-input" placeholder="Passphrase…" maxlength="50" />
+      <input type="text" class="wide" id="name-input" placeholder="Your name…" maxlength="30"/>
+      <input type="password" class="narrow" id="pass-input" placeholder="Passphrase…" maxlength="50"/>
       <button onclick="loadPerson()">Load</button>
     </div>
-    <p class="hint">Pick any passphrase — you'll need it if you want to edit later.</p>
+    <p class="hint">Pick any passphrase — you'll need it to edit your response later.</p>
 
     <div id="calendar-section" style="display:none">
       <div class="legend">
@@ -281,10 +187,11 @@
     </div>
   </div>
 
+  <!-- ADMIN -->
   <div id="admin-section">
     <p class="panel-title" style="margin-bottom:0.75rem">Admin view</p>
     <div class="form-row">
-      <input type="password" class="narrow" id="admin-pw" placeholder="Admin password…" />
+      <input type="password" class="narrow" id="admin-pw" placeholder="Admin password…"/>
       <button onclick="unlockAdmin()">View results</button>
     </div>
     <p id="admin-pw-error" style="font-size:13px;color:var(--red-text);margin-top:-4px;display:none">Incorrect password.</p>
@@ -292,13 +199,21 @@
     <div id="admin-panel">
       <div class="panel" style="margin-top:1rem">
         <p class="panel-title">Responses</p>
-        <div class="people-chips" id="people-chips"></div>
+        <div class="people-list" id="people-list"></div>
+
         <div class="tabs">
           <button class="tab active" id="tab-windows" onclick="showTab('windows')">3-day windows</button>
           <button class="tab" id="tab-heatmap" onclick="showTab('heatmap')">Heatmap</button>
+          <button class="tab" id="tab-view" onclick="showTab('view')">View person</button>
+          <button class="tab" id="tab-export" onclick="showTab('export')">Export</button>
         </div>
-        <div id="view-windows"><div class="windows-list" id="windows-list"></div></div>
+
+        <div id="view-windows">
+          <div class="windows-list" id="windows-list"></div>
+        </div>
+
         <div id="view-heatmap" style="display:none">
+          <p style="font-size:12px;color:var(--text-tertiary);font-family:'DM Mono',monospace;margin-bottom:0.75rem">Click any day for a breakdown.</p>
           <div class="cal-wrapper">
             <div>
               <p class="month-title">August 2026</p>
@@ -312,390 +227,470 @@
             </div>
           </div>
         </div>
+
+        <div id="view-view" style="display:none">
+          <p class="view-label" id="view-person-label">Select a person above to view their calendar.</p>
+          <div id="person-cal-wrap" style="display:none">
+            <div class="cal-wrapper">
+              <div>
+                <p class="month-title">August 2026</p>
+                <div class="weekday-header"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+                <div class="cal-grid" id="aug-person"></div>
+              </div>
+              <div>
+                <p class="month-title">September 2026</p>
+                <div class="weekday-header"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+                <div class="cal-grid" id="sep-person"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-export" style="display:none">
+          <div class="export-box" id="export-box"></div>
+          <button onclick="copyExport()">Copy to clipboard</button>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-const DB_URL = 'https://availability-b8252-default-rtdb.europe-west1.firebasedatabase.app';
-const ADMIN_PW = 'admin123';
-const LOCK_TIMEOUT_MS = 5 * 60 * 1000;
+const DB_URL='https://availability-b8252-default-rtdb.europe-west1.firebasedatabase.app';
+const ADMIN_PW='admin123';
+const COLORS=['#378ADD','#D85A30','#1D9E75','#D4537E','#7F77DD','#639922','#BA7517','#888780','#E24B4A','#0F6E56'];
+const DEFAULT_RESET_PASS='changeme';
 
-let localUnavail = {};
-let currentName = '';
-let currentPassHash = '';
-let isDragging = false;
-let dragValue = null;
-let lockToken = null;
-let heartbeatInterval = null;
+let localUnavail={};
+let currentName='';
+let currentPassHash='';
+let isDragging=false;
+let dragValue=null;
+let adminData={};
+let viewingPerson=null;
+let selectedWindowIdx=null;
+let resetTargetName=null;
 
-function dateKey(y, m, d) {
-  return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-}
-function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
-function firstDayOfWeek(y, m) {
-  const d = new Date(y, m-1, 1).getDay();
-  return d === 0 ? 6 : d - 1;
-}
-function isWeekend(y, m, d) {
-  const dow = new Date(y, m-1, d).getDay();
-  return dow === 0 || dow === 6;
-}
-function getAllDays() {
-  const days = [];
-  for (let d = 1; d <= daysInMonth(2026,8); d++) days.push(dateKey(2026,8,d));
-  for (let d = 1; d <= daysInMonth(2026,9); d++) days.push(dateKey(2026,9,d));
+function dateKey(y,m,d){return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}
+function daysInMonth(y,m){return new Date(y,m,0).getDate();}
+function firstDayOfWeek(y,m){const d=new Date(y,m-1,1).getDay();return d===0?6:d-1;}
+function isWeekend(y,m,d){const dow=new Date(y,m-1,d).getDay();return dow===0||dow===6;}
+function getAllDays(){
+  const days=[];
+  for(let d=1;d<=daysInMonth(2026,8);d++) days.push(dateKey(2026,8,d));
+  for(let d=1;d<=daysInMonth(2026,9);d++) days.push(dateKey(2026,9,d));
   return days;
 }
-function formatDate(key) {
-  const [y,m,d] = key.split('-').map(Number);
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  const dt = new Date(y, m-1, d);
-  const dow = dt.getDay();
+function formatDate(key){
+  const [y,m,d]=key.split('-').map(Number);
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dayNames=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const dt=new Date(y,m-1,d);const dow=dt.getDay();
+  return `${dayNames[dow===0?6:dow-1]} ${d} ${months[m-1]}`;
+}
+function formatDateLong(key){
+  const [y,m,d]=key.split('-').map(Number);
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dayNames=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const dt=new Date(y,m-1,d);const dow=dt.getDay();
   return `${dayNames[dow===0?6:dow-1]} ${d} ${months[m-1]}`;
 }
 
-async function hashPass(pass) {
-  const enc = new TextEncoder().encode(pass.toLowerCase().trim());
-  const buf = await crypto.subtle.digest('SHA-256', enc);
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+async function hashPass(pass){
+  const enc=new TextEncoder().encode(pass.toLowerCase().trim());
+  const buf=await crypto.subtle.digest('SHA-256',enc);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
+function encodeKey(name){return encodeURIComponent(name).replace(/\./g,'%2E');}
+function decodeKey(key){return decodeURIComponent(key.replace(/%2E/g,'.'));}
 
-async function fbGet(path) {
-  const r = await fetch(`${DB_URL}/${path}.json`);
-  if (!r.ok) throw new Error('Firebase read failed: ' + r.status);
+async function fbGet(path){
+  const r=await fetch(`${DB_URL}/${path}.json`);
+  if(!r.ok) throw new Error('Read failed: '+r.status);
   return r.json();
 }
-
-async function fbSet(path, data) {
-  const r = await fetch(`${DB_URL}/${path}.json`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
-  if (!r.ok) throw new Error('Firebase write failed: ' + r.status);
+async function fbSet(path,data){
+  const r=await fetch(`${DB_URL}/${path}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  if(!r.ok) throw new Error('Write failed: '+r.status);
   return r.json();
 }
-
-function showStatus(msg, type) {
-  const bar = document.getElementById('status-bar');
-  bar.textContent = msg;
-  bar.className = 'status-bar ' + type;
-  if (type === 'success') setTimeout(() => { bar.className = 'status-bar'; }, 5000);
+async function fbDelete(path){
+  const r=await fetch(`${DB_URL}/${path}.json`,{method:'DELETE'});
+  if(!r.ok) throw new Error('Delete failed: '+r.status);
 }
 
-async function loadPerson() {
-  const name = document.getElementById('name-input').value.trim();
-  const pass = document.getElementById('pass-input').value;
-  if (!name) { showStatus('Please enter your name.', 'error'); return; }
-  if (!pass) { showStatus('Please enter a passphrase.', 'error'); return; }
+function showStatus(msg,type){
+  const bar=document.getElementById('status-bar');
+  bar.textContent=msg;bar.className='status-bar '+type;
+  if(type==='success') setTimeout(()=>{bar.className='status-bar';},5000);
+}
 
-  showStatus('Loading…', 'info');
-
-  let lock, existing;
-  try {
-    lock = await fbGet('lock');
-    existing = await fbGet(`people/${encodeFirebaseKey(name)}`);
-  } catch(e) {
-    showStatus('Could not connect. Please try again.', 'error');
-    console.error(e);
-    return;
-  }
-
-  const now = Date.now();
-  if (lock && lock.token && lock.name !== name && (now - lock.since) < LOCK_TIMEOUT_MS) {
-    document.getElementById('lock-overlay').classList.add('visible');
-    showStatus('', 'info');
-    return;
-  }
-
-  const hash = await hashPass(pass);
-
-  if (existing) {
-    if (existing.passHash !== hash) {
-      showStatus('Incorrect passphrase for that name. Try again.', 'error');
-      return;
-    }
-    localUnavail = existing.unavail || {};
-  } else {
-    localUnavail = {};
-  }
-
-  lockToken = Math.random().toString(36).slice(2);
-  try {
-    await fbSet('lock', { token: lockToken, name, since: now });
-  } catch(e) {
-    showStatus('Could not start session. Try again.', 'error');
-    return;
-  }
-
-  currentName = name;
-  currentPassHash = hash;
+async function loadPerson(){
+  const name=document.getElementById('name-input').value.trim();
+  const pass=document.getElementById('pass-input').value;
+  if(!name){showStatus('Please enter your name.','error');return;}
+  if(!pass){showStatus('Please enter a passphrase.','error');return;}
+  showStatus('Loading…','info');
+  let existing;
+  try{existing=await fbGet(`people/${encodeKey(name)}`);}
+  catch(e){showStatus('Could not connect. Please try again.','error');return;}
+  const hash=await hashPass(pass);
+  if(existing){
+    if(existing.passHash!==hash){showStatus('Incorrect passphrase for that name.','error');return;}
+    localUnavail=existing.unavail||{};
+  } else {localUnavail={};}
+  currentName=name;currentPassHash=hash;
   refreshGrids();
-  document.getElementById('calendar-section').style.display = 'block';
-
-  if (existing) {
-    showStatus(`Welcome back, ${name}. Your previous selections are loaded — edit and save again when done.`, 'success');
-  } else {
-    showStatus(`Hi ${name} — mark your unavailable days then hit Save.`, 'success');
-  }
-
-  startHeartbeat();
+  document.getElementById('calendar-section').style.display='block';
+  showStatus(existing?`Loaded your previous selections, ${name}. Edit and save when done.`:`Ready — mark the days you can't make it, then hit Save.`,'success');
 }
 
-function encodeFirebaseKey(name) {
-  return encodeURIComponent(name).replace(/\./g, '%2E');
-}
-
-function startHeartbeat() {
-  clearInterval(heartbeatInterval);
-  heartbeatInterval = setInterval(async () => {
-    try {
-      const lock = await fbGet('lock');
-      if (lock && lock.token === lockToken) {
-        await fbSet('lock', { ...lock, since: Date.now() });
-      }
-    } catch(e) {}
-  }, 60000);
-}
-
-async function releaseLock() {
-  clearInterval(heartbeatInterval);
-  try {
-    const lock = await fbGet('lock');
-    if (lock && lock.token === lockToken) {
-      await fbSet('lock', null);
-    }
-  } catch(e) {}
-}
-
-async function savePerson() {
-  if (!currentName) return;
-  showStatus('Saving…', 'info');
-
-  try {
-    await fbSet(`people/${encodeFirebaseKey(currentName)}`, {
-      passHash: currentPassHash,
-      unavail: { ...localUnavail }
-    });
-    await fbSet('lock', null);
-  } catch(e) {
-    showStatus('Save failed. Try again.', 'error');
-    return;
-  }
-
-  lockToken = null;
-  clearInterval(heartbeatInterval);
-  showStatus(`Saved — thanks, ${currentName}!`, 'success');
-  document.getElementById('calendar-section').style.display = 'none';
-  document.getElementById('name-input').value = '';
-  document.getElementById('pass-input').value = '';
-  currentName = '';
-  currentPassHash = '';
-  localUnavail = {};
+async function savePerson(){
+  if(!currentName) return;
+  showStatus('Saving…','info');
+  try{
+    await fbSet(`people/${encodeKey(currentName)}`,{passHash:currentPassHash,unavail:{...localUnavail}});
+  } catch(e){showStatus('Save failed. Try again.','error');return;}
+  showStatus(`Saved — thanks, ${currentName}!`,'success');
+  document.getElementById('calendar-section').style.display='none';
+  document.getElementById('name-input').value='';
+  document.getElementById('pass-input').value='';
+  currentName='';currentPassHash='';localUnavail={};
   refreshGrids();
 }
+function clearPerson(){localUnavail={};refreshGrids();}
 
-function clearPerson() {
-  localUnavail = {};
-  refreshGrids();
-}
-
-function refreshGrids() {
-  ['aug-grid','sep-grid'].forEach(id => {
-    document.querySelectorAll(`#${id} .day-cell:not(.empty)`).forEach(cell => {
+function refreshGrids(){
+  ['aug-grid','sep-grid'].forEach(id=>{
+    document.querySelectorAll(`#${id} .day-cell:not(.empty)`).forEach(cell=>{
       cell.classList.remove('available','unavailable');
-      cell.classList.add(localUnavail[cell.dataset.key] ? 'unavailable' : 'available');
+      cell.classList.add(localUnavail[cell.dataset.key]?'unavailable':'available');
     });
   });
 }
 
-function buildGrid(gridId, year, month) {
-  const grid = document.getElementById(gridId);
-  grid.innerHTML = '';
-  const fd = firstDayOfWeek(year, month);
-  const total = daysInMonth(year, month);
-
-  for (let i = 0; i < fd; i++) {
-    const e = document.createElement('div');
-    e.className = 'day-cell empty';
-    grid.appendChild(e);
-  }
-
-  for (let d = 1; d <= total; d++) {
-    const key = dateKey(year, month, d);
-    const cell = document.createElement('div');
-    cell.className = 'day-cell available';
-    cell.textContent = d;
-    cell.dataset.key = key;
-    if (isWeekend(year, month, d)) cell.classList.add('weekend');
-
-    cell.addEventListener('mousedown', e => {
-      e.preventDefault();
-      if (!currentName) return;
-      isDragging = true;
-      dragValue = !localUnavail[key];
-      localUnavail[key] = dragValue;
-      refreshGrids();
-    });
-    cell.addEventListener('mouseover', () => {
-      if (isDragging && currentName) { localUnavail[key] = dragValue; refreshGrids(); }
-    });
-    cell.addEventListener('touchstart', e => {
-      e.preventDefault();
-      if (!currentName) return;
-      isDragging = true;
-      dragValue = !localUnavail[key];
-      localUnavail[key] = dragValue;
-      refreshGrids();
-    }, { passive: false });
-    cell.addEventListener('touchmove', e => {
-      e.preventDefault();
-      if (!isDragging || !currentName) return;
-      const t = e.touches[0];
-      const el = document.elementFromPoint(t.clientX, t.clientY);
-      if (el && el.dataset.key) { localUnavail[el.dataset.key] = dragValue; refreshGrids(); }
-    }, { passive: false });
-
+function buildGrid(gridId,year,month,interactive){
+  const grid=document.getElementById(gridId);
+  grid.innerHTML='';
+  const fd=firstDayOfWeek(year,month);const total=daysInMonth(year,month);
+  for(let i=0;i<fd;i++){const e=document.createElement('div');e.className='day-cell empty';grid.appendChild(e);}
+  for(let d=1;d<=total;d++){
+    const key=dateKey(year,month,d);
+    const cell=document.createElement('div');
+    cell.className='day-cell available';cell.textContent=d;cell.dataset.key=key;
+    if(isWeekend(year,month,d)) cell.classList.add('weekend');
+    if(interactive){
+      cell.addEventListener('mousedown',e=>{e.preventDefault();if(!currentName) return;isDragging=true;dragValue=!localUnavail[key];localUnavail[key]=dragValue;refreshGrids();});
+      cell.addEventListener('mouseover',()=>{if(isDragging&&currentName){localUnavail[key]=dragValue;refreshGrids();}});
+      cell.addEventListener('touchstart',e=>{e.preventDefault();if(!currentName) return;isDragging=true;dragValue=!localUnavail[key];localUnavail[key]=dragValue;refreshGrids();},{passive:false});
+      cell.addEventListener('touchmove',e=>{e.preventDefault();if(!isDragging||!currentName) return;const t=e.touches[0];const el=document.elementFromPoint(t.clientX,t.clientY);if(el&&el.dataset.key){localUnavail[el.dataset.key]=dragValue;refreshGrids();}},{passive:false});
+    }
     grid.appendChild(cell);
   }
 }
 
-document.addEventListener('mouseup', () => { isDragging = false; });
-document.addEventListener('touchend', () => { isDragging = false; });
-window.addEventListener('beforeunload', () => { if (lockToken) releaseLock(); });
+document.addEventListener('mouseup',()=>{isDragging=false;});
+document.addEventListener('touchend',()=>{isDragging=false;});
+document.getElementById('pass-input').addEventListener('keydown',e=>{if(e.key==='Enter') loadPerson();});
+document.getElementById('name-input').addEventListener('keydown',e=>{if(e.key==='Enter') document.getElementById('pass-input').focus();});
 
-document.getElementById('pass-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') loadPerson();
-});
-document.getElementById('name-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('pass-input').focus();
+// Popups
+function closePopup(id){document.getElementById(id).classList.remove('visible');}
+document.querySelectorAll('.popup-backdrop').forEach(el=>{
+  el.addEventListener('click',e=>{if(e.target===el) el.classList.remove('visible');});
 });
 
-function checkLockAndRetry() {
-  document.getElementById('lock-overlay').classList.remove('visible');
-  loadPerson();
+function showDayPopup(key){
+  const names=Object.keys(adminData);
+  document.getElementById('day-popup-title').textContent=formatDateLong(key);
+  const list=document.getElementById('day-popup-list');
+  list.innerHTML='';
+  const free=[],busy=[];
+  names.forEach((n,i)=>{if(adminData[n][key]) busy.push({n,i});else free.push({n,i});});
+  if(free.length){
+    const hdr=document.createElement('p');
+    hdr.style.cssText="font-size:11px;font-family:'DM Mono',monospace;color:var(--text-tertiary);margin-bottom:4px;letter-spacing:0.05em;text-transform:uppercase";
+    hdr.textContent='Available';list.appendChild(hdr);
+    free.forEach(({n,i})=>{const row=document.createElement('div');row.className='person-avail-row free';row.innerHTML=`<span class="dot" style="background:${COLORS[i%COLORS.length]}"></span>${n}`;list.appendChild(row);});
+  }
+  if(busy.length){
+    const hdr=document.createElement('p');
+    hdr.style.cssText="font-size:11px;font-family:'DM Mono',monospace;color:var(--text-tertiary);margin-bottom:4px;margin-top:8px;letter-spacing:0.05em;text-transform:uppercase";
+    hdr.textContent='Unavailable';list.appendChild(hdr);
+    busy.forEach(({n,i})=>{const row=document.createElement('div');row.className='person-avail-row busy';row.innerHTML=`<span class="dot" style="background:${COLORS[i%COLORS.length]}"></span>${n}`;list.appendChild(row);});
+  }
+  document.getElementById('day-popup').classList.add('visible');
 }
 
-function unlockAdmin() {
-  const pw = document.getElementById('admin-pw').value;
-  const errEl = document.getElementById('admin-pw-error');
-  if (pw !== ADMIN_PW) { errEl.style.display = 'block'; return; }
-  errEl.style.display = 'none';
+function showWindowPopup(w){
+  const names=Object.keys(adminData);
+  document.getElementById('window-popup-title').textContent=`${formatDate(w.d1)} – ${formatDate(w.d3)}`;
+  document.getElementById('window-popup-sub').textContent=`${w.minFree} of ${names.length} people free for all 3 days`;
+  const list=document.getElementById('window-popup-list');
+  list.innerHTML='';
+  const free=[],busy=[];
+  names.forEach((n,i)=>{
+    const unavailAny=adminData[n][w.d1]||adminData[n][w.d2]||adminData[n][w.d3];
+    if(unavailAny) busy.push({n,i,days:[w.d1,w.d2,w.d3].filter(d=>adminData[n][d]).map(formatDate)});
+    else free.push({n,i});
+  });
+  if(free.length){
+    const hdr=document.createElement('p');
+    hdr.style.cssText="font-size:11px;font-family:'DM Mono',monospace;color:var(--text-tertiary);margin-bottom:4px;letter-spacing:0.05em;text-transform:uppercase";
+    hdr.textContent='Free all 3 days';list.appendChild(hdr);
+    free.forEach(({n,i})=>{const row=document.createElement('div');row.className='person-avail-row free';row.innerHTML=`<span class="dot" style="background:${COLORS[i%COLORS.length]}"></span>${n}`;list.appendChild(row);});
+  }
+  if(busy.length){
+    const hdr=document.createElement('p');
+    hdr.style.cssText="font-size:11px;font-family:'DM Mono',monospace;color:var(--text-tertiary);margin-bottom:4px;margin-top:8px;letter-spacing:0.05em;text-transform:uppercase";
+    hdr.textContent='Unavailable';list.appendChild(hdr);
+    busy.forEach(({n,i,days})=>{const row=document.createElement('div');row.className='person-avail-row busy';row.innerHTML=`<span class="dot" style="background:${COLORS[i%COLORS.length]}"></span><span>${n}</span><span style="font-size:11px;margin-left:auto;font-family:'DM Mono',monospace">${days.join(', ')}</span>`;list.appendChild(row);});
+  }
+  document.getElementById('window-popup').classList.add('visible');
+}
+
+function openResetPopup(name){
+  resetTargetName=name;
+  document.getElementById('reset-popup-title').textContent=`Reset passphrase — ${name}`;
+  document.getElementById('reset-new-pass').value=DEFAULT_RESET_PASS;
+  document.getElementById('reset-status').style.display='none';
+  document.getElementById('reset-popup').classList.add('visible');
+}
+async function confirmReset(){
+  if(!resetTargetName) return;
+  const newPass=document.getElementById('reset-new-pass').value.trim();
+  if(!newPass){document.getElementById('reset-status').textContent='Enter a passphrase.';document.getElementById('reset-status').style.display='block';return;}
+  const hash=await hashPass(newPass);
+  try{
+    const existing=await fbGet(`people/${encodeKey(resetTargetName)}`);
+    if(!existing) throw new Error('Not found');
+    await fbSet(`people/${encodeKey(resetTargetName)}`,{...existing,passHash:hash});
+    const s=document.getElementById('reset-status');
+    s.style.cssText='display:block;color:var(--green-text);font-size:13px;margin-top:0.75rem';
+    s.textContent=`Done. Tell ${resetTargetName} their new passphrase is: "${newPass}"`;
+  } catch(e){
+    const s=document.getElementById('reset-status');
+    s.style.cssText='display:block;color:var(--red-text);font-size:13px;margin-top:0.75rem';
+    s.textContent='Failed. Try again.';
+  }
+}
+
+// Admin
+function unlockAdmin(){
+  const pw=document.getElementById('admin-pw').value;
+  const errEl=document.getElementById('admin-pw-error');
+  if(pw!==ADMIN_PW){errEl.style.display='block';return;}
+  errEl.style.display='none';
   document.getElementById('admin-panel').classList.add('visible');
   loadAdminView();
 }
-document.getElementById('admin-pw').addEventListener('keydown', e => {
-  if (e.key === 'Enter') unlockAdmin();
-});
+document.getElementById('admin-pw').addEventListener('keydown',e=>{if(e.key==='Enter') unlockAdmin();});
 
-async function loadAdminView() {
+async function loadAdminView(){
   let people;
-  try { people = await fbGet('people'); } catch(e) { return; }
-  people = people || {};
-  const names = Object.keys(people);
-  const colors = ['#378ADD','#D85A30','#1D9E75','#D4537E','#7F77DD','#639922','#BA7517','#888780','#E24B4A','#0F6E56'];
-
-  const chipsEl = document.getElementById('people-chips');
-  chipsEl.innerHTML = '';
-  if (names.length === 0) {
-    chipsEl.innerHTML = '<span class="no-data">No responses yet.</span>';
-  }
-  names.forEach((name, i) => {
-    const chip = document.createElement('div');
-    chip.className = 'chip';
-    const displayName = decodeURIComponent(name.replace(/%2E/g, '.'));
-    chip.innerHTML = `<span class="dot" style="background:${colors[i%colors.length]}"></span>${displayName}`;
-    chipsEl.appendChild(chip);
-  });
-
-  const unavailByPerson = {};
-  names.forEach(n => {
-    const displayName = decodeURIComponent(n.replace(/%2E/g, '.'));
-    unavailByPerson[displayName] = people[n].unavail || {};
-  });
-
-  renderWindows(unavailByPerson, Object.keys(unavailByPerson));
-  renderHeatmap(unavailByPerson, Object.keys(unavailByPerson));
+  try{people=await fbGet('people');}catch(e){return;}
+  people=people||{};
+  adminData={};
+  Object.keys(people).forEach(k=>{adminData[decodeKey(k)]=people[k].unavail||{};});
+  renderPeopleList();
+  const names=Object.keys(adminData);
+  renderWindows(adminData,names);
+  renderHeatmap(adminData,names);
+  renderExport(adminData,names);
+  if(viewingPerson&&adminData[viewingPerson]) renderPersonCal(viewingPerson);
 }
 
-function getAvail(unavailByPerson, names) {
-  const result = {};
-  getAllDays().forEach(key => {
-    let free = 0;
-    names.forEach(n => { if (!unavailByPerson[n][key]) free++; });
-    result[key] = free;
-  });
-  return result;
-}
-
-function renderWindows(unavailByPerson, names) {
-  const allDays = getAllDays();
-  const avail = getAvail(unavailByPerson, names);
-  const total = names.length;
-  const el = document.getElementById('windows-list');
-  el.innerHTML = '';
-
-  if (total === 0) { el.innerHTML = '<p class="no-data">No responses yet.</p>'; return; }
-
-  const windows = [];
-  for (let i = 0; i <= allDays.length - 3; i++) {
-    const d1 = allDays[i], d2 = allDays[i+1], d3 = allDays[i+2];
-    windows.push({ d1, d2, d3, minFree: Math.min(avail[d1], avail[d2], avail[d3]) });
-  }
-  windows.sort((a,b) => b.minFree - a.minFree);
-  windows.slice(0, 15).forEach(w => {
-    const item = document.createElement('div');
-    item.className = 'window-item' + (w.minFree === total ? ' all-free' : '');
-    item.innerHTML = `<span class="window-date">${formatDate(w.d1)} – ${formatDate(w.d3)}</span><span class="window-count">${w.minFree === total ? 'Everyone free ✓' : `${w.minFree} / ${total} free`}</span>`;
-    el.appendChild(item);
+function renderPeopleList(){
+  const el=document.getElementById('people-list');
+  el.innerHTML='';
+  const names=Object.keys(adminData);
+  if(names.length===0){el.innerHTML='<p class="no-data">No responses yet.</p>';return;}
+  names.forEach((name,i)=>{
+    const row=document.createElement('div');
+    row.className='person-row'+(viewingPerson===name?' active-view':'');
+    const unavailCount=Object.values(adminData[name]).filter(v=>v).length;
+    const safeName=name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    row.innerHTML=`
+      <div class="person-info">
+        <span class="person-dot" style="background:${COLORS[i%COLORS.length]}"></span>
+        <span>${name}</span>
+        <span style="color:var(--text-tertiary);font-size:12px;font-family:'DM Mono',monospace">${unavailCount} day${unavailCount!==1?'s':''} unavailable</span>
+      </div>
+      <div class="person-actions">
+        <button class="small" onclick="viewPerson('${safeName}')">View</button>
+        <button class="small amber" onclick="openResetPopup('${safeName}')">Reset pass</button>
+        <button class="small danger" onclick="deletePerson('${safeName}')">Delete</button>
+      </div>`;
+    el.appendChild(row);
   });
 }
 
-function renderHeatmap(unavailByPerson, names) {
-  [['aug-heatmap',8],['sep-heatmap',9]].forEach(([id, month]) => {
-    const grid = document.getElementById(id);
-    grid.innerHTML = '';
-    const fd = firstDayOfWeek(2026, month);
-    const total = daysInMonth(2026, month);
-    const avail = getAvail(unavailByPerson, names);
-    const n = names.length || 1;
+function viewPerson(name){
+  viewingPerson=name;showTab('view');renderPeopleList();renderPersonCal(name);
+}
 
-    for (let i = 0; i < fd; i++) {
-      const e = document.createElement('div'); e.className = 'day-cell empty'; grid.appendChild(e);
-    }
-    for (let d = 1; d <= total; d++) {
-      const key = dateKey(2026, month, d);
-      const ratio = avail[key] / n;
-      const cell = document.createElement('div');
-      cell.className = 'day-cell' + (isWeekend(2026,month,d) ? ' weekend' : '');
-      cell.textContent = d;
-      const r = Math.round(252 - ratio * 18);
-      const g = Math.round(235 - ratio * (235-243));
-      const b = Math.round(235 - ratio * (235-222));
-      const tr = Math.round(247 - ratio * (247-39));
-      const tg = Math.round(193 - ratio * (193-80));
-      const tb = Math.round(193 - ratio * (193-10));
-      cell.style.background = `rgb(${r},${g},${b})`;
-      cell.style.color = `rgb(${tr},${tg},${tb})`;
-      cell.style.borderColor = `rgba(${tr},${tg},${tb},0.3)`;
-      cell.title = `${avail[key]}/${n} free`;
+function renderPersonCal(name){
+  const unavail=adminData[name]||{};
+  document.getElementById('view-person-label').textContent=`${name}'s availability`;
+  document.getElementById('person-cal-wrap').style.display='block';
+  ['aug-person','sep-person'].forEach((id,mi)=>{
+    const month=mi===0?8:9;
+    const grid=document.getElementById(id);grid.innerHTML='';
+    const fd=firstDayOfWeek(2026,month);const total=daysInMonth(2026,month);
+    for(let i=0;i<fd;i++){const e=document.createElement('div');e.className='day-cell empty';grid.appendChild(e);}
+    for(let d=1;d<=total;d++){
+      const key=dateKey(2026,month,d);
+      const cell=document.createElement('div');
+      cell.className='day-cell'+(isWeekend(2026,month,d)?' weekend':'');
+      cell.classList.add(unavail[key]?'unavailable':'available');
+      cell.textContent=d;cell.dataset.key=key;
       grid.appendChild(cell);
     }
   });
 }
 
-function showTab(tab) {
-  document.getElementById('view-windows').style.display = tab === 'windows' ? 'block' : 'none';
-  document.getElementById('view-heatmap').style.display = tab === 'heatmap' ? 'block' : 'none';
-  document.getElementById('tab-windows').classList.toggle('active', tab === 'windows');
-  document.getElementById('tab-heatmap').classList.toggle('active', tab === 'heatmap');
+async function deletePerson(name){
+  if(!confirm(`Delete ${name}'s response? This cannot be undone.`)) return;
+  try{await fbDelete(`people/${encodeKey(name)}`);}
+  catch(e){alert('Delete failed. Try again.');return;}
+  if(viewingPerson===name){
+    viewingPerson=null;
+    document.getElementById('person-cal-wrap').style.display='none';
+    document.getElementById('view-person-label').textContent='Select a person above to view their calendar.';
+  }
+  await loadAdminView();
 }
 
-buildGrid('aug-grid', 2026, 8);
-buildGrid('sep-grid', 2026, 9);
+function getAvail(unavailByPerson,names){
+  const result={};
+  getAllDays().forEach(key=>{
+    let free=0;names.forEach(n=>{if(!unavailByPerson[n][key]) free++;});
+    result[key]=free;
+  });
+  return result;
+}
+
+function renderWindows(unavailByPerson,names){
+  const allDays=getAllDays();
+  const avail=getAvail(unavailByPerson,names);
+  const total=names.length;
+  const el=document.getElementById('windows-list');
+  el.innerHTML='';
+  if(total===0){el.innerHTML='<p class="no-data">No responses yet.</p>';return;}
+  const windows=[];
+  for(let i=0;i<=allDays.length-3;i++){
+    const d1=allDays[i],d2=allDays[i+1],d3=allDays[i+2];
+    windows.push({d1,d2,d3,minFree:Math.min(avail[d1],avail[d2],avail[d3])});
+  }
+  windows.sort((a,b)=>b.minFree-a.minFree);
+  windows.slice(0,15).forEach((w,idx)=>{
+    const item=document.createElement('div');
+    item.className='window-item'+(w.minFree===total?' all-free':'')+(selectedWindowIdx===idx?' selected':'');
+    const whoOut=w.minFree<total?names.filter(n=>unavailByPerson[n][w.d1]||unavailByPerson[n][w.d2]||unavailByPerson[n][w.d3]).join(', '):'';
+    item.innerHTML=`
+      <div>
+        <div class="window-date">${formatDate(w.d1)} – ${formatDate(w.d3)}</div>
+        ${whoOut?`<div style="font-size:11px;color:var(--text-tertiary);font-family:'DM Mono',monospace;margin-top:2px">Away: ${whoOut}</div>`:''}
+      </div>
+      <span class="window-count">${w.minFree===total?'Everyone free ✓':`${w.minFree} / ${total} free`}</span>`;
+    item.addEventListener('click',()=>{selectedWindowIdx=idx;highlightWindow(w.d1,w.d2,w.d3);renderWindows(unavailByPerson,names);showWindowPopup(w);});
+    el.appendChild(item);
+  });
+}
+
+function highlightWindow(d1,d2,d3){
+  const keys=new Set([d1,d2,d3]);
+  ['aug-heatmap','sep-heatmap'].forEach(id=>{
+    document.querySelectorAll(`#${id} .day-cell:not(.empty)`).forEach(cell=>{
+      cell.classList.toggle('highlight-window',keys.has(cell.dataset.key));
+    });
+  });
+}
+
+function renderHeatmap(unavailByPerson,names){
+  [['aug-heatmap',8],['sep-heatmap',9]].forEach(([id,month])=>{
+    const grid=document.getElementById(id);grid.innerHTML='';
+    const fd=firstDayOfWeek(2026,month);const total=daysInMonth(2026,month);
+    const avail=getAvail(unavailByPerson,names);const n=names.length||1;
+    for(let i=0;i<fd;i++){const e=document.createElement('div');e.className='day-cell empty';grid.appendChild(e);}
+    for(let d=1;d<=total;d++){
+      const key=dateKey(2026,month,d);
+      const ratio=avail[key]/n;
+      const cell=document.createElement('div');
+      cell.className='day-cell clickable-heat'+(isWeekend(2026,month,d)?' weekend':'');
+      cell.textContent=d;cell.dataset.key=key;
+      const r=Math.round(252-ratio*18);const g=Math.round(235-ratio*(235-243));const b=Math.round(235-ratio*(235-222));
+      const tr=Math.round(247-ratio*(247-39));const tg=Math.round(193-ratio*(193-80));const tb=Math.round(193-ratio*(193-10));
+      cell.style.background=`rgb(${r},${g},${b})`;cell.style.color=`rgb(${tr},${tg},${tb})`;cell.style.borderColor=`rgba(${tr},${tg},${tb},0.3)`;
+      cell.title=`${avail[key]}/${n} free — click for details`;
+      cell.addEventListener('click',()=>showDayPopup(key));
+      grid.appendChild(cell);
+    }
+  });
+}
+
+function renderExport(unavailByPerson,names){
+  const allDays=getAllDays();
+  const avail=getAvail(unavailByPerson,names);
+  const total=names.length;
+  let out='';
+  out+=`AVAILABILITY SUMMARY — AUG / SEP 2026\n`;
+  out+=`Generated: ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}\n`;
+  out+=`Respondents (${total}): ${names.join(', ')}\n\n`;
+  const windows=[];
+  for(let i=0;i<=allDays.length-3;i++){
+    const d1=allDays[i],d2=allDays[i+1],d3=allDays[i+2];
+    windows.push({d1,d2,d3,minFree:Math.min(avail[d1],avail[d2],avail[d3])});
+  }
+  windows.sort((a,b)=>b.minFree-a.minFree);
+  out+=`TOP 3-DAY WINDOWS (best first):\n`;
+  windows.slice(0,10).forEach((w,i)=>{
+    const whoOut=names.filter(n=>unavailByPerson[n][w.d1]||unavailByPerson[n][w.d2]||unavailByPerson[n][w.d3]);
+    const status=w.minFree===total?'ALL FREE':whoOut.length===1?`${whoOut[0]} unavailable`:`${whoOut.join(', ')} unavailable`;
+    out+=`${i+1}. ${formatDateLong(w.d1)} – ${formatDateLong(w.d3)} [${w.minFree}/${total} free] — ${status}\n`;
+  });
+  out+=`\nINDIVIDUAL UNAVAILABILITY:\n`;
+  names.forEach(name=>{
+    const unavailDays=allDays.filter(k=>unavailByPerson[name][k]);
+    if(unavailDays.length===0){out+=`${name}: No days marked unavailable\n`;return;}
+    const runs=[];let runStart=null,runEnd=null;
+    unavailDays.forEach((key,i)=>{
+      if(!runStart){runStart=key;runEnd=key;return;}
+      const prev=unavailDays[i-1];
+      const diff=(new Date(key.replace(/-/g,'/'))-new Date(prev.replace(/-/g,'/')))/86400000;
+      if(diff===1){runEnd=key;}else{runs.push({start:runStart,end:runEnd});runStart=key;runEnd=key;}
+    });
+    runs.push({start:runStart,end:runEnd});
+    const parts=runs.map(r=>r.start===r.end?formatDate(r.start):`${formatDate(r.start)} – ${formatDate(r.end)}`);
+    out+=`${name}: ${parts.join(', ')}\n`;
+  });
+  out+=`\nDAILY FREE COUNT (days with absences):\n`;
+  allDays.forEach(key=>{
+    if(avail[key]<total){
+      const whoOut=names.filter(n=>unavailByPerson[n][key]);
+      out+=`${formatDate(key)}: ${avail[key]}/${total} free (${whoOut.join(', ')} away)\n`;
+    }
+  });
+  document.getElementById('export-box').textContent=out;
+}
+
+function copyExport(){
+  const text=document.getElementById('export-box').textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn=event.target;btn.textContent='Copied!';
+    setTimeout(()=>{btn.textContent='Copy to clipboard';},2000);
+  });
+}
+
+function showTab(tab){
+  ['windows','heatmap','view','export'].forEach(t=>{
+    document.getElementById('view-'+t).style.display=t===tab?'block':'none';
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+  });
+}
+
+buildGrid('aug-grid',2026,8,true);
+buildGrid('sep-grid',2026,9,true);
 </script>
 </body>
 </html>
