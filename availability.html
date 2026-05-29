@@ -204,7 +204,6 @@
         <div class="tabs">
           <button class="tab active" id="tab-windows" onclick="showTab('windows')">3-day windows</button>
           <button class="tab" id="tab-heatmap" onclick="showTab('heatmap')">Heatmap</button>
-          <button class="tab" id="tab-view" onclick="showTab('view')">View person</button>
           <button class="tab" id="tab-export" onclick="showTab('export')">Export</button>
         </div>
 
@@ -238,32 +237,29 @@
           </div>
         </div>
 
-        <div id="view-view" style="display:none">
-          <p class="view-label" id="view-person-label">Select a person above to view their calendar.</p>
-          <div id="person-cal-wrap" style="display:none">
-            <div class="cal-wrapper">
-              <div>
-                <p class="month-title">August 2026</p>
-                <div class="weekday-header"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
-                <div class="cal-grid" id="aug-person"></div>
-              </div>
-              <div>
-                <p class="month-title">September 2026</p>
-                <div class="weekday-header"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
-                <div class="cal-grid" id="sep-person"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div id="view-export" style="display:none">
           <div class="export-box" id="export-box"></div>
-          <button onclick="copyExport()">Copy to clipboard</button>
+          <button onclick="copyExport(this)">Copy to clipboard</button>
         </div>
       </div>
     </div>
   </div>
-</div>
+
+  <div class="panel" id="person-cal-panel" style="display:none;">
+    <p class="panel-title" id="view-person-label">Person's availability</p>
+    <div class="cal-wrapper">
+      <div>
+        <p class="month-title">August 2026</p>
+        <div class="weekday-header"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+        <div class="cal-grid" id="aug-person"></div>
+      </div>
+      <div>
+        <p class="month-title">September 2026</p>
+        <div class="weekday-header"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+        <div class="cal-grid" id="sep-person"></div>
+      </div>
+    </div>
+  </div>
 
 <script>
 const DB_URL='https://availability-b8252-default-rtdb.europe-west1.firebasedatabase.app';
@@ -358,8 +354,11 @@ async function loadPerson(){
 async function savePerson(){
   if(!currentName) return;
   showStatus('Saving…','info');
+  // Strip false values — only store days that are actually unavailable
+  const cleanUnavail={};
+  Object.keys(localUnavail).forEach(k=>{if(localUnavail[k]) cleanUnavail[k]=true;});
   try{
-    await fbSet(`people/${encodeKey(currentName)}`,{passHash:currentPassHash,unavail:{...localUnavail}});
+    await fbSet(`people/${encodeKey(currentName)}`,{passHash:currentPassHash,unavail:cleanUnavail});
   } catch(e){showStatus('Save failed. Try again.','error');return;}
   showStatus(`Saved — thanks, ${currentName}!`,'success');
   document.getElementById('calendar-section').style.display='none';
@@ -498,7 +497,10 @@ document.getElementById('admin-pw').addEventListener('keydown',e=>{if(e.key==='E
 
 async function loadAdminView(){
   let people;
-  try{people=await fbGet('people');}catch(e){return;}
+  try{people=await fbGet('people');}catch(e){
+    document.getElementById('people-list').innerHTML='<p class="no-data" style="color:var(--red-text)">Could not load data. Check your connection and try again.</p>';
+    return;
+  }
   people=people||{};
   adminData={};
   Object.keys(people).forEach(k=>{adminData[decodeKey(k)]=people[k].unavail||{};});
@@ -536,13 +538,16 @@ function renderPeopleList(){
 }
 
 function viewPerson(name){
-  viewingPerson=name;showTab('view');renderPeopleList();renderPersonCal(name);
+  viewingPerson=name;
+  renderPeopleList();
+  renderPersonCal(name);
+  document.getElementById('person-cal-panel').style.display='block';
+  document.getElementById('person-cal-panel').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
 function renderPersonCal(name){
   const unavail=adminData[name]||{};
   document.getElementById('view-person-label').textContent=`${name}'s availability`;
-  document.getElementById('person-cal-wrap').style.display='block';
   ['aug-person','sep-person'].forEach((id,mi)=>{
     const month=mi===0?8:9;
     const grid=document.getElementById(id);grid.innerHTML='';
@@ -565,8 +570,7 @@ async function deletePerson(name){
   catch(e){alert('Delete failed. Try again.');return;}
   if(viewingPerson===name){
     viewingPerson=null;
-    document.getElementById('person-cal-wrap').style.display='none';
-    document.getElementById('view-person-label').textContent='Select a person above to view their calendar.';
+    document.getElementById('person-cal-panel').style.display='none';
   }
   await loadAdminView();
 }
@@ -723,19 +727,27 @@ function renderExport(unavailByPerson,names){
   document.getElementById('export-box').textContent=out;
 }
 
-function copyExport(){
+function copyExport(btn){
   const text=document.getElementById('export-box').textContent;
   navigator.clipboard.writeText(text).then(()=>{
-    const btn=event.target;btn.textContent='Copied!';
+    btn.textContent='Copied!';
+    setTimeout(()=>{btn.textContent='Copy to clipboard';},2000);
+  }).catch(()=>{
+    btn.textContent='Copy failed';
     setTimeout(()=>{btn.textContent='Copy to clipboard';},2000);
   });
 }
 
 function showTab(tab){
-  ['windows','heatmap','view','export'].forEach(t=>{
+  ['windows','heatmap','export'].forEach(t=>{
     document.getElementById('view-'+t).style.display=t===tab?'block':'none';
     document.getElementById('tab-'+t).classList.toggle('active',t===tab);
   });
+  if(viewingPerson){
+    viewingPerson=null;
+    document.getElementById('person-cal-panel').style.display='none';
+    renderPeopleList();
+  }
 }
 
 buildGrid('aug-grid',2026,8,true);
