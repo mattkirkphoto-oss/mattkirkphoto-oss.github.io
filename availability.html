@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Availability — Aug / Sep 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f9f8f6;
+    --bg-panel: #ffffff;
+    --bg-secondary: #f2f1ee;
+    --text: #1a1a18;
+    --text-secondary: #6b6a66;
+    --text-tertiary: #9e9d99;
+    --border: rgba(0,0,0,0.1);
+    --border-strong: rgba(0,0,0,0.2);
+    --green-bg: #EAF3DE;
+    --green-text: #27500A;
+    --green-border: #C0DD97;
+    --red-bg: #FCEBEB;
+    --red-text: #A32D2D;
+    --red-border: #F7C1C1;
+    --amber-bg: #FAEEDA;
+    --amber-text: #633806;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  .site-header {
+    margin-bottom: 2rem;
+  }
+
+  .site-header h1 {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+
+  .site-header p {
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--text);
+  }
+
+  .panel {
+    background: var(--bg-panel);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .panel-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    margin-bottom: 1.25rem;
+  }
+
+  .instruction {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+  }
+
+  .name-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  input[type="text"] {
+    height: 38px;
+    padding: 0 12px;
+    border: 0.5px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+    min-width: 200px;
+  }
+
+  input[type="text"]:focus { border-color: #378ADD; box-shadow: 0 0 0 3px rgba(55,138,221,0.12); }
+  input[type="text"]::placeholder { color: var(--text-tertiary); }
+
+  input[type="password"] {
+    height: 38px;
+    padding: 0 12px;
+    border: 0.5px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+    min-width: 180px;
+  }
+
+  input[type="password"]:focus { border-color: #378ADD; box-shadow: 0 0 0 3px rgba(55,138,221,0.12); }
+
+  button {
+    height: 38px;
+    padding: 0 16px;
+    border: 0.5px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    background: var(--bg-panel);
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.1s, transform 0.08s;
+    white-space: nowrap;
+  }
+
+  button:hover { background: var(--bg-secondary); }
+  button:active { transform: scale(0.97); }
+
+  button.primary {
+    background: var(--text);
+    color: var(--bg-panel);
+    border-color: var(--text);
+  }
+
+  button.primary:hover { opacity: 0.85; }
+
+  button.danger {
+    color: var(--red-text);
+    border-color: var(--red-border);
+  }
+
+  button.danger:hover { background: var(--red-bg); }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 1.25rem;
+    font-size: 13px;
+    color: var(--text-secondary);
+    align-items: center;
+  }
+
+  .legend-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+
+  .cal-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+
+  @media (max-width: 560px) { .cal-wrapper { grid-template-columns: 1fr; } }
+
+  .month-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+  }
+
+  .weekday-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-bottom: 3px;
+  }
+
+  .weekday-header span {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-align: center;
+    color: var(--text-tertiary);
+    letter-spacing: 0.04em;
+    padding: 2px 0;
+  }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    user-select: none;
+  }
+
+  .day-cell {
+    aspect-ratio: 1;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    cursor: pointer;
+    transition: transform 0.07s, opacity 0.1s;
+    border: 0.5px solid transparent;
+    font-family: 'DM Mono', monospace;
+    position: relative;
+  }
+
+  .day-cell:active { transform: scale(0.88); }
+  .day-cell.empty { cursor: default; background: transparent !important; border-color: transparent !important; }
+  .day-cell.weekend { opacity: 0.5; }
+
+  .day-cell.available {
+    background: var(--green-bg);
+    color: var(--green-text);
+    border-color: var(--green-border);
+  }
+
+  .day-cell.unavailable {
+    background: var(--red-bg);
+    color: var(--red-text);
+    border-color: var(--red-border);
+  }
+
+  /* locked overlay */
+  #lock-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(249,248,246,0.92);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+    font-family: 'DM Sans', sans-serif;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  #lock-overlay.visible { display: flex; }
+
+  #lock-overlay i {
+    font-size: 32px;
+    color: var(--text-tertiary);
+    margin-bottom: 4px;
+  }
+
+  #lock-overlay h2 {
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  #lock-overlay p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+
+  /* status bar */
+  .status-bar {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    margin-bottom: 1rem;
+  }
+
+  .status-bar.success { display: flex; background: var(--green-bg); color: var(--green-text); border: 0.5px solid var(--green-border); }
+  .status-bar.error { display: flex; background: var(--red-bg); color: var(--red-text); border: 0.5px solid var(--red-border); }
+  .status-bar.info { display: flex; background: var(--amber-bg); color: var(--amber-text); border: 0.5px solid #FAC775; }
+
+  /* results */
+  .people-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 1.25rem;
+  }
+
+  .chip {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: var(--bg-secondary);
+    border: 0.5px solid var(--border);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 1.25rem;
+  }
+
+  .tab {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    height: 32px;
+    padding: 0 12px;
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    border: 0.5px solid var(--border-strong);
+    background: transparent;
+    color: var(--text-secondary);
+    transition: all 0.1s;
+  }
+
+  .tab.active {
+    background: var(--text);
+    color: var(--bg-panel);
+    border-color: var(--text);
+  }
+
+  .windows-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .window-item {
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    border: 0.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-panel);
+  }
+
+  .window-item.all-free {
+    background: var(--green-bg);
+    border-color: var(--green-border);
+  }
+
+  .window-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .window-item.all-free .window-date { color: var(--green-text); }
+
+  .window-count {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .window-item.all-free .window-count { color: var(--green-text); font-weight: 500; }
+
+  .no-data {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    padding: 8px 0;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* admin section */
+  #admin-section { margin-top: 3rem; padding-top: 2rem; border-top: 0.5px solid var(--border); }
+
+  .admin-unlock-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  #admin-panel { display: none; }
+  #admin-panel.visible { display: block; }
+
+  .spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--text-secondary);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div id="lock-overlay">
+  <i class="ti ti-lock"></i>
+  <h2>Someone else is filling this in</h2>
+  <p>The calendar is locked while another person is entering their availability.<br>Please check back in a few minutes.</p>
+  <button onclick="checkLockAndRetry()">Check again</button>
+</div>
+
+<div class="container">
+  <div class="site-header">
+    <h1>Group planner</h1>
+    <p>Availability — August &amp; September 2026</p>
+  </div>
+
+  <div id="status-bar" class="status-bar"></div>
+
+  <div class="panel" id="entry-panel">
+    <p class="panel-title">Your availability</p>
+    <p class="instruction">Enter your name and click <strong>Load</strong> to begin. Then click or drag across days to mark when you're <strong style="color:var(--red-text)">unavailable</strong>. Everything starts green (free). When you're done, click <strong>Save</strong>.</p>
+
+    <div class="name-row">
+      <input type="text" id="name-input" placeholder="Your name…" maxlength="30" />
+      <button onclick="loadPerson()">Load</button>
+      <button class="primary" id="save-btn" onclick="savePerson()" style="display:none">Save my availability</button>
+      <button class="danger" id="clear-btn" onclick="clearPerson()" style="display:none">Clear</button>
+    </div>
+
+    <div class="legend">
+      <span><span class="legend-dot" style="background:var(--green-bg);border:0.5px solid var(--green-border)"></span>Available</span>
+      <span><span class="legend-dot" style="background:var(--red-bg);border:0.5px solid var(--red-border)"></span>Unavailable</span>
+    </div>
+
+    <div class="cal-wrapper">
+      <div>
+        <p class="month-title">August 2026</p>
+        <div class="weekday-header"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+        <div class="cal-grid" id="aug-grid"></div>
+      </div>
+      <div>
+        <p class="month-title">September 2026</p>
+        <div class="weekday-header"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+        <div class="cal-grid" id="sep-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="admin-section">
+    <p class="panel-title" style="margin-bottom:0.75rem">Admin view</p>
+    <div class="admin-unlock-row">
+      <input type="password" id="admin-pw" placeholder="Password…" />
+      <button onclick="unlockAdmin()">View results</button>
+    </div>
+    <div id="admin-pw-error" style="font-size:13px;color:var(--red-text);margin-top:8px;display:none">Incorrect password.</div>
+
+    <div id="admin-panel">
+      <div class="panel" style="margin-top:1rem">
+        <p class="panel-title">Responses</p>
+        <div class="people-chips" id="people-chips"></div>
+
+        <div class="tabs">
+          <button class="tab active" id="tab-windows" onclick="showTab('windows')">3-day windows</button>
+          <button class="tab" id="tab-heatmap" onclick="showTab('heatmap')">Heatmap</button>
+        </div>
+
+        <div id="view-windows">
+          <div class="windows-list" id="windows-list"></div>
+        </div>
+
+        <div id="view-heatmap" style="display:none">
+          <div class="cal-wrapper">
+            <div>
+              <p class="month-title">August 2026</p>
+              <div class="weekday-header"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+              <div class="cal-grid" id="aug-heatmap"></div>
+            </div>
+            <div>
+              <p class="month-title">September 2026</p>
+              <div class="weekday-header"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+              <div class="cal-grid" id="sep-heatmap"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BIN_ID = '6a19db8addf5aa59f775ace1';
+const API_KEY = '$2a$10$90ZyAVkvRnP./kJJbKSvB.UPUuHVFon1LH1qlyNKOpiSGIHxYG/QC';
+const ADMIN_PW = 'admin123';
+const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+const LOCK_TIMEOUT_MS = 5 * 60 * 1000;
+
+let localUnavail = {};
+let currentName = '';
+let isDragging = false;
+let dragValue = null;
+let lockToken = null;
+
+function dateKey(y, m, d) {
+  return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+
+function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
+
+function firstDayOfWeek(y, m) {
+  const d = new Date(y, m - 1, 1).getDay();
+  return d === 0 ? 6 : d - 1;
+}
+
+function isWeekend(y, m, d) {
+  const dow = new Date(y, m - 1, d).getDay();
+  return dow === 0 || dow === 6;
+}
+
+function getAllDays() {
+  const days = [];
+  for (let d = 1; d <= daysInMonth(2026, 8); d++) days.push(dateKey(2026, 8, d));
+  for (let d = 1; d <= daysInMonth(2026, 9); d++) days.push(dateKey(2026, 9, d));
+  return days;
+}
+
+function formatDate(key) {
+  const [y, m, d] = key.split('-').map(Number);
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const dt = new Date(y, m - 1, d);
+  const dow = dt.getDay();
+  return `${dayNames[dow === 0 ? 6 : dow - 1]} ${d} ${months[m - 1]}`;
+}
+
+async function fetchData() {
+  const r = await fetch(BASE_URL + '/latest', {
+    headers: { 'X-Master-Key': API_KEY }
+  });
+  if (!r.ok) throw new Error('Fetch failed');
+  const j = await r.json();
+  return j.record;
+}
+
+async function putData(data) {
+  const r = await fetch(BASE_URL, {
+    method: 'PUT',
+    headers: { 'X-Master-Key': API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error('Save failed');
+}
+
+function showStatus(msg, type) {
+  const bar = document.getElementById('status-bar');
+  bar.textContent = msg;
+  bar.className = 'status-bar ' + type;
+  if (type === 'success') setTimeout(() => { bar.className = 'status-bar'; }, 4000);
+}
+
+async function loadPerson() {
+  const name = document.getElementById('name-input').value.trim();
+  if (!name) { showStatus('Please enter your name first.', 'error'); return; }
+
+  showStatus('Loading…', 'info');
+
+  let data;
+  try { data = await fetchData(); } catch (e) { showStatus('Could not connect. Please try again.', 'error'); return; }
+
+  const lock = data.lock;
+  const now = Date.now();
+
+  if (lock && lock.token && lock.name !== name && (now - lock.since) < LOCK_TIMEOUT_MS) {
+    document.getElementById('lock-overlay').classList.add('visible');
+    showStatus('', 'info');
+    return;
+  }
+
+  lockToken = Math.random().toString(36).slice(2);
+  data.lock = { token: lockToken, name, since: now };
+  try { await putData(data); } catch (e) { showStatus('Could not acquire lock. Try again.', 'error'); return; }
+
+  currentName = name;
+  localUnavail = {};
+  if (data.people && data.people[name]) {
+    localUnavail = { ...data.people[name] };
+  }
+
+  refreshGrids();
+  document.getElementById('save-btn').style.display = 'inline-block';
+  document.getElementById('clear-btn').style.display = 'inline-block';
+  showStatus(`Loaded. Mark your unavailable days, then click Save.`, 'success');
+
+  startLockHeartbeat(data);
+}
+
+let heartbeatInterval = null;
+
+function startLockHeartbeat(initialData) {
+  clearInterval(heartbeatInterval);
+  heartbeatInterval = setInterval(async () => {
+    try {
+      const data = await fetchData();
+      if (data.lock && data.lock.token === lockToken) {
+        data.lock.since = Date.now();
+        await putData(data);
+      }
+    } catch (e) {}
+  }, 60000);
+}
+
+async function releaseLock() {
+  clearInterval(heartbeatInterval);
+  try {
+    const data = await fetchData();
+    if (data.lock && data.lock.token === lockToken) {
+      data.lock = null;
+      await putData(data);
+    }
+  } catch (e) {}
+}
+
+async function savePerson() {
+  if (!currentName) return;
+  showStatus('Saving…', 'info');
+
+  let data;
+  try { data = await fetchData(); } catch (e) { showStatus('Could not connect. Try again.', 'error'); return; }
+
+  if (!data.people) data.people = {};
+  data.people[currentName] = { ...localUnavail };
+  data.lock = null;
+  lockToken = null;
+
+  try { await putData(data); } catch (e) { showStatus('Save failed. Try again.', 'error'); return; }
+
+  clearInterval(heartbeatInterval);
+  showStatus(`Saved! Thanks, ${currentName}.`, 'success');
+  document.getElementById('save-btn').style.display = 'none';
+  document.getElementById('clear-btn').style.display = 'none';
+  currentName = '';
+  localUnavail = {};
+  refreshGrids();
+}
+
+function clearPerson() {
+  localUnavail = {};
+  refreshGrids();
+}
+
+function toggleDay(key) {
+  localUnavail[key] = dragValue;
+  refreshGrids();
+}
+
+function refreshGrids() {
+  ['aug-grid', 'sep-grid'].forEach(id => {
+    document.querySelectorAll(`#${id} .day-cell:not(.empty)`).forEach(cell => {
+      const key = cell.dataset.key;
+      cell.classList.remove('available', 'unavailable');
+      cell.classList.add(localUnavail[key] ? 'unavailable' : 'available');
+    });
+  });
+}
+
+function buildGrid(gridId, year, month) {
+  const grid = document.getElementById(gridId);
+  grid.innerHTML = '';
+  const fd = firstDayOfWeek(year, month);
+  const total = daysInMonth(year, month);
+
+  for (let i = 0; i < fd; i++) {
+    const e = document.createElement('div');
+    e.className = 'day-cell empty';
+    grid.appendChild(e);
+  }
+
+  for (let d = 1; d <= total; d++) {
+    const key = dateKey(year, month, d);
+    const cell = document.createElement('div');
+    cell.className = 'day-cell available';
+    cell.textContent = d;
+    cell.dataset.key = key;
+    if (isWeekend(year, month, d)) cell.classList.add('weekend');
+
+    cell.addEventListener('mousedown', e => {
+      e.preventDefault();
+      if (!currentName) { showStatus('Load your name first.', 'error'); return; }
+      isDragging = true;
+      dragValue = !localUnavail[key];
+      localUnavail[key] = dragValue;
+      refreshGrids();
+    });
+
+    cell.addEventListener('mouseover', () => {
+      if (isDragging && currentName) {
+        localUnavail[key] = dragValue;
+        refreshGrids();
+      }
+    });
+
+    cell.addEventListener('touchstart', e => {
+      e.preventDefault();
+      if (!currentName) return;
+      isDragging = true;
+      dragValue = !localUnavail[key];
+      localUnavail[key] = dragValue;
+      refreshGrids();
+    }, { passive: false });
+
+    cell.addEventListener('touchmove', e => {
+      e.preventDefault();
+      if (!isDragging || !currentName) return;
+      const t = e.touches[0];
+      const el = document.elementFromPoint(t.clientX, t.clientY);
+      if (el && el.dataset.key) { localUnavail[el.dataset.key] = dragValue; refreshGrids(); }
+    }, { passive: false });
+
+    grid.appendChild(cell);
+  }
+}
+
+document.addEventListener('mouseup', () => { isDragging = false; });
+document.addEventListener('touchend', () => { isDragging = false; });
+
+window.addEventListener('beforeunload', () => { if (lockToken) releaseLock(); });
+
+function checkLockAndRetry() {
+  document.getElementById('lock-overlay').classList.remove('visible');
+  loadPerson();
+}
+
+function unlockAdmin() {
+  const pw = document.getElementById('admin-pw').value;
+  const errEl = document.getElementById('admin-pw-error');
+  if (pw !== ADMIN_PW) { errEl.style.display = 'block'; return; }
+  errEl.style.display = 'none';
+  document.getElementById('admin-panel').classList.add('visible');
+  loadAdminView();
+}
+
+document.getElementById('admin-pw').addEventListener('keydown', e => {
+  if (e.key === 'Enter') unlockAdmin();
+});
+
+async function loadAdminView() {
+  let data;
+  try { data = await fetchData(); } catch (e) { return; }
+  const people = data.people || {};
+  const names = Object.keys(people);
+  const colors = ['#378ADD','#D85A30','#1D9E75','#D4537E','#7F77DD','#639922','#BA7517','#888780','#E24B4A','#0F6E56'];
+
+  const chipsEl = document.getElementById('people-chips');
+  chipsEl.innerHTML = '';
+  if (names.length === 0) {
+    chipsEl.innerHTML = '<span class="no-data">No responses yet.</span>';
+  }
+  names.forEach((name, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.innerHTML = `<span class="dot" style="background:${colors[i % colors.length]}"></span>${name}`;
+    chipsEl.appendChild(chip);
+  });
+
+  renderWindows(people, names);
+  renderHeatmap(people, names);
+}
+
+function getAvail(people, names) {
+  const allDays = getAllDays();
+  const result = {};
+  allDays.forEach(key => {
+    let free = 0;
+    names.forEach(n => { if (!(people[n] || {})[key]) free++; });
+    result[key] = free;
+  });
+  return result;
+}
+
+function renderWindows(people, names) {
+  const allDays = getAllDays();
+  const avail = getAvail(people, names);
+  const total = names.length;
+  const el = document.getElementById('windows-list');
+  el.innerHTML = '';
+
+  if (total === 0) { el.innerHTML = '<p class="no-data">No responses yet.</p>'; return; }
+
+  const windows = [];
+  for (let i = 0; i <= allDays.length - 3; i++) {
+    const d1 = allDays[i], d2 = allDays[i+1], d3 = allDays[i+2];
+    windows.push({ d1, d2, d3, minFree: Math.min(avail[d1], avail[d2], avail[d3]) });
+  }
+
+  windows.sort((a, b) => b.minFree - a.minFree);
+  windows.slice(0, 15).forEach(w => {
+    const item = document.createElement('div');
+    item.className = 'window-item' + (w.minFree === total ? ' all-free' : '');
+    item.innerHTML = `<span class="window-date">${formatDate(w.d1)} – ${formatDate(w.d3)}</span><span class="window-count">${w.minFree === total ? 'Everyone free ✓' : `${w.minFree} / ${total} free`}</span>`;
+    el.appendChild(item);
+  });
+}
+
+function renderHeatmap(people, names) {
+  [['aug-heatmap', 8], ['sep-heatmap', 9]].forEach(([id, month]) => {
+    const grid = document.getElementById(id);
+    grid.innerHTML = '';
+    const fd = firstDayOfWeek(2026, month);
+    const total = daysInMonth(2026, month);
+    const avail = getAvail(people, names);
+    const n = names.length || 1;
+
+    for (let i = 0; i < fd; i++) {
+      const e = document.createElement('div'); e.className = 'day-cell empty'; grid.appendChild(e);
+    }
+
+    for (let d = 1; d <= total; d++) {
+      const key = dateKey(2026, month, d);
+      const ratio = avail[key] / n;
+      const cell = document.createElement('div');
+      cell.className = 'day-cell' + (isWeekend(2026, month, d) ? ' weekend' : '');
+      cell.textContent = d;
+
+      const r = Math.round(252 - ratio * 18);
+      const g = Math.round(235 - ratio * (235 - 243));
+      const b = Math.round(235 - ratio * (235 - 222));
+      const tr = Math.round(247 - ratio * (247 - 39));
+      const tg = Math.round(193 - ratio * (193 - 80));
+      const tb = Math.round(193 - ratio * (193 - 10));
+
+      cell.style.background = `rgb(${r},${g},${b})`;
+      cell.style.color = `rgb(${tr},${tg},${tb})`;
+      cell.style.borderColor = `rgba(${tr},${tg},${tb},0.3)`;
+      cell.title = `${avail[key]}/${n} free`;
+      grid.appendChild(cell);
+    }
+  });
+}
+
+function showTab(tab) {
+  document.getElementById('view-windows').style.display = tab === 'windows' ? 'block' : 'none';
+  document.getElementById('view-heatmap').style.display = tab === 'heatmap' ? 'block' : 'none';
+  document.getElementById('tab-windows').classList.toggle('active', tab === 'windows');
+  document.getElementById('tab-heatmap').classList.toggle('active', tab === 'heatmap');
+}
+
+buildGrid('aug-grid', 2026, 8);
+buildGrid('sep-grid', 2026, 9);
+</script>
+</body>
+</html>
