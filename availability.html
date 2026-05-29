@@ -6,7 +6,6 @@
 <title>Availability — Aug / Sep 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -27,6 +26,10 @@
     --red-border: #F7C1C1;
     --amber-bg: #FAEEDA;
     --amber-text: #633806;
+    --amber-border: #FAC775;
+    --blue-bg: #E6F1FB;
+    --blue-text: #0C447C;
+    --blue-border: #B5D4F4;
     --radius-md: 8px;
     --radius-lg: 12px;
   }
@@ -39,15 +42,9 @@
     padding: 2rem 1rem 4rem;
   }
 
-  .container {
-    max-width: 860px;
-    margin: 0 auto;
-  }
+  .container { max-width: 860px; margin: 0 auto; }
 
-  .site-header {
-    margin-bottom: 2rem;
-  }
-
+  .site-header { margin-bottom: 2rem; }
   .site-header h1 {
     font-family: 'DM Mono', monospace;
     font-size: 13px;
@@ -57,12 +54,7 @@
     color: var(--text-secondary);
     margin-bottom: 4px;
   }
-
-  .site-header p {
-    font-size: 22px;
-    font-weight: 300;
-    color: var(--text);
-  }
+  .site-header p { font-size: 22px; font-weight: 300; }
 
   .panel {
     background: var(--bg-panel);
@@ -89,15 +81,15 @@
     margin-bottom: 1.25rem;
   }
 
-  .name-row {
+  .form-row {
     display: flex;
     gap: 8px;
     align-items: center;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1rem;
     flex-wrap: wrap;
   }
 
-  input[type="text"] {
+  input[type="text"], input[type="password"] {
     height: 38px;
     padding: 0 12px;
     border: 0.5px solid var(--border-strong);
@@ -108,27 +100,17 @@
     color: var(--text);
     outline: none;
     transition: border-color 0.15s;
-    min-width: 200px;
   }
 
-  input[type="text"]:focus { border-color: #378ADD; box-shadow: 0 0 0 3px rgba(55,138,221,0.12); }
-  input[type="text"]::placeholder { color: var(--text-tertiary); }
-
-  input[type="password"] {
-    height: 38px;
-    padding: 0 12px;
-    border: 0.5px solid var(--border-strong);
-    border-radius: var(--radius-md);
-    font-family: 'DM Mono', monospace;
-    font-size: 14px;
-    background: var(--bg);
-    color: var(--text);
-    outline: none;
-    transition: border-color 0.15s;
-    min-width: 180px;
+  input[type="text"]:focus, input[type="password"]:focus {
+    border-color: #378ADD;
+    box-shadow: 0 0 0 3px rgba(55,138,221,0.12);
   }
 
-  input[type="password"]:focus { border-color: #378ADD; box-shadow: 0 0 0 3px rgba(55,138,221,0.12); }
+  input[type="text"]::placeholder, input[type="password"]::placeholder { color: var(--text-tertiary); }
+
+  input.wide { min-width: 200px; }
+  input.narrow { min-width: 150px; }
 
   button {
     height: 38px;
@@ -153,14 +135,9 @@
     color: var(--bg-panel);
     border-color: var(--text);
   }
-
   button.primary:hover { opacity: 0.85; }
 
-  button.danger {
-    color: var(--red-text);
-    border-color: var(--red-border);
-  }
-
+  button.danger { color: var(--red-text); border-color: var(--red-border); }
   button.danger:hover { background: var(--red-bg); }
 
   .legend {
@@ -173,12 +150,8 @@
   }
 
   .legend-dot {
-    width: 14px;
-    height: 14px;
-    border-radius: 3px;
-    display: inline-block;
-    margin-right: 5px;
-    vertical-align: middle;
+    width: 14px; height: 14px; border-radius: 3px;
+    display: inline-block; margin-right: 5px; vertical-align: middle;
   }
 
   .cal-wrapper {
@@ -186,7 +159,6 @@
     grid-template-columns: 1fr 1fr;
     gap: 2rem;
   }
-
   @media (max-width: 560px) { .cal-wrapper { grid-template-columns: 1fr; } }
 
   .month-title {
@@ -205,7 +177,6 @@
     gap: 2px;
     margin-bottom: 3px;
   }
-
   .weekday-header span {
     font-family: 'DM Mono', monospace;
     font-size: 10px;
@@ -230,66 +201,33 @@
     justify-content: center;
     font-size: 12px;
     cursor: pointer;
-    transition: transform 0.07s, opacity 0.1s;
+    transition: transform 0.07s;
     border: 0.5px solid transparent;
     font-family: 'DM Mono', monospace;
-    position: relative;
   }
-
   .day-cell:active { transform: scale(0.88); }
   .day-cell.empty { cursor: default; background: transparent !important; border-color: transparent !important; }
   .day-cell.weekend { opacity: 0.5; }
+  .day-cell.available { background: var(--green-bg); color: var(--green-text); border-color: var(--green-border); }
+  .day-cell.unavailable { background: var(--red-bg); color: var(--red-text); border-color: var(--red-border); }
 
-  .day-cell.available {
-    background: var(--green-bg);
-    color: var(--green-text);
-    border-color: var(--green-border);
-  }
-
-  .day-cell.unavailable {
-    background: var(--red-bg);
-    color: var(--red-text);
-    border-color: var(--red-border);
-  }
-
-  /* locked overlay */
   #lock-overlay {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(249,248,246,0.92);
+    background: rgba(249,248,246,0.94);
     z-index: 100;
     align-items: center;
     justify-content: center;
     flex-direction: column;
     gap: 12px;
-    font-family: 'DM Sans', sans-serif;
     text-align: center;
     padding: 2rem;
   }
-
   #lock-overlay.visible { display: flex; }
+  #lock-overlay h2 { font-size: 18px; font-weight: 400; margin-bottom: 4px; }
+  #lock-overlay p { font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; }
 
-  #lock-overlay i {
-    font-size: 32px;
-    color: var(--text-tertiary);
-    margin-bottom: 4px;
-  }
-
-  #lock-overlay h2 {
-    font-size: 18px;
-    font-weight: 400;
-    color: var(--text);
-    margin-bottom: 4px;
-  }
-
-  #lock-overlay p {
-    font-size: 14px;
-    color: var(--text-secondary);
-    margin-bottom: 8px;
-  }
-
-  /* status bar */
   .status-bar {
     display: none;
     align-items: center;
@@ -299,19 +237,19 @@
     font-size: 13px;
     margin-bottom: 1rem;
   }
-
   .status-bar.success { display: flex; background: var(--green-bg); color: var(--green-text); border: 0.5px solid var(--green-border); }
   .status-bar.error { display: flex; background: var(--red-bg); color: var(--red-text); border: 0.5px solid var(--red-border); }
-  .status-bar.info { display: flex; background: var(--amber-bg); color: var(--amber-text); border: 0.5px solid #FAC775; }
+  .status-bar.info { display: flex; background: var(--amber-bg); color: var(--amber-text); border: 0.5px solid var(--amber-border); }
 
-  /* results */
-  .people-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 1.25rem;
+  .hint {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-family: 'DM Mono', monospace;
+    margin-top: -4px;
+    margin-bottom: 1rem;
   }
 
+  .people-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1.25rem; }
   .chip {
     font-family: 'DM Mono', monospace;
     font-size: 11px;
@@ -324,15 +262,9 @@
     align-items: center;
     gap: 6px;
   }
-
   .chip .dot { width: 8px; height: 8px; border-radius: 50%; }
 
-  .tabs {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 1.25rem;
-  }
-
+  .tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; }
   .tab {
     font-family: 'DM Mono', monospace;
     font-size: 11px;
@@ -347,15 +279,9 @@
     color: var(--text-secondary);
     transition: all 0.1s;
   }
-
-  .tab.active {
-    background: var(--text);
-    color: var(--bg-panel);
-    border-color: var(--text);
-  }
+  .tab.active { background: var(--text); color: var(--bg-panel); border-color: var(--text); }
 
   .windows-list { display: flex; flex-direction: column; gap: 6px; }
-
   .window-item {
     padding: 10px 14px;
     border-radius: var(--radius-md);
@@ -365,65 +291,28 @@
     justify-content: space-between;
     background: var(--bg-panel);
   }
-
-  .window-item.all-free {
-    background: var(--green-bg);
-    border-color: var(--green-border);
-  }
-
-  .window-date {
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    color: var(--text);
-  }
-
+  .window-item.all-free { background: var(--green-bg); border-color: var(--green-border); }
+  .window-date { font-family: 'DM Mono', monospace; font-size: 13px; }
   .window-item.all-free .window-date { color: var(--green-text); }
-
-  .window-count {
-    font-size: 12px;
-    color: var(--text-secondary);
-  }
-
+  .window-count { font-size: 12px; color: var(--text-secondary); }
   .window-item.all-free .window-count { color: var(--green-text); font-weight: 500; }
 
-  .no-data {
-    font-size: 13px;
-    color: var(--text-tertiary);
-    padding: 8px 0;
-    font-family: 'DM Mono', monospace;
-  }
+  .no-data { font-size: 13px; color: var(--text-tertiary); font-family: 'DM Mono', monospace; padding: 8px 0; }
 
-  /* admin section */
   #admin-section { margin-top: 3rem; padding-top: 2rem; border-top: 0.5px solid var(--border); }
-
-  .admin-unlock-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-
   #admin-panel { display: none; }
   #admin-panel.visible { display: block; }
 
-  .spinner {
-    display: inline-block;
-    width: 14px;
-    height: 14px;
-    border: 2px solid var(--border);
-    border-top-color: var(--text-secondary);
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-    vertical-align: middle;
-    margin-right: 6px;
+  .divider {
+    border: none;
+    border-top: 0.5px solid var(--border);
+    margin: 1.25rem 0;
   }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
 <div id="lock-overlay">
-  <i class="ti ti-lock"></i>
   <h2>Someone else is filling this in</h2>
   <p>The calendar is locked while another person is entering their availability.<br>Please check back in a few minutes.</p>
   <button onclick="checkLockAndRetry()">Check again</button>
@@ -439,41 +328,49 @@
 
   <div class="panel" id="entry-panel">
     <p class="panel-title">Your availability</p>
-    <p class="instruction">Enter your name and click <strong>Load</strong> to begin. Then click or drag across days to mark when you're <strong style="color:var(--red-text)">unavailable</strong>. Everything starts green (free). When you're done, click <strong>Save</strong>.</p>
+    <p class="instruction">Enter your name and passphrase, then click <strong>Load</strong>. Mark days you're <strong style="color:var(--red-text)">unavailable</strong> by clicking or dragging. Everything starts green. Hit <strong>Save</strong> when done. Use the same passphrase if you come back to edit.</p>
 
-    <div class="name-row">
-      <input type="text" id="name-input" placeholder="Your name…" maxlength="30" />
+    <div class="form-row">
+      <input type="text" class="wide" id="name-input" placeholder="Your name…" maxlength="30" />
+      <input type="password" class="narrow" id="pass-input" placeholder="Passphrase…" maxlength="50" />
       <button onclick="loadPerson()">Load</button>
-      <button class="primary" id="save-btn" onclick="savePerson()" style="display:none">Save my availability</button>
-      <button class="danger" id="clear-btn" onclick="clearPerson()" style="display:none">Clear</button>
     </div>
+    <p class="hint">Choose any passphrase — you'll need it if you want to come back and edit later.</p>
 
-    <div class="legend">
-      <span><span class="legend-dot" style="background:var(--green-bg);border:0.5px solid var(--green-border)"></span>Available</span>
-      <span><span class="legend-dot" style="background:var(--red-bg);border:0.5px solid var(--red-border)"></span>Unavailable</span>
-    </div>
-
-    <div class="cal-wrapper">
-      <div>
-        <p class="month-title">August 2026</p>
-        <div class="weekday-header"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
-        <div class="cal-grid" id="aug-grid"></div>
+    <div id="calendar-section" style="display:none">
+      <div class="legend">
+        <span><span class="legend-dot" style="background:var(--green-bg);border:0.5px solid var(--green-border)"></span>Available</span>
+        <span><span class="legend-dot" style="background:var(--red-bg);border:0.5px solid var(--red-border)"></span>Unavailable</span>
       </div>
-      <div>
-        <p class="month-title">September 2026</p>
-        <div class="weekday-header"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
-        <div class="cal-grid" id="sep-grid"></div>
+
+      <div class="cal-wrapper">
+        <div>
+          <p class="month-title">August 2026</p>
+          <div class="weekday-header"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+          <div class="cal-grid" id="aug-grid"></div>
+        </div>
+        <div>
+          <p class="month-title">September 2026</p>
+          <div class="weekday-header"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+          <div class="cal-grid" id="sep-grid"></div>
+        </div>
+      </div>
+
+      <hr class="divider">
+      <div class="form-row" style="margin-bottom:0">
+        <button class="primary" onclick="savePerson()">Save my availability</button>
+        <button class="danger" onclick="clearPerson()">Clear all</button>
       </div>
     </div>
   </div>
 
   <div id="admin-section">
     <p class="panel-title" style="margin-bottom:0.75rem">Admin view</p>
-    <div class="admin-unlock-row">
-      <input type="password" id="admin-pw" placeholder="Password…" />
+    <div class="form-row">
+      <input type="password" class="narrow" id="admin-pw" placeholder="Admin password…" />
       <button onclick="unlockAdmin()">View results</button>
     </div>
-    <div id="admin-pw-error" style="font-size:13px;color:var(--red-text);margin-top:8px;display:none">Incorrect password.</div>
+    <p id="admin-pw-error" style="font-size:13px;color:var(--red-text);margin-top:-4px;display:none">Incorrect password.</p>
 
     <div id="admin-panel">
       <div class="panel" style="margin-top:1rem">
@@ -517,49 +414,49 @@ const LOCK_TIMEOUT_MS = 5 * 60 * 1000;
 
 let localUnavail = {};
 let currentName = '';
+let currentPass = '';
 let isDragging = false;
 let dragValue = null;
 let lockToken = null;
+let heartbeatInterval = null;
 
 function dateKey(y, m, d) {
   return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 }
-
 function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
-
 function firstDayOfWeek(y, m) {
-  const d = new Date(y, m - 1, 1).getDay();
+  const d = new Date(y, m-1, 1).getDay();
   return d === 0 ? 6 : d - 1;
 }
-
 function isWeekend(y, m, d) {
-  const dow = new Date(y, m - 1, d).getDay();
+  const dow = new Date(y, m-1, d).getDay();
   return dow === 0 || dow === 6;
 }
-
 function getAllDays() {
   const days = [];
-  for (let d = 1; d <= daysInMonth(2026, 8); d++) days.push(dateKey(2026, 8, d));
-  for (let d = 1; d <= daysInMonth(2026, 9); d++) days.push(dateKey(2026, 9, d));
+  for (let d = 1; d <= daysInMonth(2026,8); d++) days.push(dateKey(2026,8,d));
+  for (let d = 1; d <= daysInMonth(2026,9); d++) days.push(dateKey(2026,9,d));
   return days;
 }
-
 function formatDate(key) {
-  const [y, m, d] = key.split('-').map(Number);
+  const [y,m,d] = key.split('-').map(Number);
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  const dt = new Date(y, m - 1, d);
+  const dt = new Date(y, m-1, d);
   const dow = dt.getDay();
-  return `${dayNames[dow === 0 ? 6 : dow - 1]} ${d} ${months[m - 1]}`;
+  return `${dayNames[dow===0?6:dow-1]} ${d} ${months[m-1]}`;
+}
+
+async function hashPass(pass) {
+  const enc = new TextEncoder().encode(pass.toLowerCase().trim());
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
 async function fetchData() {
-  const r = await fetch(BASE_URL + '/latest', {
-    headers: { 'X-Master-Key': API_KEY }
-  });
+  const r = await fetch(BASE_URL + '/latest', { headers: { 'X-Master-Key': API_KEY } });
   if (!r.ok) throw new Error('Fetch failed');
-  const j = await r.json();
-  return j.record;
+  return (await r.json()).record;
 }
 
 async function putData(data) {
@@ -575,48 +472,61 @@ function showStatus(msg, type) {
   const bar = document.getElementById('status-bar');
   bar.textContent = msg;
   bar.className = 'status-bar ' + type;
-  if (type === 'success') setTimeout(() => { bar.className = 'status-bar'; }, 4000);
+  if (type === 'success') setTimeout(() => { bar.className = 'status-bar'; }, 5000);
 }
 
 async function loadPerson() {
   const name = document.getElementById('name-input').value.trim();
-  if (!name) { showStatus('Please enter your name first.', 'error'); return; }
+  const pass = document.getElementById('pass-input').value;
+  if (!name) { showStatus('Please enter your name.', 'error'); return; }
+  if (!pass) { showStatus('Please enter a passphrase.', 'error'); return; }
 
   showStatus('Loading…', 'info');
 
   let data;
-  try { data = await fetchData(); } catch (e) { showStatus('Could not connect. Please try again.', 'error'); return; }
+  try { data = await fetchData(); } catch(e) { showStatus('Could not connect. Please try again.', 'error'); return; }
 
   const lock = data.lock;
   const now = Date.now();
-
   if (lock && lock.token && lock.name !== name && (now - lock.since) < LOCK_TIMEOUT_MS) {
     document.getElementById('lock-overlay').classList.add('visible');
     showStatus('', 'info');
     return;
   }
 
-  lockToken = Math.random().toString(36).slice(2);
-  data.lock = { token: lockToken, name, since: now };
-  try { await putData(data); } catch (e) { showStatus('Could not acquire lock. Try again.', 'error'); return; }
+  const hash = await hashPass(pass);
+  const existing = data.people && data.people[name];
 
-  currentName = name;
-  localUnavail = {};
-  if (data.people && data.people[name]) {
-    localUnavail = { ...data.people[name] };
+  if (existing) {
+    if (existing.passHash !== hash) {
+      showStatus('Incorrect passphrase for that name. Try again.', 'error');
+      return;
+    }
+    localUnavail = { ...existing.unavail };
+  } else {
+    localUnavail = {};
   }
 
-  refreshGrids();
-  document.getElementById('save-btn').style.display = 'inline-block';
-  document.getElementById('clear-btn').style.display = 'inline-block';
-  showStatus(`Loaded. Mark your unavailable days, then click Save.`, 'success');
+  lockToken = Math.random().toString(36).slice(2);
+  data.lock = { token: lockToken, name, since: now };
+  try { await putData(data); } catch(e) { showStatus('Could not acquire session. Try again.', 'error'); return; }
 
-  startLockHeartbeat(data);
+  currentName = name;
+  currentPass = hash;
+
+  refreshGrids();
+  document.getElementById('calendar-section').style.display = 'block';
+
+  if (existing) {
+    showStatus(`Welcome back, ${name}. Your previous selections are loaded — edit and save again when done.`, 'success');
+  } else {
+    showStatus(`Hi ${name} — mark your unavailable days then hit Save.`, 'success');
+  }
+
+  startHeartbeat();
 }
 
-let heartbeatInterval = null;
-
-function startLockHeartbeat(initialData) {
+function startHeartbeat() {
   clearInterval(heartbeatInterval);
   heartbeatInterval = setInterval(async () => {
     try {
@@ -625,7 +535,7 @@ function startLockHeartbeat(initialData) {
         data.lock.since = Date.now();
         await putData(data);
       }
-    } catch (e) {}
+    } catch(e) {}
   }, 60000);
 }
 
@@ -637,7 +547,7 @@ async function releaseLock() {
       data.lock = null;
       await putData(data);
     }
-  } catch (e) {}
+  } catch(e) {}
 }
 
 async function savePerson() {
@@ -645,20 +555,22 @@ async function savePerson() {
   showStatus('Saving…', 'info');
 
   let data;
-  try { data = await fetchData(); } catch (e) { showStatus('Could not connect. Try again.', 'error'); return; }
+  try { data = await fetchData(); } catch(e) { showStatus('Could not connect. Try again.', 'error'); return; }
 
   if (!data.people) data.people = {};
-  data.people[currentName] = { ...localUnavail };
+  data.people[currentName] = { passHash: currentPass, unavail: { ...localUnavail } };
   data.lock = null;
   lockToken = null;
 
-  try { await putData(data); } catch (e) { showStatus('Save failed. Try again.', 'error'); return; }
+  try { await putData(data); } catch(e) { showStatus('Save failed. Try again.', 'error'); return; }
 
   clearInterval(heartbeatInterval);
-  showStatus(`Saved! Thanks, ${currentName}.`, 'success');
-  document.getElementById('save-btn').style.display = 'none';
-  document.getElementById('clear-btn').style.display = 'none';
+  showStatus(`Saved — thanks, ${currentName}!`, 'success');
+  document.getElementById('calendar-section').style.display = 'none';
+  document.getElementById('name-input').value = '';
+  document.getElementById('pass-input').value = '';
   currentName = '';
+  currentPass = '';
   localUnavail = {};
   refreshGrids();
 }
@@ -668,17 +580,11 @@ function clearPerson() {
   refreshGrids();
 }
 
-function toggleDay(key) {
-  localUnavail[key] = dragValue;
-  refreshGrids();
-}
-
 function refreshGrids() {
-  ['aug-grid', 'sep-grid'].forEach(id => {
+  ['aug-grid','sep-grid'].forEach(id => {
     document.querySelectorAll(`#${id} .day-cell:not(.empty)`).forEach(cell => {
-      const key = cell.dataset.key;
-      cell.classList.remove('available', 'unavailable');
-      cell.classList.add(localUnavail[key] ? 'unavailable' : 'available');
+      cell.classList.remove('available','unavailable');
+      cell.classList.add(localUnavail[cell.dataset.key] ? 'unavailable' : 'available');
     });
   });
 }
@@ -705,20 +611,15 @@ function buildGrid(gridId, year, month) {
 
     cell.addEventListener('mousedown', e => {
       e.preventDefault();
-      if (!currentName) { showStatus('Load your name first.', 'error'); return; }
+      if (!currentName) return;
       isDragging = true;
       dragValue = !localUnavail[key];
       localUnavail[key] = dragValue;
       refreshGrids();
     });
-
     cell.addEventListener('mouseover', () => {
-      if (isDragging && currentName) {
-        localUnavail[key] = dragValue;
-        refreshGrids();
-      }
+      if (isDragging && currentName) { localUnavail[key] = dragValue; refreshGrids(); }
     });
-
     cell.addEventListener('touchstart', e => {
       e.preventDefault();
       if (!currentName) return;
@@ -727,7 +628,6 @@ function buildGrid(gridId, year, month) {
       localUnavail[key] = dragValue;
       refreshGrids();
     }, { passive: false });
-
     cell.addEventListener('touchmove', e => {
       e.preventDefault();
       if (!isDragging || !currentName) return;
@@ -742,8 +642,14 @@ function buildGrid(gridId, year, month) {
 
 document.addEventListener('mouseup', () => { isDragging = false; });
 document.addEventListener('touchend', () => { isDragging = false; });
-
 window.addEventListener('beforeunload', () => { if (lockToken) releaseLock(); });
+
+document.getElementById('pass-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') loadPerson();
+});
+document.getElementById('name-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('pass-input').focus();
+});
 
 function checkLockAndRetry() {
   document.getElementById('lock-overlay').classList.remove('visible');
@@ -758,14 +664,13 @@ function unlockAdmin() {
   document.getElementById('admin-panel').classList.add('visible');
   loadAdminView();
 }
-
 document.getElementById('admin-pw').addEventListener('keydown', e => {
   if (e.key === 'Enter') unlockAdmin();
 });
 
 async function loadAdminView() {
   let data;
-  try { data = await fetchData(); } catch (e) { return; }
+  try { data = await fetchData(); } catch(e) { return; }
   const people = data.people || {};
   const names = Object.keys(people);
   const colors = ['#378ADD','#D85A30','#1D9E75','#D4537E','#7F77DD','#639922','#BA7517','#888780','#E24B4A','#0F6E56'];
@@ -778,28 +683,30 @@ async function loadAdminView() {
   names.forEach((name, i) => {
     const chip = document.createElement('div');
     chip.className = 'chip';
-    chip.innerHTML = `<span class="dot" style="background:${colors[i % colors.length]}"></span>${name}`;
+    chip.innerHTML = `<span class="dot" style="background:${colors[i%colors.length]}"></span>${name}`;
     chipsEl.appendChild(chip);
   });
 
-  renderWindows(people, names);
-  renderHeatmap(people, names);
+  const unavailByPerson = {};
+  names.forEach(n => { unavailByPerson[n] = people[n].unavail || {}; });
+
+  renderWindows(unavailByPerson, names);
+  renderHeatmap(unavailByPerson, names);
 }
 
-function getAvail(people, names) {
-  const allDays = getAllDays();
+function getAvail(unavailByPerson, names) {
   const result = {};
-  allDays.forEach(key => {
+  getAllDays().forEach(key => {
     let free = 0;
-    names.forEach(n => { if (!(people[n] || {})[key]) free++; });
+    names.forEach(n => { if (!unavailByPerson[n][key]) free++; });
     result[key] = free;
   });
   return result;
 }
 
-function renderWindows(people, names) {
+function renderWindows(unavailByPerson, names) {
   const allDays = getAllDays();
-  const avail = getAvail(people, names);
+  const avail = getAvail(unavailByPerson, names);
   const total = names.length;
   const el = document.getElementById('windows-list');
   el.innerHTML = '';
@@ -811,8 +718,7 @@ function renderWindows(people, names) {
     const d1 = allDays[i], d2 = allDays[i+1], d3 = allDays[i+2];
     windows.push({ d1, d2, d3, minFree: Math.min(avail[d1], avail[d2], avail[d3]) });
   }
-
-  windows.sort((a, b) => b.minFree - a.minFree);
+  windows.sort((a,b) => b.minFree - a.minFree);
   windows.slice(0, 15).forEach(w => {
     const item = document.createElement('div');
     item.className = 'window-item' + (w.minFree === total ? ' all-free' : '');
@@ -821,33 +727,30 @@ function renderWindows(people, names) {
   });
 }
 
-function renderHeatmap(people, names) {
-  [['aug-heatmap', 8], ['sep-heatmap', 9]].forEach(([id, month]) => {
+function renderHeatmap(unavailByPerson, names) {
+  [['aug-heatmap',8],['sep-heatmap',9]].forEach(([id, month]) => {
     const grid = document.getElementById(id);
     grid.innerHTML = '';
     const fd = firstDayOfWeek(2026, month);
     const total = daysInMonth(2026, month);
-    const avail = getAvail(people, names);
+    const avail = getAvail(unavailByPerson, names);
     const n = names.length || 1;
 
     for (let i = 0; i < fd; i++) {
       const e = document.createElement('div'); e.className = 'day-cell empty'; grid.appendChild(e);
     }
-
     for (let d = 1; d <= total; d++) {
       const key = dateKey(2026, month, d);
       const ratio = avail[key] / n;
       const cell = document.createElement('div');
-      cell.className = 'day-cell' + (isWeekend(2026, month, d) ? ' weekend' : '');
+      cell.className = 'day-cell' + (isWeekend(2026,month,d) ? ' weekend' : '');
       cell.textContent = d;
-
       const r = Math.round(252 - ratio * 18);
-      const g = Math.round(235 - ratio * (235 - 243));
-      const b = Math.round(235 - ratio * (235 - 222));
-      const tr = Math.round(247 - ratio * (247 - 39));
-      const tg = Math.round(193 - ratio * (193 - 80));
-      const tb = Math.round(193 - ratio * (193 - 10));
-
+      const g = Math.round(235 - ratio * (235-243));
+      const b = Math.round(235 - ratio * (235-222));
+      const tr = Math.round(247 - ratio * (247-39));
+      const tg = Math.round(193 - ratio * (193-80));
+      const tb = Math.round(193 - ratio * (193-10));
       cell.style.background = `rgb(${r},${g},${b})`;
       cell.style.color = `rgb(${tr},${tg},${tb})`;
       cell.style.borderColor = `rgba(${tr},${tg},${tb},0.3)`;
