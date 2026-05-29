@@ -407,7 +407,7 @@
 
 <script>
 const BIN_ID = '6a19db8addf5aa59f775ace1';
-const API_KEY = '$2a$10$90ZyAVkvRnP./kJJbKSvB.UPUuHVFon1LH1qlyNKOpiSGIHxYG/QC';
+const API_KEY = '$2a$10$/yYP2GIZE0nUb3ThlU68MeR288p3Lwa1SIIHm05dVk5ispyPML4uW';
 const ADMIN_PW = 'admin123';
 const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 const LOCK_TIMEOUT_MS = 5 * 60 * 1000;
@@ -454,7 +454,7 @@ async function hashPass(pass) {
 }
 
 async function fetchData() {
-  const r = await fetch(BASE_URL + '/latest', { headers: { 'X-Master-Key': API_KEY } });
+  const r = await fetch(BASE_URL + '/latest', { headers: { 'X-Access-Key': API_KEY } });
   if (!r.ok) throw new Error('Fetch failed');
   return (await r.json()).record;
 }
@@ -462,7 +462,7 @@ async function fetchData() {
 async function putData(data) {
   const r = await fetch(BASE_URL, {
     method: 'PUT',
-    headers: { 'X-Master-Key': API_KEY, 'Content-Type': 'application/json' },
+    headers: { 'X-Access-Key': API_KEY, 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   });
   if (!r.ok) throw new Error('Save failed');
