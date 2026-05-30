@@ -800,7 +800,7 @@ function renderWindows(unavailByPerson,names){
         ${bufferHTML}
       </div>
       <span class="window-count" style="flex-shrink:0">${countLabel}</span>`;
-    item.addEventListener('click',()=>{selectedWindowIdx=idx;highlightWindow(w.d1,w.d2,w.d3);renderWindows(unavailByPerson,names);showWindowPopup(w);});
+    item.addEventListener('click',()=>{selectedWindowIdx=idx;showWindowPopup(w);highlightWindow(w.d1,w.d2,w.d3);renderWindows(unavailByPerson,names);});
     el.appendChild(item);
   });
 }
