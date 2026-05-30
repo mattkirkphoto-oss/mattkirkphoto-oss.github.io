@@ -757,7 +757,9 @@ function renderWindows(unavailByPerson,names){
       if(b.minFree!==a.minFree) return b.minFree-a.minFree;
       const aAllFree=a.minFree===total, bAllFree=b.minFree===total;
       if(aAllFree&&bAllFree) return b.bufferTotal-a.bufferTotal||(a.d1<b.d1?-1:1);
-      return a.absenceDays-b.absenceDays||(a.d1<b.d1?-1:1);
+      // For partial windows: sort by absence days first, then buffer as tiebreak
+      if(a.absenceDays!==b.absenceDays) return a.absenceDays-b.absenceDays;
+      return b.bufferTotal-a.bufferTotal||(a.d1<b.d1?-1:1);
     });
   }
 
