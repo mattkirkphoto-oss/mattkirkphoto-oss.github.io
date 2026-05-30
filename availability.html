@@ -707,6 +707,7 @@ function renderWindows(unavailByPerson,names){
   const allDays=getAllDays();
   const avail=getAvail(unavailByPerson,names);
   const total=names.length;
+  const n=total;
   const el=document.getElementById('windows-list');
   el.innerHTML='';
   if(total===0){el.innerHTML='<p class="no-data">No responses yet.</p>';return;}
