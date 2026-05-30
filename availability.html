@@ -741,15 +741,15 @@ function renderWindows(unavailByPerson,names){
     return true;
   }):windows;
 
-  const allFreeWindows=filtered.filter(w=>w.minFree===total);
+  const allFreeWindows=[...filtered.filter(w=>w.minFree===total)];
 
   let sorted;
   if(windowSort==='earliest'){
-    // Only fully-free windows, earliest first
-    sorted=allFreeWindows.sort((a,b)=>b.bufferTotal-a.bufferTotal||(a.d1<b.d1?-1:1));
+    // Only fully-free windows, earliest first, buffer as secondary tiebreak
+    sorted=allFreeWindows.sort((a,b)=>a.d1<b.d1?-1:a.d1>b.d1?1:b.bufferTotal-a.bufferTotal);
   } else if(windowSort==='latest'){
-    // Only fully-free windows, latest first
-    sorted=allFreeWindows.sort((a,b)=>b.bufferTotal-a.bufferTotal||(a.d1>b.d1?-1:1));
+    // Only fully-free windows, latest first, buffer as secondary tiebreak
+    sorted=allFreeWindows.sort((a,b)=>a.d1>b.d1?-1:a.d1<b.d1?1:b.bufferTotal-a.bufferTotal);
   } else {
     // All windows, most free to least free
     // For all-free windows tiebreak by buffer; for partial by absenceDays
@@ -878,6 +878,7 @@ function renderExport(unavailByPerson,names){
   const allDays=getAllDays();
   const avail=getAvail(unavailByPerson,names);
   const total=names.length;
+  const n=total;
   let out='';
   out+=`AVAILABILITY SUMMARY — AUG / SEP 2026\n`;
   out+=`Generated: ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}\n`;
