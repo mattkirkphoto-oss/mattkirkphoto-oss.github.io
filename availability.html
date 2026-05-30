@@ -95,6 +95,10 @@
   .window-item{padding:10px 14px;border-radius:var(--radius-md);border:0.5px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;background:var(--bg-panel);cursor:pointer;transition:background 0.1s;gap:8px;}
   .window-item:hover{background:var(--bg-secondary);}
   .window-item.all-free{background:var(--green-bg);border-color:var(--green-border);}
+  .window-item.near-miss{background:var(--amber-bg);border-color:var(--amber-border);}
+  .window-item.near-miss .window-date{color:var(--amber-text);}
+  .window-item.near-miss .window-count{color:var(--amber-text);font-weight:500;}
+  .window-item.near-miss:hover{background:#f5e4c8;}
   .window-item.all-free:hover{background:#d8eeca;}
   .window-item.selected{outline:2px solid #378ADD;}
   .window-date{font-family:'DM Mono',monospace;font-size:13px;}
@@ -447,7 +451,8 @@ function showDayPopup(key){
 function showWindowPopup(w){
   const names=Object.keys(adminData);
   document.getElementById('window-popup-title').textContent=`${formatDate(w.d1)} – ${formatDate(w.d3)}`;
-  document.getElementById('window-popup-sub').textContent=`${w.minFree} of ${names.length} people free for all 3 days`;
+  const isNearMissPopup=w.absentPeople===1&&w.absenceDays===1&&w.minFree<names.length;
+  document.getElementById('window-popup-sub').textContent=isNearMissPopup?`Near-miss — 1 person unavailable for just 1 day`:`${w.minFree} of ${names.length} people free for all 3 days`;
   const list=document.getElementById('window-popup-list');
   list.innerHTML='';
   const free=[],busy=[];
@@ -651,7 +656,12 @@ function renderWindows(unavailByPerson,names){
   const windows=[];
   for(let i=0;i<=allDays.length-3;i++){
     const d1=allDays[i],d2=allDays[i+1],d3=allDays[i+2];
-    windows.push({d1,d2,d3,minFree:Math.min(avail[d1],avail[d2],avail[d3])});
+    const minFree=Math.min(avail[d1],avail[d2],avail[d3]);
+    // Count total person-days of absence across the window (lower = better)
+    const absenceDays=(n-avail[d1])+(n-avail[d2])+(n-avail[d3]);
+    // Count how many distinct people are absent at least once
+    const absentPeople=names.filter(nm=>unavailByPerson[nm][d1]||unavailByPerson[nm][d2]||unavailByPerson[nm][d3]).length;
+    windows.push({d1,d2,d3,minFree,absenceDays,absentPeople});
   }
   const allFreeWindows=windows.filter(w=>w.minFree===total);
 
@@ -664,7 +674,7 @@ function renderWindows(unavailByPerson,names){
     sorted=allFreeWindows.sort((a,b)=>a.d1>b.d1?-1:1);
   } else {
     // All windows, most free to least free
-    sorted=windows.sort((a,b)=>b.minFree-a.minFree||(a.d1<b.d1?-1:1));
+    sorted=windows.sort((a,b)=>b.minFree-a.minFree||a.absenceDays-b.absenceDays||(a.d1<b.d1?-1:1));
   }
 
   const countEl=document.getElementById('windows-count');
@@ -674,15 +684,23 @@ function renderWindows(unavailByPerson,names){
   }
 
   sorted.forEach((w,idx)=>{
+    const isAllFree=w.minFree===total;
+    // Near-miss: exactly 1 person absent, and only for 1 of the 3 days
+    const isNearMiss=!isAllFree&&w.absentPeople===1&&w.absenceDays===1;
     const item=document.createElement('div');
-    item.className='window-item'+(w.minFree===total?' all-free':'')+(selectedWindowIdx===idx?' selected':'');
-    const whoOut=w.minFree<total?names.filter(n=>unavailByPerson[n][w.d1]||unavailByPerson[n][w.d2]||unavailByPerson[n][w.d3]).join(', '):'';
+    item.className='window-item'+(isAllFree?' all-free':isNearMiss?' near-miss':'')+(selectedWindowIdx===idx?' selected':'');
+    const whoOut=!isAllFree?names.filter(n=>unavailByPerson[n][w.d1]||unavailByPerson[n][w.d2]||unavailByPerson[n][w.d3]):[]; 
+    const whoOutStr=whoOut.map(n=>{
+      const missingDays=[w.d1,w.d2,w.d3].filter(d=>unavailByPerson[n][d]);
+      return missingDays.length===3?n:`${n} (misses ${missingDays.map(formatDate).join(', ')})`;
+    }).join(', ');
+    const countLabel=isAllFree?'Everyone free ✓':isNearMiss?'1 person, 1 day only':`${w.minFree} / ${total} free`;
     item.innerHTML=`
       <div>
         <div class="window-date">${formatDate(w.d1)} – ${formatDate(w.d3)}</div>
-        ${whoOut?`<div style="font-size:11px;color:var(--text-tertiary);font-family:'DM Mono',monospace;margin-top:2px">Away: ${whoOut}</div>`:''}
+        ${whoOutStr?`<div style="font-size:11px;color:var(--text-tertiary);font-family:'DM Mono',monospace;margin-top:2px">Away: ${whoOutStr}</div>`:''}
       </div>
-      <span class="window-count">${w.minFree===total?'Everyone free ✓':`${w.minFree} / ${total} free`}</span>`;
+      <span class="window-count">${countLabel}</span>`;
     item.addEventListener('click',()=>{selectedWindowIdx=idx;highlightWindow(w.d1,w.d2,w.d3);renderWindows(unavailByPerson,names);showWindowPopup(w);});
     el.appendChild(item);
   });
@@ -769,7 +787,12 @@ function renderExport(unavailByPerson,names){
   const windows=[];
   for(let i=0;i<=allDays.length-3;i++){
     const d1=allDays[i],d2=allDays[i+1],d3=allDays[i+2];
-    windows.push({d1,d2,d3,minFree:Math.min(avail[d1],avail[d2],avail[d3])});
+    const minFree=Math.min(avail[d1],avail[d2],avail[d3]);
+    // Count total person-days of absence across the window (lower = better)
+    const absenceDays=(n-avail[d1])+(n-avail[d2])+(n-avail[d3]);
+    // Count how many distinct people are absent at least once
+    const absentPeople=names.filter(nm=>unavailByPerson[nm][d1]||unavailByPerson[nm][d2]||unavailByPerson[nm][d3]).length;
+    windows.push({d1,d2,d3,minFree,absenceDays,absentPeople});
   }
   windows.sort((a,b)=>b.minFree-a.minFree);
   out+=`TOP 3-DAY WINDOWS (best first):\n`;
