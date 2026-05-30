@@ -493,8 +493,8 @@ function showWindowPopup(w){
     bufDiv.innerHTML='<p style="font-size:11px;font-family:\'DM Mono\',monospace;color:var(--text-tertiary);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px;">Travel buffer days</p>';
     
     if(w.dayBefore){
-      const beforeFree=names.filter(n=>!unavailByPerson[n]||!unavailByPerson[n][w.dayBefore]);
-      const beforeBusy=names.filter(n=>unavailByPerson[n]&&unavailByPerson[n][w.dayBefore]);
+      const beforeFree=names.filter(n=>!adminData[n]||!adminData[n][w.dayBefore]);
+      const beforeBusy=names.filter(n=>adminData[n]&&adminData[n][w.dayBefore]);
       const row=document.createElement('div');
       row.style.cssText='margin-bottom:4px;';
       row.innerHTML=`<span style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text-secondary)">${formatDate(w.dayBefore)} (day before)</span><br>
@@ -503,8 +503,8 @@ function showWindowPopup(w){
       bufDiv.appendChild(row);
     }
     if(w.dayAfter){
-      const afterFree=names.filter(n=>!unavailByPerson[n]||!unavailByPerson[n][w.dayAfter]);
-      const afterBusy=names.filter(n=>unavailByPerson[n]&&unavailByPerson[n][w.dayAfter]);
+      const afterFree=names.filter(n=>!adminData[n]||!adminData[n][w.dayAfter]);
+      const afterBusy=names.filter(n=>adminData[n]&&adminData[n][w.dayAfter]);
       const row=document.createElement('div');
       row.innerHTML=`<span style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text-secondary)">${formatDate(w.dayAfter)} (day after)</span><br>
         <span style="font-size:12px;color:var(--green-text)">${afterFree.join(', ')||'none'} free</span>
