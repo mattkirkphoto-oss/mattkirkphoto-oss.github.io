@@ -208,7 +208,18 @@
         </div>
 
         <div id="view-windows">
-          <div class="windows-list" id="windows-list"></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap;">
+            <span style="font-size:12px;color:var(--text-secondary);font-family:'DM Mono',monospace;">Sort:</span>
+            <button class="small tab active" id="sort-best" onclick="setSort('best')">Most free first</button>
+            <button class="small tab" id="sort-earliest" onclick="setSort('earliest')">Earliest first (all free)</button>
+            <button class="small tab" id="sort-latest" onclick="setSort('latest')">Latest first (all free)</button>
+            <span style="margin-left:auto;font-size:12px;color:var(--text-tertiary);font-family:'DM Mono',monospace;" id="windows-count"></span>
+          </div>
+          <div style="margin-bottom:1rem;">
+            <span style="font-size:12px;color:var(--text-secondary);font-family:'DM Mono',monospace;">Exclude from analysis: </span>
+            <div id="exclude-chips" style="display:inline-flex;flex-wrap:wrap;gap:4px;margin-top:6px;"></div>
+          </div>
+          <div class="windows-list" id="windows-list" style="max-height:520px;overflow-y:auto;padding-right:4px;"></div>
         </div>
 
         <div id="view-heatmap" style="display:none">
@@ -276,6 +287,8 @@ let adminData={};
 let viewingPerson=null;
 let selectedWindowIdx=null;
 let resetTargetName=null;
+let windowSort='best';
+let excludedPeople=new Set();
 
 function dateKey(y,m,d){return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}
 function daysInMonth(y,m){return new Date(y,m,0).getDate();}
@@ -505,7 +518,8 @@ async function loadAdminView(){
   adminData={};
   Object.keys(people).forEach(k=>{adminData[decodeKey(k)]=people[k].unavail||{};});
   renderPeopleList();
-  const names=Object.keys(adminData);
+  renderExcludeChips();
+  const names=Object.keys(adminData).filter(n=>!excludedPeople.has(n));
   renderWindows(adminData,names);
   renderHeatmap(adminData,names);
   renderExport(adminData,names);
@@ -584,6 +598,49 @@ function getAvail(unavailByPerson,names){
   return result;
 }
 
+function setSort(mode){
+  windowSort=mode;
+  ['best','earliest','latest'].forEach(m=>{
+    const btn=document.getElementById('sort-'+m);
+    if(btn) btn.classList.toggle('active',m===mode);
+  });
+  const names=Object.keys(adminData).filter(n=>!excludedPeople.has(n));
+  renderWindows(adminData,names);
+}
+
+function renderExcludeChips(){
+  const allNames=Object.keys(adminData);
+  const el=document.getElementById('exclude-chips');
+  if(!el) return;
+  el.innerHTML='';
+  if(allNames.length===0) return;
+  allNames.forEach((name,i)=>{
+    const excluded=excludedPeople.has(name);
+    const chip=document.createElement('button');
+    chip.style.cssText=`height:26px;padding:0 10px;font-size:11px;border-radius:20px;font-family:'DM Mono',monospace;cursor:pointer;transition:all 0.1s;border:0.5px solid;letter-spacing:0.03em;`;
+    if(excluded){
+      chip.style.background='var(--red-bg)';
+      chip.style.color='var(--red-text)';
+      chip.style.borderColor='var(--red-border)';
+    } else {
+      chip.style.background=`${COLORS[i%COLORS.length]}22`;
+      chip.style.color=COLORS[i%COLORS.length];
+      chip.style.borderColor=COLORS[i%COLORS.length];
+    }
+    chip.textContent=(excluded?'✕ ':'')+name;
+    chip.title=excluded?`Click to include ${name}`:`Click to exclude ${name}`;
+    chip.addEventListener('click',()=>{
+      if(excludedPeople.has(name)) excludedPeople.delete(name);
+      else excludedPeople.add(name);
+      const activeNames=Object.keys(adminData).filter(n=>!excludedPeople.has(n));
+      renderExcludeChips();
+      renderWindows(adminData,activeNames);
+      renderHeatmap(adminData,activeNames);
+    });
+    el.appendChild(chip);
+  });
+}
+
 function renderWindows(unavailByPerson,names){
   const allDays=getAllDays();
   const avail=getAvail(unavailByPerson,names);
@@ -596,8 +653,27 @@ function renderWindows(unavailByPerson,names){
     const d1=allDays[i],d2=allDays[i+1],d3=allDays[i+2];
     windows.push({d1,d2,d3,minFree:Math.min(avail[d1],avail[d2],avail[d3])});
   }
-  windows.sort((a,b)=>b.minFree-a.minFree);
-  windows.slice(0,15).forEach((w,idx)=>{
+  const allFreeWindows=windows.filter(w=>w.minFree===total);
+
+  let sorted;
+  if(windowSort==='earliest'){
+    // Only fully-free windows, earliest first
+    sorted=allFreeWindows.sort((a,b)=>a.d1<b.d1?-1:1);
+  } else if(windowSort==='latest'){
+    // Only fully-free windows, latest first
+    sorted=allFreeWindows.sort((a,b)=>a.d1>b.d1?-1:1);
+  } else {
+    // All windows, most free to least free
+    sorted=windows.sort((a,b)=>b.minFree-a.minFree||(a.d1<b.d1?-1:1));
+  }
+
+  const countEl=document.getElementById('windows-count');
+  if(countEl){
+    if(windowSort==='best') countEl.textContent=`${sorted.length} windows`;
+    else countEl.textContent=allFreeWindows.length>0?`${allFreeWindows.length} fully free window${allFreeWindows.length!==1?'s':''}`:total>0?'No fully free windows':'';
+  }
+
+  sorted.forEach((w,idx)=>{
     const item=document.createElement('div');
     item.className='window-item'+(w.minFree===total?' all-free':'')+(selectedWindowIdx===idx?' selected':'');
     const whoOut=w.minFree<total?names.filter(n=>unavailByPerson[n][w.d1]||unavailByPerson[n][w.d2]||unavailByPerson[n][w.d3]).join(', '):'';
