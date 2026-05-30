@@ -221,12 +221,7 @@
               <button class="small primary" onclick="applyDateFilter()">Filter</button>
               <button class="small" onclick="clearDateFilter()">Clear</button>
             </div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
-              <button class="small tab" onclick="setQuickFilter('aug')">All of August</button>
-              <button class="small tab" onclick="setQuickFilter('sep')">All of September</button>
-              <button class="small tab" onclick="setQuickFilter('early-sep')">Early Sep (1–14)</button>
-              <button class="small tab" onclick="setQuickFilter('late-sep')">Late Sep (15–30)</button>
-            </div>
+
           </div>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap;">
             <span style="font-size:12px;color:var(--text-secondary);font-family:'DM Mono',monospace;">Sort:</span>
@@ -491,6 +486,33 @@ function showWindowPopup(w){
     hdr.textContent='Unavailable';list.appendChild(hdr);
     busy.forEach(({n,i,days})=>{const row=document.createElement('div');row.className='person-avail-row busy';row.innerHTML=`<span class="dot" style="background:${COLORS[i%COLORS.length]}"></span><span>${n}</span><span style="font-size:11px;margin-left:auto;font-family:'DM Mono',monospace">${days.join(', ')}</span>`;list.appendChild(row);});
   }
+  // Buffer detail
+  if(w.bufferMax>0){
+    const bufDiv=document.createElement('div');
+    bufDiv.style.cssText='margin-top:12px;padding-top:10px;border-top:0.5px solid var(--border);';
+    bufDiv.innerHTML='<p style="font-size:11px;font-family:\'DM Mono\',monospace;color:var(--text-tertiary);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px;">Travel buffer days</p>';
+    
+    if(w.dayBefore){
+      const beforeFree=names.filter(n=>!unavailByPerson[n]||!unavailByPerson[n][w.dayBefore]);
+      const beforeBusy=names.filter(n=>unavailByPerson[n]&&unavailByPerson[n][w.dayBefore]);
+      const row=document.createElement('div');
+      row.style.cssText='margin-bottom:4px;';
+      row.innerHTML=`<span style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text-secondary)">${formatDate(w.dayBefore)} (day before)</span><br>
+        <span style="font-size:12px;color:var(--green-text)">${beforeFree.join(', ')||'none'} free</span>
+        ${beforeBusy.length?`<span style="font-size:12px;color:var(--red-text)"> · ${beforeBusy.join(', ')} busy</span>`:''}`;
+      bufDiv.appendChild(row);
+    }
+    if(w.dayAfter){
+      const afterFree=names.filter(n=>!unavailByPerson[n]||!unavailByPerson[n][w.dayAfter]);
+      const afterBusy=names.filter(n=>unavailByPerson[n]&&unavailByPerson[n][w.dayAfter]);
+      const row=document.createElement('div');
+      row.innerHTML=`<span style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text-secondary)">${formatDate(w.dayAfter)} (day after)</span><br>
+        <span style="font-size:12px;color:var(--green-text)">${afterFree.join(', ')||'none'} free</span>
+        ${afterBusy.length?`<span style="font-size:12px;color:var(--red-text)"> · ${afterBusy.join(', ')} busy</span>`:''}`;
+      bufDiv.appendChild(row);
+    }
+    list.appendChild(bufDiv);
+  }
   document.getElementById('window-popup').classList.add('visible');
 }
 
@@ -635,26 +657,10 @@ function clearDateFilter(){
   document.getElementById('filter-from').value='';
   document.getElementById('filter-to').value='';
   // Clear quick filter active states
-  document.querySelectorAll('#view-windows .small.tab').forEach(b=>{
-    if(['All of August','All of September','Early Sep (1–14)','Late Sep (15–30)'].includes(b.textContent))
-      b.classList.remove('active');
-  });
   refreshWindows();
 }
 
-function setQuickFilter(preset){
-  const presets={
-    'aug':  {from:'2026-08-01',to:'2026-08-31'},
-    'sep':  {from:'2026-09-01',to:'2026-09-30'},
-    'early-sep': {from:'2026-09-01',to:'2026-09-14'},
-    'late-sep':  {from:'2026-09-15',to:'2026-09-30'},
-  };
-  const p=presets[preset];
-  filterFrom=p.from;filterTo=p.to;
-  document.getElementById('filter-from').value=p.from;
-  document.getElementById('filter-to').value=p.to;
-  refreshWindows();
-}
+
 
 function refreshWindows(){
   const names=Object.keys(adminData).filter(n=>!excludedPeople.has(n));
@@ -772,20 +778,16 @@ function renderWindows(unavailByPerson,names){
       const missingDays=[w.d1,w.d2,w.d3].filter(d=>unavailByPerson[n][d]);
       return missingDays.length===3?n:`${n} (misses ${missingDays.map(formatDate).join(', ')})`;
     }).join(', ');
-    // Buffer display for all-free windows
+    // Buffer display for all-free windows — compact bar only, detail in popup
     let bufferHTML='';
     if(isAllFree&&w.bufferMax>0){
       const pct=Math.round((w.bufferTotal/w.bufferMax)*100);
-      const beforePct=w.dayBefore?Math.round((w.bufferBefore/n)*100):null;
-      const afterPct=w.dayAfter?Math.round((w.bufferAfter/n)*100):null;
       const barColor=pct>=80?'#3B8A1A':pct>=50?'#6BAF3C':'#A3C47A';
-      bufferHTML=`<div style="margin-top:5px;display:flex;align-items:center;gap:6px;">
-        <span style="font-size:10px;font-family:'DM Mono',monospace;color:#3B8A1A;letter-spacing:0.04em;">TRAVEL DAYS</span>
-        ${beforePct!==null?`<span style="font-size:10px;font-family:'DM Mono',monospace;color:#3B8A1A">${w.bufferBefore}/${n} free day before</span>`:''}
-        <span style="width:40px;height:5px;border-radius:3px;background:#C0DD97;overflow:hidden;display:inline-block;vertical-align:middle">
+      bufferHTML=`<div style="margin-top:5px;display:flex;align-items:center;gap:5px;">
+        <span style="font-size:10px;font-family:'DM Mono',monospace;color:#3B8A1A;letter-spacing:0.04em;white-space:nowrap;">travel buffer</span>
+        <span style="flex:1;max-width:80px;height:5px;border-radius:3px;background:#C0DD97;overflow:hidden;display:inline-block;vertical-align:middle">
           <span style="display:block;height:100%;width:${pct}%;background:${barColor};border-radius:3px;"></span>
         </span>
-        ${afterPct!==null?`<span style="font-size:10px;font-family:'DM Mono',monospace;color:#3B8A1A">${w.bufferAfter}/${n} free day after</span>`:''}
       </div>`;
     }
     const countLabel=isAllFree?'Everyone free ✓':isNearMiss?'1 person, 1 day only':`${w.minFree} / ${total} free`;
@@ -869,6 +871,7 @@ function renderHeatmap(unavailByPerson,names){
       grid.appendChild(cell);
     }
   });
+
 }
 
 function renderExport(unavailByPerson,names){
