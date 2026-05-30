@@ -212,6 +212,22 @@
         </div>
 
         <div id="view-windows">
+          <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:1rem;">
+            <p style="font-size:11px;font-family:'DM Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:10px;">Filter by date range</p>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+              <input type="date" id="filter-from" min="2026-08-01" max="2026-09-30" style="height:34px;padding:0 10px;border:0.5px solid var(--border-strong);border-radius:var(--radius-md);font-family:'DM Mono',monospace;font-size:12px;background:var(--bg-panel);color:var(--text);outline:none;" />
+              <span style="font-size:12px;color:var(--text-tertiary);font-family:'DM Mono',monospace;">to</span>
+              <input type="date" id="filter-to" min="2026-08-01" max="2026-09-30" style="height:34px;padding:0 10px;border:0.5px solid var(--border-strong);border-radius:var(--radius-md);font-family:'DM Mono',monospace;font-size:12px;background:var(--bg-panel);color:var(--text);outline:none;" />
+              <button class="small primary" onclick="applyDateFilter()">Filter</button>
+              <button class="small" onclick="clearDateFilter()">Clear</button>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="small tab" onclick="setQuickFilter('aug')">All of August</button>
+              <button class="small tab" onclick="setQuickFilter('sep')">All of September</button>
+              <button class="small tab" onclick="setQuickFilter('early-sep')">Early Sep (1–14)</button>
+              <button class="small tab" onclick="setQuickFilter('late-sep')">Late Sep (15–30)</button>
+            </div>
+          </div>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap;">
             <span style="font-size:12px;color:var(--text-secondary);font-family:'DM Mono',monospace;">Sort:</span>
             <button class="small tab active" id="sort-best" onclick="setSort('best')">Most free first</button>
@@ -293,6 +309,8 @@ let selectedWindowIdx=null;
 let resetTargetName=null;
 let windowSort='best';
 let excludedPeople=new Set();
+let filterFrom=null;
+let filterTo=null;
 
 function dateKey(y,m,d){return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}
 function daysInMonth(y,m){return new Date(y,m,0).getDate();}
@@ -603,14 +621,53 @@ function getAvail(unavailByPerson,names){
   return result;
 }
 
+function applyDateFilter(){
+  const from=document.getElementById('filter-from').value;
+  const to=document.getElementById('filter-to').value;
+  if(!from&&!to){clearDateFilter();return;}
+  filterFrom=from||null;
+  filterTo=to||null;
+  refreshWindows();
+}
+
+function clearDateFilter(){
+  filterFrom=null;filterTo=null;
+  document.getElementById('filter-from').value='';
+  document.getElementById('filter-to').value='';
+  // Clear quick filter active states
+  document.querySelectorAll('#view-windows .small.tab').forEach(b=>{
+    if(['All of August','All of September','Early Sep (1–14)','Late Sep (15–30)'].includes(b.textContent))
+      b.classList.remove('active');
+  });
+  refreshWindows();
+}
+
+function setQuickFilter(preset){
+  const presets={
+    'aug':  {from:'2026-08-01',to:'2026-08-31'},
+    'sep':  {from:'2026-09-01',to:'2026-09-30'},
+    'early-sep': {from:'2026-09-01',to:'2026-09-14'},
+    'late-sep':  {from:'2026-09-15',to:'2026-09-30'},
+  };
+  const p=presets[preset];
+  filterFrom=p.from;filterTo=p.to;
+  document.getElementById('filter-from').value=p.from;
+  document.getElementById('filter-to').value=p.to;
+  refreshWindows();
+}
+
+function refreshWindows(){
+  const names=Object.keys(adminData).filter(n=>!excludedPeople.has(n));
+  renderWindows(adminData,names);
+}
+
 function setSort(mode){
   windowSort=mode;
   ['best','earliest','latest'].forEach(m=>{
     const btn=document.getElementById('sort-'+m);
     if(btn) btn.classList.toggle('active',m===mode);
   });
-  const names=Object.keys(adminData).filter(n=>!excludedPeople.has(n));
-  renderWindows(adminData,names);
+  refreshWindows();
 }
 
 function renderExcludeChips(){
@@ -639,7 +696,7 @@ function renderExcludeChips(){
       else excludedPeople.add(name);
       const activeNames=Object.keys(adminData).filter(n=>!excludedPeople.has(n));
       renderExcludeChips();
-      renderWindows(adminData,activeNames);
+      refreshWindows();
       renderHeatmap(adminData,activeNames);
     });
     el.appendChild(chip);
@@ -661,20 +718,40 @@ function renderWindows(unavailByPerson,names){
     const absenceDays=(n-avail[d1])+(n-avail[d2])+(n-avail[d3]);
     // Count how many distinct people are absent at least once
     const absentPeople=names.filter(nm=>unavailByPerson[nm][d1]||unavailByPerson[nm][d2]||unavailByPerson[nm][d3]).length;
-    windows.push({d1,d2,d3,minFree,absenceDays,absentPeople});
+    // Buffer: how many people are free the day before d1 and day after d3
+    const dayBefore=allDays[i-1]||null;
+    const dayAfter=allDays[i+3]||null;
+    const bufferBefore=dayBefore?(avail[dayBefore]||0):0;
+    const bufferAfter=dayAfter?(avail[dayAfter]||0):0;
+    const bufferTotal=bufferBefore+bufferAfter;
+    const bufferMax=n*2; // max possible = all people free on both buffer days
+    windows.push({d1,d2,d3,minFree,absenceDays,absentPeople,bufferBefore,bufferAfter,bufferTotal,bufferMax,dayBefore,dayAfter});
   }
-  const allFreeWindows=windows.filter(w=>w.minFree===total);
+  // Apply date range filter
+  const filtered=filterFrom||filterTo?windows.filter(w=>{
+    if(filterFrom&&w.d3<filterFrom) return false;
+    if(filterTo&&w.d1>filterTo) return false;
+    return true;
+  }):windows;
+
+  const allFreeWindows=filtered.filter(w=>w.minFree===total);
 
   let sorted;
   if(windowSort==='earliest'){
     // Only fully-free windows, earliest first
-    sorted=allFreeWindows.sort((a,b)=>a.d1<b.d1?-1:1);
+    sorted=allFreeWindows.sort((a,b)=>b.bufferTotal-a.bufferTotal||(a.d1<b.d1?-1:1));
   } else if(windowSort==='latest'){
     // Only fully-free windows, latest first
-    sorted=allFreeWindows.sort((a,b)=>a.d1>b.d1?-1:1);
+    sorted=allFreeWindows.sort((a,b)=>b.bufferTotal-a.bufferTotal||(a.d1>b.d1?-1:1));
   } else {
     // All windows, most free to least free
-    sorted=windows.sort((a,b)=>b.minFree-a.minFree||a.absenceDays-b.absenceDays||(a.d1<b.d1?-1:1));
+    // For all-free windows tiebreak by buffer; for partial by absenceDays
+    sorted=filtered.sort((a,b)=>{
+      if(b.minFree!==a.minFree) return b.minFree-a.minFree;
+      const aAllFree=a.minFree===total, bAllFree=b.minFree===total;
+      if(aAllFree&&bAllFree) return b.bufferTotal-a.bufferTotal||(a.d1<b.d1?-1:1);
+      return a.absenceDays-b.absenceDays||(a.d1<b.d1?-1:1);
+    });
   }
 
   const countEl=document.getElementById('windows-count');
@@ -694,13 +771,30 @@ function renderWindows(unavailByPerson,names){
       const missingDays=[w.d1,w.d2,w.d3].filter(d=>unavailByPerson[n][d]);
       return missingDays.length===3?n:`${n} (misses ${missingDays.map(formatDate).join(', ')})`;
     }).join(', ');
+    // Buffer display for all-free windows
+    let bufferHTML='';
+    if(isAllFree&&w.bufferMax>0){
+      const pct=Math.round((w.bufferTotal/w.bufferMax)*100);
+      const beforePct=w.dayBefore?Math.round((w.bufferBefore/n)*100):null;
+      const afterPct=w.dayAfter?Math.round((w.bufferAfter/n)*100):null;
+      const barColor=pct>=80?'#3B8A1A':pct>=50?'#6BAF3C':'#A3C47A';
+      bufferHTML=`<div style="margin-top:5px;display:flex;align-items:center;gap:6px;">
+        <span style="font-size:10px;font-family:'DM Mono',monospace;color:#3B8A1A;letter-spacing:0.04em;">TRAVEL DAYS</span>
+        ${beforePct!==null?`<span style="font-size:10px;font-family:'DM Mono',monospace;color:#3B8A1A">${w.bufferBefore}/${n} free day before</span>`:''}
+        <span style="width:40px;height:5px;border-radius:3px;background:#C0DD97;overflow:hidden;display:inline-block;vertical-align:middle">
+          <span style="display:block;height:100%;width:${pct}%;background:${barColor};border-radius:3px;"></span>
+        </span>
+        ${afterPct!==null?`<span style="font-size:10px;font-family:'DM Mono',monospace;color:#3B8A1A">${w.bufferAfter}/${n} free day after</span>`:''}
+      </div>`;
+    }
     const countLabel=isAllFree?'Everyone free ✓':isNearMiss?'1 person, 1 day only':`${w.minFree} / ${total} free`;
     item.innerHTML=`
-      <div>
+      <div style="flex:1;min-width:0;">
         <div class="window-date">${formatDate(w.d1)} – ${formatDate(w.d3)}</div>
         ${whoOutStr?`<div style="font-size:11px;color:var(--text-tertiary);font-family:'DM Mono',monospace;margin-top:2px">Away: ${whoOutStr}</div>`:''}
+        ${bufferHTML}
       </div>
-      <span class="window-count">${countLabel}</span>`;
+      <span class="window-count" style="flex-shrink:0">${countLabel}</span>`;
     item.addEventListener('click',()=>{selectedWindowIdx=idx;highlightWindow(w.d1,w.d2,w.d3);renderWindows(unavailByPerson,names);showWindowPopup(w);});
     el.appendChild(item);
   });
@@ -792,7 +886,14 @@ function renderExport(unavailByPerson,names){
     const absenceDays=(n-avail[d1])+(n-avail[d2])+(n-avail[d3]);
     // Count how many distinct people are absent at least once
     const absentPeople=names.filter(nm=>unavailByPerson[nm][d1]||unavailByPerson[nm][d2]||unavailByPerson[nm][d3]).length;
-    windows.push({d1,d2,d3,minFree,absenceDays,absentPeople});
+    // Buffer: how many people are free the day before d1 and day after d3
+    const dayBefore=allDays[i-1]||null;
+    const dayAfter=allDays[i+3]||null;
+    const bufferBefore=dayBefore?(avail[dayBefore]||0):0;
+    const bufferAfter=dayAfter?(avail[dayAfter]||0):0;
+    const bufferTotal=bufferBefore+bufferAfter;
+    const bufferMax=n*2; // max possible = all people free on both buffer days
+    windows.push({d1,d2,d3,minFree,absenceDays,absentPeople,bufferBefore,bufferAfter,bufferTotal,bufferMax,dayBefore,dayAfter});
   }
   windows.sort((a,b)=>b.minFree-a.minFree);
   out+=`TOP 3-DAY WINDOWS (best first):\n`;
