@@ -83,7 +83,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .col-header{display:flex;align-items:center;justify-content:space-between;padding:0 4px;margin-bottom:2px;}
 .col-title{font-family:DM Mono,monospace;font-size:10px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-tertiary);}
 .col-count{font-family:DM Mono,monospace;font-size:10px;color:var(--text-tertiary);background:var(--bg-card);padding:1px 6px;border-radius:10px;}
-.col-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:2px 2px 40px;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+.col-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:2px 2px 40px;scrollbar-width:thin;scrollbar-color:var(--border) transparent;cursor:pointer;}
+.col-body:empty::after,.col-body .col-empty-hint{content:'+ Add task';display:flex;align-items:center;justify-content:center;height:48px;border:1px dashed var(--border);border-radius:var(--radius);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;color:var(--text-tertiary);opacity:0;transition:opacity 0.15s;pointer-events:none;}
+.col-body:hover::after{opacity:1;}
 .col-body::-webkit-scrollbar{width:3px;}
 .col-body::-webkit-scrollbar-track{background:transparent;}
 .col-body::-webkit-scrollbar-thumb{background:var(--border);}
@@ -773,7 +775,7 @@ async function loadInbox(){
     const btn=document.getElementById('inbox-btn');
     const badge=document.getElementById('inbox-badge');
     if(!btn) return;
-    btn.style.display='flex';
+    btn.style.display='inline-flex';
     if(!data){inboxData=[];renderInboxPanel();return;}
     // Convert object to array, sort by time desc
     inboxData=Object.entries(data)
@@ -2010,19 +2012,28 @@ async function cycleStatus(id,e){
 }
 
 // --- ADD/EDIT TASK ---
-function openAddTask(){
+function openAddTask(col){
   editingId=null;
   renderCategorySelect();
   document.getElementById('modal-title').textContent='New Task';
   document.getElementById('task-title').value='';
   document.getElementById('task-notes').value='';
-  document.getElementById('task-col').value='todo';
+  document.getElementById('task-col').value=col||'todo';
   document.getElementById('task-status').value='none';
   document.getElementById('task-priority').value='normal';
   document.getElementById('task-due').value='';
   document.getElementById('task-modal').classList.add('visible');
   setTimeout(()=>document.getElementById('task-title').focus(),50);
 }
+
+// Click empty space in a column body to add a task to that column
+document.querySelectorAll('.col-body').forEach(body=>{
+  body.addEventListener('click',e=>{
+    if(e.target!==body) return; // only fire on the empty background, not on cards
+    const col=body.id.replace('body-','');
+    openAddTask(col);
+  });
+});
 function openEditTask(id){
   if(!tasks[id]) return;
   editingId=id;
@@ -2190,13 +2201,33 @@ window.addEventListener('resize', ()=>{
 document.addEventListener("DOMContentLoaded", initMobileColumns);
 
 </script>
-        <select id="event-type"></select>
-        <button id="open-cat-manager-btn" type="button" class="modal-btn" style="height:26px;font-size:10px;padding:0 10px;margin-top:6px;">Manage categories</button>
+
+<!-- EVENT MODAL -->
+<div class="modal-backdrop" id="event-modal">
+  <div class="modal" style="width:440px;">
+    <div class="modal-title" id="event-modal-title">Add Event</div>
+    <div>
+      <label>Event title</label>
+      <input type="text" id="event-title" placeholder="What's happening…" maxlength="120" />
+    </div>
+    <div class="modal-row">
+      <div>
+        <label>Date</label>
+        <input type="date" id="event-date" />
       </div>
       <div>
-        <label>Location (optional)</label>
-        <input type="text" id="event-location" placeholder="Where…" maxlength="80" />
+        <label>Time (optional)</label>
+        <input type="time" id="event-time" />
       </div>
+    </div>
+    <div>
+      <label>Category</label>
+      <select id="event-type"></select>
+      <button id="open-cat-manager-btn" type="button" class="modal-btn" style="height:26px;font-size:10px;padding:0 10px;margin-top:6px;">Manage categories</button>
+    </div>
+    <div>
+      <label>Location (optional)</label>
+      <input type="text" id="event-location" placeholder="Where…" maxlength="80" />
     </div>
     <div>
       <label>Notes (optional)</label>
@@ -2236,7 +2267,5 @@ document.addEventListener("DOMContentLoaded", initMobileColumns);
   </div>
 </div>
 
-</body>
-</html>
 </body>
 </html>
