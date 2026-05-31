@@ -260,6 +260,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .cat-chip:hover{border-color:var(--border-strong);opacity:0.8;}
 .cat-chip .cat-remove{font-size:12px;opacity:0.6;line-height:1;}
 .cat-chip .cat-remove:hover{opacity:1;}
+
+.name-pick-btn{height:44px;width:100%;background:var(--bg-card);border:0.5px solid var(--border-strong);border-radius:var(--radius);font-family:'DM Mono',monospace;font-size:13px;letter-spacing:0.08em;color:var(--text);cursor:pointer;transition:all 0.15s;}
+.name-pick-btn:hover{background:var(--bg-hover);border-color:var(--accent);color:var(--accent);}
 </style>
 </head>
 <body>
@@ -269,10 +272,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   <div class="login-box">
     <div class="login-title">MENFOLK</div>
     <div class="login-sub">Production Dashboard</div>
-    <div class="login-form">
-      <input type="password" id="login-pw" placeholder="Password…" />
-      <button onclick="tryLogin()">Enter</button>
-      <div class="login-error" id="login-error">Incorrect password.</div>
+    <div id="login-step-1">
+      <div class="login-form">
+        <input type="password" id="login-pw" placeholder="Password…" />
+        <button onclick="tryLogin()">Enter</button>
+        <div class="login-error" id="login-error">Incorrect password.</div>
+      </div>
+    </div>
+    <div id="login-step-2" style="display:none;text-align:center;">
+      <p style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:18px;">Who are you?</p>
+      <div id="name-picker" style="display:flex;flex-direction:column;gap:8px;width:200px;"></div>
     </div>
   </div>
 </div>
@@ -542,6 +551,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 const DB='https://menfolk-production-default-rtdb.europe-west1.firebasedatabase.app';
 const PASSWORD='menfolk2026';
 const COLS=['todo','matthew','dani','zoe','meg','done'];
+const TEAM=['Matthew','Meg','Zoe','Dani'];
+let currentUser=null;
 
 let tasks={};
 let draggingId=null;
@@ -1114,8 +1125,8 @@ async function removeCat(i){
 }
 
 // --- CALENDAR ---
-let calYear=new Date().getFullYear();
-let calMonth=new Date().getMonth(); // 0-indexed
+let calYear=2026;
+let calMonth=7; // August 2026 (0-indexed)
 let events={};
 let editingEventId=null;
 let addingDateStr=null;
@@ -1269,13 +1280,31 @@ document.getElementById('login-pw').addEventListener('keydown',e=>{if(e.key==='E
 function tryLogin(){
   const pw=document.getElementById('login-pw').value;
   if(pw===PASSWORD){
-    document.getElementById('login-screen').style.display='none';
-    document.getElementById('app').classList.add('visible');
-    init();
+    document.getElementById('login-step-1').style.display='none';
+    document.getElementById('login-step-2').style.display='block';
+    renderNamePicker();
   } else {
     document.getElementById('login-error').style.display='block';
     document.getElementById('login-pw').value='';
   }
+}
+function renderNamePicker(){
+  const el=document.getElementById('name-picker');el.innerHTML='';
+  TEAM.forEach(name=>{
+    const btn=document.createElement('button');
+    btn.className='name-pick-btn';btn.textContent=name;
+    btn.onclick=()=>loginAs(name);
+    el.appendChild(btn);
+  });
+}
+function loginAs(name){
+  currentUser=name;
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').classList.add('visible');
+  // Update header to show who's logged in
+  const subEl=document.querySelector('.header-sub');
+  if(subEl) subEl.textContent=`Production Board — ${name}`;
+  init();
 }
 
 // --- FIREBASE ---
@@ -1303,8 +1332,11 @@ let pollInterval=null;
 async function init(){
   await loadAll();
   await loadCategories();
-  // Poll every 8 seconds for live updates from other users
   pollInterval=setInterval(loadAll,8000);
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden){clearInterval(pollInterval);}
+    else{loadAll();pollInterval=setInterval(loadAll,8000);}
+  });
 }
 
 async function loadAll(){
@@ -1388,6 +1420,7 @@ async function cycleStatus(id,e){
 // --- ADD/EDIT TASK ---
 function openAddTask(){
   editingId=null;
+  renderCategorySelect();
   document.getElementById('modal-title').textContent='New Task';
   document.getElementById('task-title').value='';
   document.getElementById('task-notes').value='';
@@ -1399,6 +1432,7 @@ function openAddTask(){
 function openEditTask(id){
   if(!tasks[id]) return;
   editingId=id;
+  renderCategorySelect();
   const t=tasks[id];
   document.getElementById('modal-title').textContent='Edit Task';
   document.getElementById('task-title').value=t.title||'';
@@ -1425,7 +1459,7 @@ async function saveTask(){
     try{
       const id=await fbPush('tasks',task);
       tasks[id]=task;
-    } catch(e){console.error('Add failed',e);}
+    } catch(e){console.error('Add failed',e);alert('Failed to save task. Check your connection.');return;}
   }
   renderAll();
   closeModal('task-modal');
@@ -1440,10 +1474,13 @@ async function deleteTask(id){
 
 // --- ANNOUNCEMENT ---
 async function loadAnnouncement(data){
-  const text=data&&data.text;
+  const display=data&&(data.display||data.text);
   const el=document.getElementById('announce-text');
-  if(text){el.textContent=text;el.classList.remove('empty');}
+  if(display){el.textContent=display;el.classList.remove('empty');}
   else{el.textContent='No announcements — click to add one';el.classList.add('empty');}
+  // Pre-fill edit modal with just the text (not the attribution)
+  const rawText=data&&data.text||'';
+  document.getElementById('announce-input').value=rawText;
 }
 function openAnnounceModal(){
   const cur=document.getElementById('announce-text').textContent;
@@ -1454,10 +1491,19 @@ function openAnnounceModal(){
 async function saveAnnouncement(){
   const text=document.getElementById('announce-input').value.trim();
   const el=document.getElementById('announce-text');
-  if(text){el.textContent=text;el.classList.remove('empty');}
-  else{el.textContent='No announcements — click to add one';el.classList.add('empty');}
-  try{await fbSet('announcement',{text:text||''});}
-  catch(e){console.error('Announcement failed',e);}
+  const now=new Date();
+  const timeStr=now.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' '+now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  const author=currentUser||'Unknown';
+  if(text){
+    const display=`${text} — ${author}, ${timeStr}`;
+    el.textContent=display;el.classList.remove('empty');
+    try{await fbSet('announcement',{text,author,time:timeStr,display});}
+    catch(e){console.error('Announcement failed',e);}
+  } else {
+    el.textContent='No announcements — click to add one';el.classList.add('empty');
+    try{await fbSet('announcement',{text:'',author:'',time:'',display:''});}
+    catch(e){}
+  }
   closeModal('announce-modal');
 }
 async function clearAnnouncement(){
@@ -1475,11 +1521,16 @@ document.querySelectorAll('.modal-backdrop').forEach(el=>{
   el.addEventListener('click',e=>{if(e.target===el) el.classList.remove('visible');});
 });
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape') document.querySelectorAll('.modal-backdrop.visible').forEach(m=>m.classList.remove('visible'));
+  if(e.key==='Escape'){
+    document.querySelectorAll('.modal-backdrop.visible').forEach(m=>m.classList.remove('visible'));
+    closeCalendar();
+    closeAvail();
+  }
 });
 document.getElementById('task-title').addEventListener('keydown',e=>{if(e.key==='Enter') saveTask();});
 document.getElementById('announce-input').addEventListener('keydown',e=>{if(e.key==='Enter') saveAnnouncement();});
 document.getElementById('event-title').addEventListener('keydown',e=>{if(e.key==='Enter') saveEvent();});
+document.getElementById('cat-new-input').addEventListener('keydown',e=>{if(e.key==='Enter') addCat();});
 </script>
 </body>
 </html>
