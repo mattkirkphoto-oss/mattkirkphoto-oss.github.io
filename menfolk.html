@@ -1619,8 +1619,9 @@ function renderCal(){
       if(!isTask){
         pill.addEventListener('click',e=>{e.stopPropagation();openEditEvent(id);});
       } else {
-        pill.style.cursor='default';
-        pill.title='Task deadline: '+ev.title.replace('⚑ ','');
+        pill.style.cursor='pointer';
+        pill.title='Click to view task: '+ev.title.replace('⚑ ','');
+        pill.addEventListener('click',e=>{e.stopPropagation();openEditTask(ev._taskId);});
       }
       cell.appendChild(pill);
     });
@@ -1761,10 +1762,11 @@ function showDayEventsPopup(dateStr,dayEvents,allEntries){
   const entries=allEntries||dayEvents.map(([id,ev])=>({id,ev,isTask:false}));
   entries.forEach(({id,ev,isTask})=>{
     const row=document.createElement('div');
-    row.style.cssText='display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:5px;border:0.5px solid var(--border);background:var(--bg-card);margin-bottom:5px;'+(isTask?'':'cursor:pointer;');
+    row.style.cssText='display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:5px;border:0.5px solid var(--border);background:var(--bg-card);margin-bottom:5px;cursor:pointer;';
     const spanLabel=ev.endDate?`<span style="font-size:10px;color:var(--text-tertiary);font-family:'DM Mono',monospace;"> · ${ev.date} – ${ev.endDate}</span>`:'';
     row.innerHTML=`<span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${catColor(ev.type||'other')}"></span><div style="flex:1;min-width:0;"><div style="font-size:13px;color:var(--text);">${escHtml(isTask?ev.title.replace('⚑ ',''):ev.title)}</div><div style="font-size:11px;color:var(--text-tertiary);font-family:'DM Mono',monospace;">${isTask?'Task deadline':(ev.time?ev.time.slice(0,5)+' · ':'')+( ev.type||'other')+(ev.location?' · '+escHtml(ev.location):'')}</div></div>${spanLabel}`;
     if(!isTask) row.onclick=()=>{closeModal('day-events-modal');openEditEvent(id);};
+    else row.onclick=()=>{closeModal('day-events-modal');openEditTask(ev._taskId);};
     list.appendChild(row);
   });
   document.getElementById('day-events-modal').classList.add('visible');
