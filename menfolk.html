@@ -305,6 +305,143 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .inbox-open-btn:hover{opacity:0.85;}
 #app{display:none;}
 #app.visible{display:flex;}
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE OPTIMISATION (max-width: 680px)
+═══════════════════════════════════════════════════════════════ */
+@media (max-width: 680px) {
+
+  /* Header */
+  #header { padding: 0 10px; gap: 6px; overflow-x: auto; }
+  .header-title { font-size: 16px; }
+  .header-sub { display: none; }
+  .add-task-btn { height: 32px; padding: 0 10px; font-size: 10px; }
+  #admin-reset-btn, #inbox-btn { height: 32px; padding: 0 8px; font-size: 10px; }
+
+  /* Announce bar */
+  #announce-bar { min-height: 36px; height: auto; padding: 6px 0; }
+  #announce-text { font-size: 12px; white-space: normal; line-height: 1.4; }
+
+  /* Events strip */
+  #events-strip { min-height: 32px; height: auto; padding: 4px 10px; flex-wrap: wrap; gap: 4px; }
+  .events-strip-label { font-size: 9px; padding-right: 8px; }
+  .event-chip { font-size: 11px; }
+
+  /* Body layout — stack sidebar below kanban */
+  #body { flex-direction: column; overflow: visible; height: auto; }
+
+  /* Sidebar becomes a bottom quick-links bar */
+  #sidebar {
+    width: 100%;
+    border-left: none;
+    border-top: 0.5px solid var(--border);
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    gap: 6px;
+    order: 2;
+    flex-shrink: 0;
+  }
+  .sidebar-section { padding: 0; display: contents; }
+  .sidebar-label { display: none; }
+  .sidebar-divider { display: none; }
+  .sidebar-link {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 7px 10px;
+    margin-bottom: 0;
+    font-size: 11px;
+    flex-direction: row;
+    align-items: center;
+  }
+  .sidebar-link-sub { display: none; }
+  /* Hide status key on mobile */
+  #sidebar .sidebar-section:last-child { display: none; }
+
+  /* Kanban — vertical stacked columns */
+  #kanban {
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 8px;
+    gap: 6px;
+    order: 1;
+    flex: 1;
+  }
+
+  .col { flex: none; width: 100%; }
+
+  /* Collapsible columns on mobile */
+  .col-body {
+    max-height: 600px;
+    overflow-y: auto;
+    transition: max-height 0.25s ease, padding 0.2s;
+  }
+  .col.collapsed .col-body {
+    max-height: 0 !important;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .col-header {
+    cursor: pointer;
+    padding: 8px 6px;
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border);
+    margin-bottom: 4px;
+    user-select: none;
+  }
+  .col-header::after {
+    content: '▾';
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-left: 6px;
+  }
+  .col.collapsed .col-header::after { content: '▸'; }
+
+  /* Cards slightly more padded for touch */
+  .card { padding: 12px 12px; }
+  .card-btn { width: 28px; height: 28px; font-size: 13px; }
+  .status-pill { height: 22px; font-size: 10px; }
+
+  /* Sort toggles smaller */
+  .sort-toggle { height: 20px; padding: 0 6px; font-size: 9px; }
+  .col-count { font-size: 10px; }
+
+  /* Overlays full width */
+  #cal-panel, #avail-panel {
+    width: 100% !important;
+    max-width: 100vw;
+  }
+  #cal-overlay, #avail-overlay {
+    align-items: flex-end;
+  }
+  #cal-panel, #avail-panel {
+    border-radius: 12px 12px 0 0;
+    border-left: none;
+    border-top: 0.5px solid var(--border-strong);
+    max-height: 90vh;
+  }
+  #cal-body, #avail-body { padding: 12px; }
+
+  /* Modals full width */
+  .modal { width: calc(100vw - 24px) !important; max-width: 100%; margin: 12px; }
+  .modal-row { flex-direction: column; }
+
+  /* Inbox panel */
+  #inbox-panel { width: calc(100vw - 24px) !important; margin-right: 12px; }
+
+  /* Calendar grid smaller text */
+  .cal-day { font-size: 11px; }
+  .cal-event-pill { font-size: 8px; }
+  #cal-month-jumps { gap: 4px; }
+
+  /* Login */
+  .login-title { font-size: 38px; }
+  #login-step-3 { width: calc(100vw - 48px) !important; }
+  #name-picker { width: calc(100vw - 80px) !important; }
+}
 </style>
 </head>
 <body>
@@ -1721,6 +1858,7 @@ function sortedColTasks(col){
 }
 
 function renderAll(){
+  setTimeout(initMobileColumns, 50);
   COLS.forEach(col=>{
     const body=document.getElementById(`body-${col}`);
     const sort=colSort[col]||'priority';
@@ -1985,6 +2123,26 @@ document.getElementById('login-pw-new').addEventListener('keydown',e=>{if(e.key=
 document.getElementById('login-pw-confirm').addEventListener('keydown',e=>{if(e.key==='Enter') submitPassword();});
 
 renderNamePicker();
+
+// ── Mobile collapsible columns ────────────────────────────────────────────
+function initMobileColumns(){
+  if(window.innerWidth > 680) return;
+  document.querySelectorAll('.col-header').forEach(header=>{
+    header.addEventListener('click', e=>{
+      // Don't collapse if clicking sort buttons
+      if(e.target.classList.contains('sort-toggle')||e.target.classList.contains('col-count')) return;
+      const col=header.closest('.col');
+      col.classList.toggle('collapsed');
+    });
+  });
+}
+window.addEventListener('resize', ()=>{
+  if(window.innerWidth > 680){
+    document.querySelectorAll('.col').forEach(c=>c.classList.remove('collapsed'));
+  }
+});
+
+document.addEventListener("DOMContentLoaded", initMobileColumns);
 </script>
 
 <!-- ADD EVENT MODAL -->
