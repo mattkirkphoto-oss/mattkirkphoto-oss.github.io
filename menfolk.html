@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Menfolk — Production</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%0A%20%20%3C%21--%20Board%20body%20--%3E%0A%20%20%3Crect%20x%3D%222%22%20y%3D%2210%22%20width%3D%2228%22%20height%3D%2220%22%20rx%3D%222%22%20fill%3D%22%231e1e1b%22%20stroke%3D%22%23c8b97a%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3C%21--%20Clapper%20top%20--%3E%0A%20%20%3Crect%20x%3D%222%22%20y%3D%225%22%20width%3D%2228%22%20height%3D%226%22%20rx%3D%221.5%22%20fill%3D%22%23c8b97a%22/%3E%0A%20%20%3C%21--%20Clapper%20stripes%20--%3E%0A%20%20%3Crect%20x%3D%226%22%20y%3D%225%22%20width%3D%224%22%20height%3D%226%22%20fill%3D%22%231e1e1b%22/%3E%0A%20%20%3Crect%20x%3D%2214%22%20y%3D%225%22%20width%3D%224%22%20height%3D%226%22%20fill%3D%22%231e1e1b%22/%3E%0A%20%20%3Crect%20x%3D%2222%22%20y%3D%225%22%20width%3D%224%22%20height%3D%226%22%20fill%3D%22%231e1e1b%22/%3E%0A%20%20%3C%21--%20Hinge%20line%20--%3E%0A%20%20%3Cline%20x1%3D%222%22%20y1%3D%2211%22%20x2%3D%2230%22%20y2%3D%2211%22%20stroke%3D%22%23c8b97a%22%20stroke-width%3D%221%22/%3E%0A%20%20%3C%21--%20Text%20lines%20on%20board%20--%3E%0A%20%20%3Crect%20x%3D%226%22%20y%3D%2216%22%20width%3D%2214%22%20height%3D%221.5%22%20rx%3D%220.75%22%20fill%3D%22%23c8b97a%22%20opacity%3D%220.6%22/%3E%0A%20%20%3Crect%20x%3D%226%22%20y%3D%2220%22%20width%3D%2210%22%20height%3D%221.5%22%20rx%3D%220.75%22%20fill%3D%22%23c8b97a%22%20opacity%3D%220.4%22/%3E%0A%20%20%3Crect%20x%3D%226%22%20y%3D%2224%22%20width%3D%2212%22%20height%3D%221.5%22%20rx%3D%220.75%22%20fill%3D%22%23c8b97a%22%20opacity%3D%220.4%22/%3E%0A%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -263,6 +264,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 
 .name-pick-btn{height:44px;width:100%;background:var(--bg-card);border:0.5px solid var(--border-strong);border-radius:var(--radius);font-family:'DM Mono',monospace;font-size:13px;letter-spacing:0.08em;color:var(--text);cursor:pointer;transition:all 0.15s;}
 .name-pick-btn:hover{background:var(--bg-hover);border-color:var(--accent);color:var(--accent);}
+
+.priority-tag{display:inline-flex;align-items:center;height:16px;padding:0 6px;border-radius:3px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.06em;font-weight:500;}
+.priority-tag.high{background:rgba(184,79,79,0.2);color:var(--red);}
+.priority-tag.low{background:rgba(138,136,128,0.15);color:var(--text-tertiary);}
+.card-meta{font-family:'DM Mono',monospace;font-size:9px;color:var(--text-tertiary);letter-spacing:0.04em;}
+
+.sort-toggle{height:18px;padding:0 5px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.04em;border:0.5px solid var(--border);border-radius:3px;background:transparent;color:var(--text-tertiary);cursor:pointer;transition:all 0.1s;}
+.sort-toggle.sort-active{background:var(--accent);color:#0f0f0d;border-color:var(--accent);}
+.sort-toggle:hover:not(.sort-active){color:var(--text);}
+.due-badge{font-family:'DM Mono',monospace;font-size:10px;padding:2px 6px;border-radius:3px;display:inline-block;margin-top:4px;letter-spacing:0.03em;}
+.due-badge.due-ok{background:rgba(74,158,107,0.15);color:var(--green);}
+.due-badge.due-soon{background:rgba(196,124,58,0.2);color:var(--orange);}
+.due-badge.due-overdue{background:rgba(184,79,79,0.2);color:var(--red);}
+.card.overdue{border-left:3px solid var(--red)!important;}
+.tick-btn{color:var(--green)!important;}
+.tick-btn:hover{background:var(--green-bg)!important;border-color:var(--green-border)!important;}
+.card-actions{opacity:1!important;}
 </style>
 </head>
 <body>
@@ -272,16 +290,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   <div class="login-box">
     <div class="login-title">MENFOLK</div>
     <div class="login-sub">Production Dashboard</div>
-    <div id="login-step-1">
-      <div class="login-form">
-        <input type="password" id="login-pw" placeholder="Password…" />
-        <button onclick="tryLogin()">Enter</button>
-        <div class="login-error" id="login-error">Incorrect password.</div>
-      </div>
-    </div>
-    <div id="login-step-2" style="display:none;text-align:center;">
+    <div id="login-step-1" style="text-align:center;">
       <p style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:18px;">Who are you?</p>
       <div id="name-picker" style="display:flex;flex-direction:column;gap:8px;width:200px;"></div>
+    </div>
+    <div id="login-step-2" style="display:none;"></div>
+    <div id="login-step-3" style="display:none;text-align:center;width:260px;">
+      <p id="pw-step-label" style="font-family:'DM Mono',monospace;font-size:13px;letter-spacing:0.05em;color:var(--text);margin-bottom:4px;"></p>
+      <p id="pw-step-sub" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:16px;"></p>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <input type="password" id="login-pw-new" placeholder="Password…" maxlength="60" style="height:40px;padding:0 14px;background:var(--bg-panel);border:0.5px solid var(--border-strong);border-radius:var(--radius);font-family:'DM Mono',monospace;font-size:13px;color:var(--text);outline:none;letter-spacing:0.05em;"/>
+        <div id="pw-confirm-row" style="display:none;">
+          <input type="password" id="login-pw-confirm" placeholder="Confirm password…" maxlength="60" style="height:40px;padding:0 14px;background:var(--bg-panel);border:0.5px solid var(--border-strong);border-radius:var(--radius);font-family:'DM Mono',monospace;font-size:13px;color:var(--text);outline:none;letter-spacing:0.05em;width:100%;"/>
+        </div>
+        <button onclick="submitPassword()" style="height:40px;background:var(--accent);color:#0f0f0d;border:none;border-radius:var(--radius);font-family:'DM Mono',monospace;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;font-weight:500;">Continue</button>
+        <button onclick="goBackToNamePicker()" style="height:32px;background:none;border:none;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.06em;color:var(--text-tertiary);cursor:pointer;">← Back</button>
+        <div class="login-error" id="login-pw-error" style="display:none;"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -309,7 +334,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
     <div class="header-divider"></div>
     <div class="header-sub">Production Board</div>
     <div class="header-spacer"></div>
-    <button class="add-task-btn" onclick="openCalendar()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">📆 Calendar</button><button class="add-task-btn" onclick="openAvail()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">📅 Availability</button><button class="add-task-btn" onclick="openAddTask()">+ Add Task</button>
+    <button class="add-task-btn" onclick="openCalendar()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">📆 Calendar</button><button class="add-task-btn" onclick="openAvail()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">📅 Availability</button><button id="admin-reset-btn" class="add-task-btn" onclick="openAdminReset()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;display:none;">⚙ Passwords</button><button class="add-task-btn" onclick="openAddTask()">+ Add Task</button>
   </div>
 
   <!-- BODY -->
@@ -317,24 +342,64 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 
     <!-- KANBAN -->
     <div id="kanban">
-      <div class="col" id="col-todo">
-        <div class="col-header"><span class="col-title">To Do</span><span class="col-count" id="count-todo">0</span></div>
+            <div class="col" id="col-todo">
+        <div class="col-header">
+          <span class="col-title">To Do</span>
+          <div style="display:flex;align-items:center;gap:3px;">
+<button id="sort-todo-manual" class="sort-toggle sort-active" onclick="setColSort('todo','manual')" title="Manual sort">M</button>
+            <button id="sort-todo-priority" class="sort-toggle" onclick="setColSort('todo','priority')" title="Priority sort">P</button>
+            <button id="sort-todo-date" class="sort-toggle" onclick="setColSort('todo','date')" title="Date sort">D</button>
+            <span class="col-count" id="count-todo">0</span>
+          </div>
+        </div>
         <div class="col-body" id="body-todo" ondragover="onDragOver(event)" ondrop="onDrop(event,'todo')" ondragleave="onDragLeave(event)"></div>
       </div>
-      <div class="col" id="col-matthew">
-        <div class="col-header"><span class="col-title">Matthew</span><span class="col-count" id="count-matthew">0</span></div>
+            <div class="col" id="col-matthew">
+        <div class="col-header">
+          <span class="col-title">Matthew</span>
+          <div style="display:flex;align-items:center;gap:3px;">
+<button id="sort-matthew-manual" class="sort-toggle sort-active" onclick="setColSort('matthew','manual')" title="Manual sort">M</button>
+            <button id="sort-matthew-priority" class="sort-toggle" onclick="setColSort('matthew','priority')" title="Priority sort">P</button>
+            <button id="sort-matthew-date" class="sort-toggle" onclick="setColSort('matthew','date')" title="Date sort">D</button>
+            <span class="col-count" id="count-matthew">0</span>
+          </div>
+        </div>
         <div class="col-body" id="body-matthew" ondragover="onDragOver(event)" ondrop="onDrop(event,'matthew')" ondragleave="onDragLeave(event)"></div>
       </div>
-      <div class="col" id="col-dani">
-        <div class="col-header"><span class="col-title">Dani</span><span class="col-count" id="count-dani">0</span></div>
+            <div class="col" id="col-dani">
+        <div class="col-header">
+          <span class="col-title">Dani</span>
+          <div style="display:flex;align-items:center;gap:3px;">
+<button id="sort-dani-manual" class="sort-toggle sort-active" onclick="setColSort('dani','manual')" title="Manual sort">M</button>
+            <button id="sort-dani-priority" class="sort-toggle" onclick="setColSort('dani','priority')" title="Priority sort">P</button>
+            <button id="sort-dani-date" class="sort-toggle" onclick="setColSort('dani','date')" title="Date sort">D</button>
+            <span class="col-count" id="count-dani">0</span>
+          </div>
+        </div>
         <div class="col-body" id="body-dani" ondragover="onDragOver(event)" ondrop="onDrop(event,'dani')" ondragleave="onDragLeave(event)"></div>
       </div>
-      <div class="col" id="col-zoe">
-        <div class="col-header"><span class="col-title">Zoe</span><span class="col-count" id="count-zoe">0</span></div>
+            <div class="col" id="col-zoe">
+        <div class="col-header">
+          <span class="col-title">Zoe</span>
+          <div style="display:flex;align-items:center;gap:3px;">
+<button id="sort-zoe-manual" class="sort-toggle sort-active" onclick="setColSort('zoe','manual')" title="Manual sort">M</button>
+            <button id="sort-zoe-priority" class="sort-toggle" onclick="setColSort('zoe','priority')" title="Priority sort">P</button>
+            <button id="sort-zoe-date" class="sort-toggle" onclick="setColSort('zoe','date')" title="Date sort">D</button>
+            <span class="col-count" id="count-zoe">0</span>
+          </div>
+        </div>
         <div class="col-body" id="body-zoe" ondragover="onDragOver(event)" ondrop="onDrop(event,'zoe')" ondragleave="onDragLeave(event)"></div>
       </div>
-      <div class="col" id="col-meg">
-        <div class="col-header"><span class="col-title">Meg</span><span class="col-count" id="count-meg">0</span></div>
+            <div class="col" id="col-meg">
+        <div class="col-header">
+          <span class="col-title">Meg</span>
+          <div style="display:flex;align-items:center;gap:3px;">
+<button id="sort-meg-manual" class="sort-toggle sort-active" onclick="setColSort('meg','manual')" title="Manual sort">M</button>
+            <button id="sort-meg-priority" class="sort-toggle" onclick="setColSort('meg','priority')" title="Priority sort">P</button>
+            <button id="sort-meg-date" class="sort-toggle" onclick="setColSort('meg','date')" title="Date sort">D</button>
+            <span class="col-count" id="count-meg">0</span>
+          </div>
+        </div>
         <div class="col-body" id="body-meg" ondragover="onDragOver(event)" ondrop="onDrop(event,'meg')" ondragleave="onDragLeave(event)"></div>
       </div>
       <div class="col done-col" id="col-done">
@@ -416,6 +481,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
         </select>
       </div>
     </div>
+    <div class="modal-row">
+      <div>
+        <label>Priority</label>
+        <select id="task-priority">
+          <option value="normal">Normal</option>
+          <option value="high">High</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+      <div>
+        <label>Due date (optional)</label>
+        <input type="date" id="task-due" />
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="modal-btn" onclick="closeModal('task-modal')">Cancel</button>
       <button class="modal-btn primary" onclick="saveTask()">Save Task</button>
@@ -478,10 +557,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   <div id="cal-panel">
     <div id="cal-header">
       <span id="cal-header-title">August 2026</span>
+      <button class="cal-nav-btn" onclick="calToday()" style="width:auto;padding:0 10px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.05em;" title="Jump to today">Today</button>
       <div class="cal-nav-btn" onclick="calPrev()">&#8592;</div>
       <div class="cal-nav-btn" onclick="calNext()">&#8594;</div>
       <button class="cal-close" onclick="closeCalendar()">✕</button>
     </div>
+    <div id="cal-month-jumps" style="display:flex;gap:5px;flex-wrap:wrap;padding:10px 20px 0;flex-shrink:0;overflow-x:auto;border-bottom:0.5px solid var(--border);padding-bottom:10px;"></div>
     <div id="cal-body">
       <div class="cal-weekdays">
         <div class="cal-weekday">Mon</div><div class="cal-weekday">Tue</div><div class="cal-weekday">Wed</div>
@@ -493,6 +574,29 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 </div>
 
 
+
+
+<!-- ADMIN PASSWORD RESET MODAL -->
+<div class="modal-backdrop" id="admin-reset-modal">
+  <div class="modal" style="width:380px;">
+    <div class="modal-title">Reset Passwords</div>
+    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">Resetting a password will require that person to set a new one on their next login. Their data is unaffected.</p>
+    <div id="admin-reset-list"></div>
+    <div class="modal-actions" style="margin-top:12px;">
+      <button class="modal-btn" onclick="closeModal('admin-reset-modal')">Done</button>
+    </div>
+  </div>
+</div>
+<!-- DAY EVENTS MODAL -->
+<div class="modal-backdrop" id="day-events-modal">
+  <div class="modal" style="width:400px;">
+    <div class="modal-title" id="day-events-popup-title"></div>
+    <div id="day-events-popup-list" style="margin-top:4px;max-height:300px;overflow-y:auto;"></div>
+    <div class="modal-actions" style="margin-top:12px;">
+      <button class="modal-btn" onclick="closeModal('day-events-modal')">Close</button>
+    </div>
+  </div>
+</div>
 <!-- CATEGORY MANAGER MODAL -->
 <div class="modal-backdrop" id="cat-modal">
   <div class="modal" style="width:380px;">
@@ -507,7 +611,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
     </div>
   </div>
 </div>
-<!-- ADD EVENT MODAL -->
+<!-- ADD EVENT TYPE BUTTON TO EVENT MODAL -->
 <div class="modal-backdrop" id="event-modal">
   <div class="modal">
     <div class="modal-title" id="event-modal-title">Add Event</div>
@@ -529,6 +633,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <div>
         <label>Type</label>
         <select id="event-type"></select>
+        <button id="open-cat-manager-btn" type="button" class="modal-btn" style="height:26px;font-size:10px;padding:0 10px;margin-top:6px;">Manage categories</button>
       </div>
       <div>
         <label>Location (optional)</label>
@@ -549,7 +654,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 
 <script>
 const DB='https://menfolk-production-default-rtdb.europe-west1.firebasedatabase.app';
-const PASSWORD='menfolk2026';
 const COLS=['todo','matthew','dani','zoe','meg','done'];
 const TEAM=['Matthew','Meg','Zoe','Dani'];
 let currentUser=null;
@@ -557,6 +661,25 @@ let currentUser=null;
 let tasks={};
 let draggingId=null;
 let editingId=null;
+let colSort={}; // 'manual','priority','date' per column — defaults to 'manual'
+
+function daysDiff(dateStr){
+  if(!dateStr) return null;
+  const today=new Date();today.setHours(0,0,0,0);
+  const due=new Date(dateStr+'T00:00:00');
+  return Math.round((due-today)/(1000*60*60*24));
+}
+function dueDateLabel(dateStr){
+  if(!dateStr) return '';
+  const diff=daysDiff(dateStr);
+  if(diff===0) return 'Due today';
+  if(diff===1) return 'Due tomorrow';
+  if(diff===-1) return 'Overdue by 1 day';
+  if(diff<0) return `Overdue by ${Math.abs(diff)} days`;
+  if(diff<=7) return `${diff} days left`;
+  const d=new Date(dateStr+'T00:00:00');
+  return 'Due '+d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+}
 
 
 
@@ -607,7 +730,12 @@ function avFormatDateLong(key){
 function avGetAvail(unavailByPerson,names){
   const result={};
   avGetAllDays().forEach(key=>{
-    let free=0;names.forEach(n=>{if(!unavailByPerson[n][key]) free++;});
+    let free=0;
+    names.forEach(n=>{
+      // Only count people who are in the active names list
+      if(unavailByPerson[n]&&!unavailByPerson[n][key]) free++;
+      else if(!unavailByPerson[n]) free++; // person exists but no unavail data = fully free
+    });
     result[key]=free;
   });
   return result;
@@ -1075,20 +1203,9 @@ function renderCategorySelect(){
     sel.appendChild(opt);
   });
   if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
-  // Add manage button row below select if not already there
-  let manageRow=document.getElementById('cat-manage-row');
-  if(!manageRow){
-    manageRow=document.createElement('div');
-    manageRow.id='cat-manage-row';
-    manageRow.style.cssText='margin-top:4px;';
-    sel.parentNode.parentNode.insertAdjacentElement('afterend',manageRow);
-  }
-  manageRow.innerHTML='';
-  const manageBtn=document.createElement('button');
-  manageBtn.className='modal-btn';manageBtn.style.cssText='height:28px;font-size:10px;padding:0 10px;';
-  manageBtn.textContent='Manage categories';
-  manageBtn.onclick=openCatManager;
-  manageRow.appendChild(manageBtn);
+  // Use fixed element in modal HTML
+  const manageBtn=document.getElementById('open-cat-manager-btn');
+  if(manageBtn) manageBtn.onclick=openCatManager;
 }
 
 function openCatManager(){
@@ -1125,8 +1242,9 @@ async function removeCat(i){
 }
 
 // --- CALENDAR ---
+const MIN_CAL_YEAR=2026;const MIN_CAL_MONTH=4; // May 2026 (0-indexed)
 let calYear=2026;
-let calMonth=7; // August 2026 (0-indexed)
+let calMonth=4; // Start at May 2026
 let events={};
 let editingEventId=null;
 let addingDateStr=null;
@@ -1140,11 +1258,59 @@ function openCalendar(){
 }
 function closeCalendar(){document.getElementById('cal-overlay').classList.remove('visible');}
 function onCalOverlayClick(e){if(e.target===document.getElementById('cal-overlay')) closeCalendar();}
-function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCal();}
+function calToday(){
+  const now=new Date();
+  calYear=now.getFullYear();
+  calMonth=now.getMonth();
+  // Clamp to minimum
+  if(calYear<MIN_CAL_YEAR||(calYear===MIN_CAL_YEAR&&calMonth<MIN_CAL_MONTH)){
+    calYear=MIN_CAL_YEAR;calMonth=MIN_CAL_MONTH;
+  }
+  renderCal();
+  // Briefly highlight today's cell
+  setTimeout(()=>{
+    const today=new Date();
+    const key=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+    const cell=document.querySelector(`[data-date="${key}"]`);
+    if(cell){cell.style.outline='2px solid var(--accent)';cell.style.outlineOffset='2px';setTimeout(()=>{cell.style.outline='';cell.style.outlineOffset='';},1200);}
+  },50);
+}
+
+function calPrev(){
+  calMonth--;if(calMonth<0){calMonth=11;calYear--;}
+  if(calYear<MIN_CAL_YEAR||(calYear===MIN_CAL_YEAR&&calMonth<MIN_CAL_MONTH)){calYear=MIN_CAL_YEAR;calMonth=MIN_CAL_MONTH;}
+  renderCal();
+}
 function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCal();}
 
+
+function renderMonthJumps(){
+  let el=document.getElementById('cal-month-jumps');
+  if(!el) return;
+  el.innerHTML='';
+  // Show months from May 2026 forward for next 12 months
+  const months=[];
+  for(let i=0;i<12;i++){
+    const m=(MIN_CAL_MONTH+i)%12;
+    const y=MIN_CAL_YEAR+Math.floor((MIN_CAL_MONTH+i)/12);
+    months.push({m,y});
+  }
+  months.forEach(({m,y})=>{
+    const btn=document.createElement('button');
+    const isActive=m===calMonth&&y===calYear;
+    btn.style.cssText=`height:24px;padding:0 10px;border-radius:12px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.04em;border:0.5px solid;cursor:pointer;white-space:nowrap;transition:all 0.1s;background:${isActive?'var(--accent)':'transparent'};color:${isActive?'#0f0f0d':'var(--text-tertiary)'};border-color:${isActive?'var(--accent)':'var(--border-strong)'};`;
+    btn.textContent=MONTH_NAMES[m].slice(0,3)+' '+y;
+    btn.onclick=(e)=>{e.stopPropagation();calYear=y;calMonth=m;renderCal();};
+    el.appendChild(btn);
+  });
+}
 function renderCal(){
   document.getElementById('cal-header-title').textContent=MONTH_NAMES[calMonth]+' '+calYear;
+  // Update prev button disabled state
+  const prevBtn=document.querySelector('#cal-panel .cal-nav-btn:first-of-type');
+  if(prevBtn) prevBtn.style.opacity=(calYear===MIN_CAL_YEAR&&calMonth===MIN_CAL_MONTH)?'0.25':'1';
+  // Render month jump pills
+  renderMonthJumps();
   const grid=document.getElementById('cal-grid');
   grid.innerHTML='';
   const firstDay=new Date(calYear,calMonth,1).getDay();
@@ -1176,9 +1342,15 @@ function renderCal(){
     if(dayEvents.length>maxShow){
       const more=document.createElement('div');
       more.className='cal-more';more.textContent=`+${dayEvents.length-maxShow} more`;
+      more.style.cursor='pointer';
+      more.addEventListener('click',e=>{
+        e.stopPropagation();
+        showDayEventsPopup(dateStr,dayEvents);
+      });
       cell.appendChild(more);
     }
 
+    cell.dataset.date=dateStr;
     cell.addEventListener('click',()=>openAddEvent(dateStr));
     grid.appendChild(cell);
   }
@@ -1275,36 +1447,152 @@ function renderEventsStrip(){
   });
 }
 
-// --- AUTH ---
-document.getElementById('login-pw').addEventListener('keydown',e=>{if(e.key==='Enter') tryLogin();});
-function tryLogin(){
-  const pw=document.getElementById('login-pw').value;
-  if(pw===PASSWORD){
-    document.getElementById('login-step-1').style.display='none';
-    document.getElementById('login-step-2').style.display='block';
-    renderNamePicker();
-  } else {
-    document.getElementById('login-error').style.display='block';
-    document.getElementById('login-pw').value='';
-  }
+
+function showDayEventsPopup(dateStr,dayEvents){
+  const d=new Date(dateStr+'T12:00:00');
+  const label=d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('day-events-popup-title').textContent=label;
+  const list=document.getElementById('day-events-popup-list');
+  list.innerHTML='';
+  dayEvents.forEach(([eid,ev])=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:5px;border:0.5px solid var(--border);background:var(--bg-card);margin-bottom:5px;cursor:pointer;';
+    row.innerHTML=`<span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${catColor(ev.type||'other')}"></span><div style="flex:1;min-width:0;"><div style="font-size:13px;color:var(--text);">${escHtml(ev.title)}</div><div style="font-size:11px;color:var(--text-tertiary);font-family:'DM Mono',monospace;">${ev.time?ev.time.slice(0,5)+' · ':''}${ev.type||'other'}${ev.location?' · '+escHtml(ev.location):''}</div></div>`;
+    row.onclick=()=>{closeModal('day-events-modal');openEditEvent(eid);};
+    list.appendChild(row);
+  });
+  document.getElementById('day-events-modal').classList.add('visible');
 }
+
+function catColor(type){
+  const colors={'audition':'#a78bfa','meeting':'#7cb9f0','shoot':'#e09a5a','rehearsal':'#f472b6','location-scout':'#34d399','wrap':'#fbbf24','other':'#9e9d99'};
+  return colors[type]||'#9e9d99';
+}
+// --- AUTH ---
+// ── AUTH: name first, then per-person password ──────────────────────────
+let loginName=null;
+
 function renderNamePicker(){
   const el=document.getElementById('name-picker');el.innerHTML='';
   TEAM.forEach(name=>{
     const btn=document.createElement('button');
     btn.className='name-pick-btn';btn.textContent=name;
-    btn.onclick=()=>loginAs(name);
+    btn.onclick=()=>selectName(name);
     el.appendChild(btn);
   });
 }
-function loginAs(name){
+
+async function selectName(name){
+  loginName=name;
+  // Check if this person has a password set in Firebase
+  let hasPassword=false;
+  try{
+    const data=await fbGet(`passwords/${encodeURIComponent(name)}`);
+    hasPassword=!!(data&&data.hash);
+  } catch(e){}
+
+  document.getElementById('login-step-1').style.display='none';
+  document.getElementById('login-step-2').style.display='none';
+  document.getElementById('login-step-3').style.display='block';
+
+  const label=document.getElementById('pw-step-label');
+  const subLabel=document.getElementById('pw-step-sub');
+  if(hasPassword){
+    label.textContent=`Welcome, ${name}`;
+    subLabel.textContent='Enter your password';
+    document.getElementById('pw-confirm-row').style.display='none';
+  } else {
+    label.textContent=`Hi ${name}, first time here`;
+    subLabel.textContent='Set a personal password for your account';
+    document.getElementById('pw-confirm-row').style.display='flex';
+  }
+  document.getElementById('login-pw-new').value='';
+  document.getElementById('login-pw-confirm').value='';
+  document.getElementById('login-pw-error').style.display='none';
+  setTimeout(()=>document.getElementById('login-pw-new').focus(),50);
+}
+
+async function submitPassword(){
+  const pw=document.getElementById('login-pw-new').value;
+  const confirmRow=document.getElementById('pw-confirm-row');
+  const isSetting=confirmRow.style.display!=='none';
+  const errEl=document.getElementById('login-pw-error');
+
+  if(!pw){errEl.textContent='Please enter a password.';errEl.style.display='block';return;}
+
+  if(isSetting){
+    const confirm=document.getElementById('login-pw-confirm').value;
+    if(pw!==confirm){errEl.textContent='Passwords do not match.';errEl.style.display='block';return;}
+    if(pw.length<4){errEl.textContent='Password must be at least 4 characters.';errEl.style.display='block';return;}
+    // Hash and save
+    const hash=await hashString(pw);
+    try{await fbSet(`passwords/${encodeURIComponent(loginName)}`,{hash});}
+    catch(e){errEl.textContent='Could not save password. Check connection.';errEl.style.display='block';return;}
+    enterDashboard(loginName);
+  } else {
+    // Verify
+    const hash=await hashString(pw);
+    try{
+      const data=await fbGet(`passwords/${encodeURIComponent(loginName)}`);
+      if(data&&data.hash===hash){
+        enterDashboard(loginName);
+      } else {
+        errEl.textContent='Incorrect password.';errEl.style.display='block';
+        document.getElementById('login-pw-new').value='';
+      }
+    } catch(e){errEl.textContent='Could not verify. Check connection.';errEl.style.display='block';}
+  }
+}
+
+async function hashString(str){
+  const enc=new TextEncoder().encode(str);
+  const buf=await crypto.subtle.digest('SHA-256',enc);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function enterDashboard(name){
   currentUser=name;
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').classList.add('visible');
-  // Update header to show who's logged in
   const subEl=document.querySelector('.header-sub');
   if(subEl) subEl.textContent=`Production Board — ${name}`;
+  // Show admin reset btn only for Matthew
+  const resetBtn=document.getElementById('admin-reset-btn');
+  if(resetBtn) resetBtn.style.display=name==='Matthew'?'inline-block':'none';
   init();
+}
+
+function goBackToNamePicker(){
+  document.getElementById('login-step-3').style.display='none';
+  document.getElementById('login-step-1').style.display='block';
+  loginName=null;
+}
+
+// Admin password reset (Matthew only)
+async function openAdminReset(){
+  document.getElementById('admin-reset-modal').classList.add('visible');
+  // Populate person list
+  const list=document.getElementById('admin-reset-list');
+  list.innerHTML='<p style="font-size:12px;color:var(--text-tertiary);font-family:DM Mono,monospace;">Loading…</p>';
+  try{
+    const data=await fbGet('passwords');
+    list.innerHTML='';
+    TEAM.filter(n=>n!=='Matthew').forEach(name=>{
+      const hasPass=!!(data&&data[encodeURIComponent(name)]&&data[encodeURIComponent(name)].hash);
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--border);';
+      row.innerHTML=`<span style="font-size:13px;color:var(--text);">${name}</span><button class="modal-btn" style="height:28px;font-size:10px;padding:0 10px;color:var(--orange);border-color:var(--orange-border);" onclick="resetPersonPassword('${name}')">Reset password</button>`;
+      list.appendChild(row);
+    });
+  } catch(e){list.innerHTML='<p style="color:var(--red);font-size:12px;">Could not load.</p>';}
+}
+
+async function resetPersonPassword(name){
+  if(!confirm(`Reset ${name}'s password? They will be asked to set a new one next time they log in.`)) return;
+  try{
+    await fbDelete(`passwords/${encodeURIComponent(name)}`);
+    alert(`${name}'s password has been reset. They will set a new one on next login.`);
+  } catch(e){alert('Reset failed. Try again.');}
 }
 
 // --- FIREBASE ---
@@ -1352,10 +1640,47 @@ async function loadAll(){
 }
 
 // --- RENDER ---
+
+function setColSort(col,mode){
+  colSort[col]=mode;
+  renderAll();
+}
+function sortedColTasks(col){
+  const sort=colSort[col]||'manual';
+  let colTasks=Object.entries(tasks).filter(([,t])=>t.col===col);
+  if(sort==='date'){
+    // Sort by due date ascending; undated tasks sink to bottom
+    colTasks.sort((a,b)=>{
+      const ad=a[1].dueDate||'9999-99-99',bd=b[1].dueDate||'9999-99-99';
+      return ad.localeCompare(bd);
+    });
+  } else if(sort==='priority'){
+    // Sort by priority group, then within each group by due date, then by manual order
+    const pOrder={'high':0,'normal':1,'low':2};
+    colTasks.sort((a,b)=>{
+      const pa=pOrder[a[1].priority||'normal']||1;
+      const pb=pOrder[b[1].priority||'normal']||1;
+      if(pa!==pb) return pa-pb;
+      const ad=a[1].dueDate||'9999-99-99',bd=b[1].dueDate||'9999-99-99';
+      return ad.localeCompare(bd)||(a[1].order||0)-(b[1].order||0);
+    });
+  } else {
+    // Manual — sort by persisted order field
+    colTasks.sort((a,b)=>(a[1].order||0)-(b[1].order||0));
+  }
+  return colTasks;
+}
+
 function renderAll(){
   COLS.forEach(col=>{
     const body=document.getElementById(`body-${col}`);
-    const colTasks=Object.entries(tasks).filter(([,t])=>t.col===col).sort((a,b)=>(a[1].order||0)-(b[1].order||0));
+    const sort=colSort[col]||'priority';
+    // Update sort toggle buttons
+    ['manual','priority','date'].forEach(s=>{
+      const btn=document.getElementById(`sort-${col}-${s}`);
+      if(btn) btn.classList.toggle('sort-active',s===sort);
+    });
+    const colTasks=sortedColTasks(col);
     body.innerHTML='';
     colTasks.forEach(([id,t])=>body.appendChild(makeCard(id,t)));
     document.getElementById(`count-${col}`).textContent=colTasks.length;
@@ -1372,12 +1697,25 @@ function makeCard(id,t){
   const statusClass=t.status&&t.status!=='none'?t.status:'none';
   const statusText=statusLabels[t.status]||'';
 
+  const priorityHTML=t.priority&&t.priority!=='normal'?`<span class="priority-tag ${t.priority}">${t.priority==='high'?'↑ High':'↓ Low'}</span>`:'';
+  const createdByHTML=t.createdBy?`<span class="card-meta">${escHtml(t.createdBy)}</span>`:'';
+  // Due date
+  const diff=t.dueDate?daysDiff(t.dueDate):null;
+  const overdue=diff!==null&&diff<0;
+  const dueLabel=t.dueDate?dueDateLabel(t.dueDate):'';
+  const dueCls=diff===null?'':(overdue?'due-overdue':diff<=2?'due-soon':'due-ok');
+  if(overdue) card.classList.add('overdue');
+  const dueHTML=dueLabel?`<div class="due-badge ${dueCls}">${dueLabel}</div>`:'';
   card.innerHTML=`
+    ${priorityHTML?`<div style="margin-bottom:5px;">${priorityHTML}</div>`:''}
     <div class="card-title">${escHtml(t.title)}</div>
     ${t.notes?`<div class="card-notes">${escHtml(t.notes)}</div>`:''}
-    <div class="card-footer">
+    ${dueHTML}
+    <div class="card-footer" style="margin-top:7px;">
       <span class="status-pill ${statusClass}" onclick="cycleStatus('${id}',event)">${statusText||'— status'}</span>
-      <div class="card-actions">
+      <div style="display:flex;align-items:center;gap:5px;">
+        ${createdByHTML}
+        <div class="card-btn tick-btn" onclick="completeTask('${id}',event)" title="Mark done">✓</div>
         <div class="card-btn" onclick="openEditTask('${id}')" title="Edit">✎</div>
         <div class="card-btn delete" onclick="deleteTask('${id}')" title="Delete">✕</div>
       </div>
@@ -1397,13 +1735,42 @@ async function onDrop(e,col){
   e.preventDefault();
   e.currentTarget.classList.remove('drag-over');
   if(!draggingId||!tasks[draggingId]) return;
-  const colTasks=Object.entries(tasks).filter(([,t])=>t.col===col);
-  tasks[draggingId]={...tasks[draggingId],col,order:colTasks.length};
+
+  const srcCol=tasks[draggingId].col;
+  const destSort=colSort[col]||'manual';
+  const movingCols=srcCol!==col;
+
+  // If destination column isn't in manual sort mode, ask to switch
+  if(destSort!=='manual'){
+    const switchToManual=confirm(`This column is sorted by "${destSort}". Switch to manual sort to drag tasks here?`);
+    if(switchToManual){
+      colSort[col]='manual';
+    } else {
+      renderAll();return;
+    }
+  }
+
+  // Recalculate order based on current manual-sorted position
+  const colTasksSorted=sortedColTasks(col).filter(([id])=>id!==draggingId);
+  tasks[draggingId]={...tasks[draggingId],col,order:colTasksSorted.length};
   renderAll();
   try{await fbSet(`tasks/${draggingId}`,tasks[draggingId]);}
   catch(e){console.error('Move failed',e);}
 }
 
+
+async function completeTask(id,e){
+  e.stopPropagation();
+  if(!tasks[id]) return;
+  const card=document.querySelector(`.card[data-id="${id}"]`);
+  if(card){card.style.transition='opacity 0.35s,transform 0.35s';card.style.opacity='0.3';card.style.transform='scale(0.96)';}
+  setTimeout(async()=>{
+    const colTasks=Object.values(tasks).filter(t=>t.col==='done');
+    tasks[id]={...tasks[id],col:'done',status:'complete',order:colTasks.length};
+    renderAll();
+    try{await fbSet(`tasks/${id}`,tasks[id]);}catch(e){console.error(e);}
+  },320);
+}
 // --- STATUS CYCLE ---
 const STATUS_CYCLE=['none','in-progress','complete','issue'];
 async function cycleStatus(id,e){
@@ -1426,6 +1793,8 @@ function openAddTask(){
   document.getElementById('task-notes').value='';
   document.getElementById('task-col').value='todo';
   document.getElementById('task-status').value='none';
+  document.getElementById('task-priority').value='normal';
+  document.getElementById('task-due').value='';
   document.getElementById('task-modal').classList.add('visible');
   setTimeout(()=>document.getElementById('task-title').focus(),50);
 }
@@ -1439,6 +1808,8 @@ function openEditTask(id){
   document.getElementById('task-notes').value=t.notes||'';
   document.getElementById('task-col').value=t.col||'todo';
   document.getElementById('task-status').value=t.status||'none';
+  document.getElementById('task-priority').value=t.priority||'normal';
+  document.getElementById('task-due').value=t.dueDate||'';
   document.getElementById('task-modal').classList.add('visible');
   setTimeout(()=>document.getElementById('task-title').focus(),50);
 }
@@ -1448,14 +1819,16 @@ async function saveTask(){
   const col=document.getElementById('task-col').value;
   const status=document.getElementById('task-status').value;
   const notes=document.getElementById('task-notes').value.trim();
+  const priority=document.getElementById('task-priority').value;
+  const dueDate=document.getElementById('task-due').value||'';
   const colTasks=Object.values(tasks).filter(t=>t.col===col);
 
   if(editingId){
-    tasks[editingId]={...tasks[editingId],title,notes,col,status};
+    tasks[editingId]={...tasks[editingId],title,notes,col,status,priority,dueDate};
     try{await fbSet(`tasks/${editingId}`,tasks[editingId]);}
     catch(e){console.error('Edit failed',e);}
   } else {
-    const task={title,notes,col,status,order:colTasks.length,createdAt:Date.now()};
+    const task={title,notes,col,status,priority,dueDate,order:colTasks.length,createdAt:Date.now(),createdBy:currentUser||''};
     try{
       const id=await fbPush('tasks',task);
       tasks[id]=task;
@@ -1479,12 +1852,11 @@ async function loadAnnouncement(data){
   if(display){el.textContent=display;el.classList.remove('empty');}
   else{el.textContent='No announcements — click to add one';el.classList.add('empty');}
   // Pre-fill edit modal with just the text (not the attribution)
-  const rawText=data&&data.text||'';
-  document.getElementById('announce-input').value=rawText;
+  lastRawAnnouncement=data&&data.text||'';
 }
+let lastRawAnnouncement='';
 function openAnnounceModal(){
-  const cur=document.getElementById('announce-text').textContent;
-  document.getElementById('announce-input').value=document.getElementById('announce-text').classList.contains('empty')?'':cur;
+  document.getElementById('announce-input').value=lastRawAnnouncement;
   document.getElementById('announce-modal').classList.add('visible');
   setTimeout(()=>document.getElementById('announce-input').focus(),50);
 }
@@ -1531,6 +1903,8 @@ document.getElementById('task-title').addEventListener('keydown',e=>{if(e.key===
 document.getElementById('announce-input').addEventListener('keydown',e=>{if(e.key==='Enter') saveAnnouncement();});
 document.getElementById('event-title').addEventListener('keydown',e=>{if(e.key==='Enter') saveEvent();});
 document.getElementById('cat-new-input').addEventListener('keydown',e=>{if(e.key==='Enter') addCat();});
+document.getElementById('login-pw-new').addEventListener('keydown',e=>{if(e.key==='Enter') submitPassword();});
+document.getElementById('login-pw-confirm').addEventListener('keydown',e=>{if(e.key==='Enter') submitPassword();});
 </script>
 </body>
 </html>
