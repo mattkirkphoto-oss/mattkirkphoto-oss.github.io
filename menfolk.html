@@ -71,8 +71,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .header-divider{width:0.5px;height:18px;background:var(--border-strong);}
 .header-sub{font-family:DM Mono,monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-tertiary);}
 .header-spacer{flex:1;}
-.add-task-btn{height:30px;padding:0 14px;background:var(--accent);color:#0f0f0d;border:none;border-radius:var(--radius);font-family:DM Mono,monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;font-weight:500;transition:opacity 0.15s;}
+.add-task-btn{height:30px;padding:0 14px;background:var(--accent);color:#0f0f0d;border:none;border-radius:var(--radius);font-family:DM Mono,monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;font-weight:500;transition:opacity 0.15s;display:inline-flex;align-items:center;gap:5px;}
 .add-task-btn:hover{opacity:0.85;}
+.add-task-btn.hidden{display:none!important;}
 
 /* BODY AREA */
 #body{display:flex;flex:1;overflow:hidden;}
@@ -92,6 +93,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 
 /* DONE COLUMN */
 .col.done-col .col-title{color:var(--accent-dim);}
+.col.done-col .card{opacity:0.45;filter:saturate(0.4);}
+.col.done-col .card:hover{opacity:0.75;filter:saturate(0.6);}
 
 /* DROP ZONE */
 .col-body.drag-over{background:rgba(200,185,122,0.04);border-radius:var(--radius);outline:1px dashed var(--accent-dim);}
@@ -512,9 +515,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
     <div class="header-title">MENFOLK</div>
     <div class="header-divider"></div>
     <div class="header-sub">Production Board</div>
+    <div class="header-divider"></div>
+    <select id="global-sort-select" class="col-sort-select" onchange="setGlobalSort(this.value)" title="Sort all columns" style="height:26px;font-size:10px;">
+      <option value="priority">↕ Priority</option>
+      <option value="date">↕ Due date</option>
+      <option value="manual">↕ Manual</option>
+    </select>
     <div class="header-spacer"></div>
-    <button class="add-task-btn" onclick="openCalendar()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">📆 Calendar</button><button class="add-task-btn" onclick="openAvail()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">📅 Availability</button><button id="inbox-btn" class="add-task-btn" onclick="toggleInbox()" style="display:none;background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">✉ Inbox <span class="inbox-badge" id="inbox-badge" style="display:none;">1</span></button>
-    <button id="admin-reset-btn" class="add-task-btn" onclick="openAdminReset()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;display:none;">⚙ Passwords</button><button class="add-task-btn" onclick="openAddTask()">+ Add Task</button>
+    <button class="add-task-btn" onclick="openCalendar()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">📆 Calendar</button><button class="add-task-btn" onclick="openAvail()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">📅 Availability</button><button id="inbox-btn" class="add-task-btn hidden" onclick="toggleInbox()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">✉ Inbox <span class="inbox-badge" id="inbox-badge" style="display:none;">1</span></button>
+    <button id="admin-reset-btn" class="add-task-btn hidden" onclick="openAdminReset()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">⚙ Passwords</button><button class="add-task-btn" onclick="openAddTask()">+ Add Task</button>
   </div>
 
   <!-- BODY -->
@@ -525,10 +534,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
             <div class="col" id="col-todo">
         <div class="col-header">
           <span class="col-title">To Do</span>
-          <div style="display:flex;align-items:center;gap:3px;">
-<select id="sort-todo-select" class="col-sort-select" onchange="setColSort('todo',this.value)" title="Sort"><option value="manual">Manual</option><option value="priority">Priority</option><option value="date">Due date</option></select>
-            <span class="col-count" id="count-todo">0</span>
-          </div>
+          <span class="col-count" id="count-todo">0</span>
         </div>
         <div class="col-body" id="body-todo" ondragover="onDragOver(event)" ondrop="onDrop(event,'todo')" ondragleave="onDragLeave(event)"></div>
       </div>
@@ -536,10 +542,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <div class="col" id="col-matthew">
         <div class="col-header">
           <span class="col-title">Matthew</span>
-          <div style="display:flex;align-items:center;gap:3px;">
-<select id="sort-matthew-select" class="col-sort-select" onchange="setColSort('matthew',this.value)" title="Sort"><option value="manual">Manual</option><option value="priority">Priority</option><option value="date">Due date</option></select>
-            <span class="col-count" id="count-matthew">0</span>
-          </div>
+          <span class="col-count" id="count-matthew">0</span>
         </div>
         <div class="col-body" id="body-matthew" ondragover="onDragOver(event)" ondrop="onDrop(event,'matthew')" ondragleave="onDragLeave(event)"></div>
       </div>
@@ -547,10 +550,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <div class="col" id="col-dani">
         <div class="col-header">
           <span class="col-title">Dani</span>
-          <div style="display:flex;align-items:center;gap:3px;">
-<select id="sort-dani-select" class="col-sort-select" onchange="setColSort('dani',this.value)" title="Sort"><option value="manual">Manual</option><option value="priority">Priority</option><option value="date">Due date</option></select>
-            <span class="col-count" id="count-dani">0</span>
-          </div>
+          <span class="col-count" id="count-dani">0</span>
         </div>
         <div class="col-body" id="body-dani" ondragover="onDragOver(event)" ondrop="onDrop(event,'dani')" ondragleave="onDragLeave(event)"></div>
       </div>
@@ -558,10 +558,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <div class="col" id="col-zoe">
         <div class="col-header">
           <span class="col-title">Zoe</span>
-          <div style="display:flex;align-items:center;gap:3px;">
-<select id="sort-zoe-select" class="col-sort-select" onchange="setColSort('zoe',this.value)" title="Sort"><option value="manual">Manual</option><option value="priority">Priority</option><option value="date">Due date</option></select>
-            <span class="col-count" id="count-zoe">0</span>
-          </div>
+          <span class="col-count" id="count-zoe">0</span>
         </div>
         <div class="col-body" id="body-zoe" ondragover="onDragOver(event)" ondrop="onDrop(event,'zoe')" ondragleave="onDragLeave(event)"></div>
       </div>
@@ -569,10 +566,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <div class="col" id="col-meg">
         <div class="col-header">
           <span class="col-title">Meg</span>
-          <div style="display:flex;align-items:center;gap:3px;">
-<select id="sort-meg-select" class="col-sort-select" onchange="setColSort('meg',this.value)" title="Sort"><option value="manual">Manual</option><option value="priority">Priority</option><option value="date">Due date</option></select>
-            <span class="col-count" id="count-meg">0</span>
-          </div>
+          <span class="col-count" id="count-meg">0</span>
         </div>
         <div class="col-body" id="body-meg" ondragover="onDragOver(event)" ondrop="onDrop(event,'meg')" ondragleave="onDragLeave(event)"></div>
       </div>
@@ -580,10 +574,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <div class="col done-col" id="col-done">
         <div class="col-header">
           <span class="col-title">Done</span>
-          <div style="display:flex;align-items:center;gap:3px;">
-            <select id="sort-done-select" class="col-sort-select" onchange="setColSort('done',this.value)" title="Sort"><option value="manual">Manual</option><option value="priority">Priority</option><option value="date">Due date</option></select>
-            <span class="col-count" id="count-done">0</span>
-          </div>
+          <span class="col-count" id="count-done">0</span>
         </div>
         <div class="col-body" id="body-done" ondragover="onDragOver(event)" ondrop="onDrop(event,'done')" ondragleave="onDragLeave(event)"></div>
       </div>
@@ -783,7 +774,7 @@ async function loadInbox(){
     const btn=document.getElementById('inbox-btn');
     const badge=document.getElementById('inbox-badge');
     if(!btn) return;
-    btn.style.display='inline-flex';
+    btn.classList.remove('hidden');
     if(!data){inboxData=[];renderInboxPanel();return;}
     // Convert object to array, sort by time desc
     inboxData=Object.entries(data)
@@ -890,7 +881,6 @@ let currentUser=null;
 let tasks={};
 let draggingId=null;
 let editingId=null;
-let colSort={}; // 'manual','priority','date' per column — defaults to 'manual'
 
 function daysDiff(dateStr){
   if(!dateStr) return null;
@@ -1874,7 +1864,10 @@ function enterDashboard(name){
   if(subEl) subEl.textContent=`Production Board — ${name}`;
   // Show admin reset btn only for Matthew
   const resetBtn=document.getElementById('admin-reset-btn');
-  if(resetBtn) resetBtn.style.display=name==='Matthew'?'inline-block':'none';
+  if(resetBtn){
+    if(name==='Matthew') resetBtn.classList.remove('hidden');
+    else resetBtn.classList.add('hidden');
+  }
   init();
 }
 
@@ -1958,43 +1951,43 @@ async function loadAll(){
 
 // --- RENDER ---
 
-function setColSort(col,mode){
-  colSort[col]=mode;
+let globalSort='priority'; // single sort preference for all columns
+
+function setGlobalSort(mode){
+  globalSort=mode;
+  // Update the select in case called programmatically
+  const sel=document.getElementById('global-sort-select');
+  if(sel) sel.value=mode;
   renderAll();
 }
+
 function sortedColTasks(col){
-  const sort=colSort[col]||'manual';
   let colTasks=Object.entries(tasks).filter(([,t])=>t.col===col);
-  if(sort==='date'){
-    // Sort by due date ascending; undated tasks sink to bottom
+  if(globalSort==='date'){
     colTasks.sort((a,b)=>{
       const ad=a[1].dueDate||'9999-99-99',bd=b[1].dueDate||'9999-99-99';
       return ad.localeCompare(bd);
     });
-  } else if(sort==='priority'){
-    // Sort by priority group, then within each group by due date, then by manual order
+  } else if(globalSort==='priority'){
     const pOrder={'high':0,'normal':1,'low':2};
     colTasks.sort((a,b)=>{
-      const pa=pOrder[a[1].priority||'normal']||1;
-      const pb=pOrder[b[1].priority||'normal']||1;
+      const pa=pOrder[a[1].priority||'normal']??1;
+      const pb=pOrder[b[1].priority||'normal']??1;
       if(pa!==pb) return pa-pb;
       const ad=a[1].dueDate||'9999-99-99',bd=b[1].dueDate||'9999-99-99';
       return ad.localeCompare(bd)||(a[1].order||0)-(b[1].order||0);
     });
   } else {
-    // Manual — sort by persisted order field
     colTasks.sort((a,b)=>(a[1].order||0)-(b[1].order||0));
   }
   return colTasks;
 }
 
 function renderAll(){
+  const sel=document.getElementById('global-sort-select');
+  if(sel) sel.value=globalSort;
   COLS.forEach(col=>{
     const body=document.getElementById(`body-${col}`);
-    const sort=colSort[col]||'priority';
-    // Update sort select
-    const sortSel=document.getElementById(`sort-${col}-select`);
-    if(sortSel) sortSel.value=sort;
     const colTasks=sortedColTasks(col);
     body.innerHTML='';
     colTasks.forEach(([id,t])=>body.appendChild(makeCard(id,t)));
@@ -2036,6 +2029,11 @@ function makeCard(id,t){
 
   card.addEventListener('dragstart',e=>{draggingId=id;card.classList.add('dragging');e.dataTransfer.effectAllowed='move';});
   card.addEventListener('dragend',()=>{card.classList.remove('dragging');draggingId=null;});
+  card.addEventListener('click',e=>{
+    // Don't trigger if clicking a button/interactive child
+    if(e.target.closest('.card-btn,.status-pill')) return;
+    openEditTask(id);
+  });
   return card;
 }
 
@@ -2049,21 +2047,13 @@ async function onDrop(e,col){
   e.currentTarget.classList.remove('drag-over');
   if(!draggingId||!tasks[draggingId]) return;
 
-  const srcCol=tasks[draggingId].col;
-  const destSort=colSort[col]||'manual';
-  const movingCols=srcCol!==col;
-
-  // If destination column isn't in manual sort mode, ask to switch
-  if(destSort!=='manual'){
-    const switchToManual=confirm(`This column is sorted by "${destSort}". Switch to manual sort to drag tasks here?`);
-    if(switchToManual){
-      colSort[col]='manual';
-    } else {
-      renderAll();return;
-    }
+  // Dragging implies manual ordering — switch globally if needed
+  if(globalSort!=='manual'){
+    const ok=confirm('Switch all columns to manual sort so you can drag tasks freely?');
+    if(!ok){renderAll();return;}
+    setGlobalSort('manual');
   }
 
-  // Recalculate order based on current manual-sorted position
   const colTasksSorted=sortedColTasks(col).filter(([id])=>id!==draggingId);
   tasks[draggingId]={...tasks[draggingId],col,order:colTasksSorted.length};
   renderAll();
