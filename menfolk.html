@@ -180,7 +180,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;}
 .cal-weekday{font-family:DM Mono,monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-tertiary);text-align:center;padding:4px 0;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
-.cal-day{min-height:72px;background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--radius);padding:5px;cursor:pointer;transition:border-color 0.1s,background 0.1s;display:flex;flex-direction:column;gap:3px;}
+.cal-day{height:100px;background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--radius);padding:5px;cursor:pointer;transition:border-color 0.1s,background 0.1s;display:flex;flex-direction:column;gap:3px;overflow:hidden;}
 .cal-day:hover{border-color:var(--border-strong);background:var(--bg-hover);}
 .cal-day.empty{background:transparent;border-color:transparent;cursor:default;}
 .cal-day.empty:hover{background:transparent;border-color:transparent;}
@@ -194,6 +194,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .cal-event-pill.meeting{background:rgba(55,138,221,0.25);color:#7cb9f0;}
 .cal-event-pill.shoot{background:rgba(196,124,58,0.25);color:#e09a5a;}
 .cal-event-pill.other{background:rgba(138,136,128,0.2);color:#9e9d99;}
+.cal-event-pill.task-deadline{background:rgba(184,79,79,0.2);color:#e07070;border-left:2px solid #b84f4f;cursor:default;}
+.cal-event-pill.task-deadline:hover{opacity:1;}
+/* Multi-day span pills */
+.cal-event-pill.span-start{border-radius:3px 0 0 3px;margin-right:0;}
+.cal-event-pill.span-mid{border-radius:0;margin:0 0;opacity:0.7;}
+.cal-event-pill.span-end{border-radius:0 3px 3px 0;margin-left:0;opacity:0.7;}
 .cal-more{font-size:9px;color:var(--text-tertiary);font-family:DM Mono,monospace;padding:1px 4px;}
 
 /* EVENT TYPE COLOURS for chips */
@@ -201,6 +207,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .dot-meeting{background:#7cb9f0;}
 .dot-shoot{background:#e09a5a;}
 .dot-other{background:#9e9d99;}
+.dot-task-deadline{background:#b84f4f;}
 
 /* AVAILABILITY OVERLAY */
 #avail-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:300;display:none;align-items:stretch;justify-content:flex-end;}
@@ -673,6 +680,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <button class="modal-btn" onclick="closeModal('task-modal')">Cancel</button>
       <button class="modal-btn primary" onclick="saveTask()">Save Task</button>
     </div>
+    <div id="task-created-by" style="display:none;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-tertiary);letter-spacing:0.06em;text-align:center;margin-top:2px;"></div>
   </div>
 </div>
 
@@ -1536,10 +1544,8 @@ function renderMonthJumps(){
 }
 function renderCal(){
   document.getElementById('cal-header-title').textContent=MONTH_NAMES[calMonth]+' '+calYear;
-  // Update prev button disabled state
   const prevBtn=document.querySelector('#cal-panel .cal-nav-btn:first-of-type');
   if(prevBtn) prevBtn.style.opacity=(calYear===MIN_CAL_YEAR&&calMonth===MIN_CAL_MONTH)?'0.25':'1';
-  // Render month jump pills
   renderMonthJumps();
   const grid=document.getElementById('cal-grid');
   grid.innerHTML='';
@@ -1548,34 +1554,95 @@ function renderCal(){
   const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
   const today=new Date();
 
+  // Build a map: dateStr -> [{id, ev, spanRole}]
+  // spanRole: 'single' | 'start' | 'mid' | 'end'
+  const dayMap={};
+  const addToMap=(dateStr,entry)=>{
+    if(!dayMap[dateStr]) dayMap[dateStr]=[];
+    dayMap[dateStr].push(entry);
+  };
+
+  // Regular events (including multi-day)
+  Object.entries(events).forEach(([eid,ev])=>{
+    const start=ev.date;
+    const end=ev.endDate||ev.date;
+    if(!start) return;
+    if(start===end){
+      addToMap(start,{id:eid,ev,spanRole:'single'});
+    } else {
+      // Enumerate every date in the span
+      let cur=new Date(start+'T12:00:00');
+      const endD=new Date(end+'T12:00:00');
+      let first=true;
+      while(cur<=endD){
+        const ds=cur.toISOString().slice(0,10);
+        const isLast=ds===end;
+        addToMap(ds,{id:eid,ev,spanRole:first?'start':(isLast?'end':'mid')});
+        first=false;
+        cur.setDate(cur.getDate()+1);
+      }
+    }
+  });
+
+  // Task deadlines — shown as red pills, not clickable to edit
+  Object.entries(tasks).forEach(([tid,t])=>{
+    if(!t.dueDate) return;
+    addToMap(t.dueDate,{id:'task-'+tid,ev:{
+      title:'⚑ '+t.title,
+      type:'task-deadline',
+      date:t.dueDate,
+      _taskId:tid,
+    },spanRole:'single',isTask:true});
+  });
+
   for(let i=0;i<blanks;i++){
     const empty=document.createElement('div');empty.className='cal-day empty';grid.appendChild(empty);
   }
   for(let d=1;d<=daysInMonth;d++){
     const dateStr=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const dayEvents=Object.entries(events).filter(([,e])=>e.date===dateStr).sort((a,b)=>(a[1].time||'').localeCompare(b[1].time||''));
+    const dayEntries=(dayMap[dateStr]||[]).sort((a,b)=>{
+      // Tasks last, events first; within events sort by time
+      if(a.isTask&&!b.isTask) return 1;
+      if(!a.isTask&&b.isTask) return -1;
+      return (a.ev.time||'').localeCompare(b.ev.time||'');
+    });
     const isToday=today.getFullYear()===calYear&&today.getMonth()===calMonth&&today.getDate()===d;
 
     const cell=document.createElement('div');
-    cell.className='cal-day'+(isToday?' today':'')+(dayEvents.length?' has-events':'');
+    cell.className='cal-day'+(isToday?' today':'')+(dayEntries.length?' has-events':'');
     cell.innerHTML=`<div class="cal-day-num">${d}</div>`;
 
     const maxShow=3;
-    dayEvents.slice(0,maxShow).forEach(([eid,ev])=>{
+    dayEntries.slice(0,maxShow).forEach(({id,ev,spanRole,isTask})=>{
       const pill=document.createElement('div');
-      pill.className=`cal-event-pill ${ev.type||'other'}`;
-      pill.textContent=(ev.time?ev.time.slice(0,5)+' ':'')+ev.title;
-      pill.title=ev.title+(ev.location?' @ '+ev.location:'')+(ev.notes?' — '+ev.notes:'');
-      pill.addEventListener('click',e=>{e.stopPropagation();openEditEvent(eid);});
+      const spanCls=spanRole==='single'?'':(' span-'+spanRole);
+      pill.className=`cal-event-pill ${ev.type||'other'}${spanCls}`;
+      // Only show title on start/single; mid/end show blank bar
+      const showTitle=spanRole==='single'||spanRole==='start';
+      if(showTitle){
+        pill.textContent=(ev.time&&spanRole==='single'?ev.time.slice(0,5)+' ':'')+ev.title;
+      } else {
+        pill.innerHTML='&nbsp;';
+      }
+      const spanLabel=ev.endDate?` (${ev.date} – ${ev.endDate})`:'';
+      pill.title=ev.title+spanLabel+(ev.location?' @ '+ev.location:'')+(ev.notes?' — '+ev.notes:'');
+      if(!isTask){
+        pill.addEventListener('click',e=>{e.stopPropagation();openEditEvent(id);});
+      } else {
+        pill.style.cursor='default';
+        pill.title='Task deadline: '+ev.title.replace('⚑ ','');
+      }
       cell.appendChild(pill);
     });
-    if(dayEvents.length>maxShow){
+    if(dayEntries.length>maxShow){
       const more=document.createElement('div');
-      more.className='cal-more';more.textContent=`+${dayEvents.length-maxShow} more`;
+      more.className='cal-more';more.textContent=`+${dayEntries.length-maxShow} more`;
       more.style.cursor='pointer';
+      // For popup, pass only real events (non-tasks) for editing; tasks shown as info
+      const realEvents=dayEntries.filter(e=>!e.isTask).map(e=>[e.id,e.ev]);
       more.addEventListener('click',e=>{
         e.stopPropagation();
-        showDayEventsPopup(dateStr,dayEvents);
+        showDayEventsPopup(dateStr,realEvents,dayEntries);
       });
       cell.appendChild(more);
     }
@@ -1591,6 +1658,7 @@ function openAddEvent(dateStr){
   document.getElementById('event-modal-title').textContent='Add Event';
   document.getElementById('event-title').value='';
   document.getElementById('event-date').value=dateStr;
+  document.getElementById('event-end-date').value='';
   document.getElementById('event-time').value='';
   document.getElementById('event-type').value='meeting';
   document.getElementById('event-location').value='';
@@ -1607,6 +1675,7 @@ function openEditEvent(id){
   document.getElementById('event-modal-title').textContent='Edit Event';
   document.getElementById('event-title').value=ev.title||'';
   document.getElementById('event-date').value=ev.date||'';
+  document.getElementById('event-end-date').value=ev.endDate||'';
   document.getElementById('event-time').value=ev.time||'';
   document.getElementById('event-type').value=ev.type||'meeting';
   document.getElementById('event-location').value=ev.location||'';
@@ -1619,9 +1688,12 @@ function openEditEvent(id){
 async function saveEvent(){
   const title=document.getElementById('event-title').value.trim();
   if(!title) return;
+  const startDate=document.getElementById('event-date').value;
+  const endDate=document.getElementById('event-end-date').value;
   const ev={
     title,
-    date:document.getElementById('event-date').value,
+    date:startDate,
+    endDate:(endDate&&endDate>startDate)?endDate:'',
     time:document.getElementById('event-time').value,
     type:document.getElementById('event-type').value,
     location:document.getElementById('event-location').value.trim(),
@@ -1657,18 +1729,31 @@ function renderEventsStrip(){
   const el=document.getElementById('events-strip-list');
   const today=new Date();today.setHours(0,0,0,0);
   const todayStr=today.toISOString().slice(0,10);
-  const upcoming=Object.entries(events)
-    .filter(([,e])=>e.date>=todayStr)
-    .sort((a,b)=>a[1].date.localeCompare(b[1].date)||(a[1].time||'').localeCompare(b[1].time||''))
-    .slice(0,5);
+
+  // Regular events (use start date for filtering)
+  const upcomingEvents=Object.entries(events)
+    .filter(([,e])=>(e.endDate||e.date)>=todayStr)
+    .map(([,e])=>({title:e.title,date:e.date,endDate:e.endDate||'',time:e.time||'',type:e.type||'other',ev:e}));
+
+  // Task deadlines
+  const upcomingTasks=Object.values(tasks)
+    .filter(t=>t.dueDate&&t.dueDate>=todayStr)
+    .map(t=>({title:t.title,date:t.dueDate,endDate:'',time:'',type:'task-deadline',isTask:true}));
+
+  const upcoming=[...upcomingEvents,...upcomingTasks]
+    .sort((a,b)=>a.date.localeCompare(b.date)||(a.time).localeCompare(b.time))
+    .slice(0,6);
+
   if(upcoming.length===0){el.innerHTML='<span class="no-events">No upcoming events</span>';return;}
   el.innerHTML='';
-  upcoming.forEach(([,ev])=>{
+  upcoming.forEach(item=>{
     const chip=document.createElement('div');
     chip.className='event-chip';
-    const d=new Date(ev.date+'T12:00:00');
+    const d=new Date(item.date+'T12:00:00');
     const dateStr=d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
-    chip.innerHTML=`<span class="event-chip-dot dot-${ev.type||'other'}"></span><span>${ev.title}</span><span class="event-chip-date">${dateStr}${ev.time?' '+ev.time.slice(0,5):''}</span>`;
+    const dateLabel=item.endDate?`${dateStr} – ${new Date(item.endDate+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}`:dateStr;
+    const prefix=item.isTask?'⚑ ':'';
+    chip.innerHTML=`<span class="event-chip-dot dot-${item.type}"></span><span>${prefix}${item.title}</span><span class="event-chip-date">${dateLabel}${item.time?' '+item.time.slice(0,5):''}</span>`;
     chip.onclick=()=>{
       calYear=d.getFullYear();calMonth=d.getMonth();
       openCalendar();
@@ -1677,24 +1762,26 @@ function renderEventsStrip(){
   });
 }
 
-function showDayEventsPopup(dateStr,dayEvents){
+function showDayEventsPopup(dateStr,dayEvents,allEntries){
   const d=new Date(dateStr+'T12:00:00');
   const label=d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
   document.getElementById('day-events-popup-title').textContent=label;
   const list=document.getElementById('day-events-popup-list');
   list.innerHTML='';
-  dayEvents.forEach(([eid,ev])=>{
+  const entries=allEntries||dayEvents.map(([id,ev])=>({id,ev,isTask:false}));
+  entries.forEach(({id,ev,isTask})=>{
     const row=document.createElement('div');
-    row.style.cssText='display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:5px;border:0.5px solid var(--border);background:var(--bg-card);margin-bottom:5px;cursor:pointer;';
-    row.innerHTML=`<span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${catColor(ev.type||'other')}"></span><div style="flex:1;min-width:0;"><div style="font-size:13px;color:var(--text);">${escHtml(ev.title)}</div><div style="font-size:11px;color:var(--text-tertiary);font-family:'DM Mono',monospace;">${ev.time?ev.time.slice(0,5)+' · ':''}${ev.type||'other'}${ev.location?' · '+escHtml(ev.location):''}</div></div>`;
-    row.onclick=()=>{closeModal('day-events-modal');openEditEvent(eid);};
+    row.style.cssText='display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:5px;border:0.5px solid var(--border);background:var(--bg-card);margin-bottom:5px;'+(isTask?'':'cursor:pointer;');
+    const spanLabel=ev.endDate?`<span style="font-size:10px;color:var(--text-tertiary);font-family:'DM Mono',monospace;"> · ${ev.date} – ${ev.endDate}</span>`:'';
+    row.innerHTML=`<span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${catColor(ev.type||'other')}"></span><div style="flex:1;min-width:0;"><div style="font-size:13px;color:var(--text);">${escHtml(isTask?ev.title.replace('⚑ ',''):ev.title)}</div><div style="font-size:11px;color:var(--text-tertiary);font-family:'DM Mono',monospace;">${isTask?'Task deadline':(ev.time?ev.time.slice(0,5)+' · ':'')+( ev.type||'other')+(ev.location?' · '+escHtml(ev.location):'')}</div></div>${spanLabel}`;
+    if(!isTask) row.onclick=()=>{closeModal('day-events-modal');openEditEvent(id);};
     list.appendChild(row);
   });
   document.getElementById('day-events-modal').classList.add('visible');
 }
 
 function catColor(type){
-  const colors={'audition':'#a78bfa','meeting':'#7cb9f0','shoot':'#e09a5a','rehearsal':'#f472b6','location-scout':'#34d399','wrap':'#fbbf24','other':'#9e9d99'};
+  const colors={'audition':'#a78bfa','meeting':'#7cb9f0','shoot':'#e09a5a','rehearsal':'#f472b6','location-scout':'#34d399','wrap':'#fbbf24','other':'#9e9d99','task-deadline':'#b84f4f'};
   return colors[type]||'#9e9d99';
 }
 // --- AUTH ---
@@ -1926,7 +2013,6 @@ function makeCard(id,t){
   const statusText=statusLabels[t.status]||'';
 
   const priorityHTML=t.priority&&t.priority!=='normal'?`<span class="priority-tag ${t.priority}">${t.priority==='high'?'↑ High':'↓ Low'}</span>`:'';
-  const createdByHTML=t.createdBy?`<span class="card-meta">${escHtml(t.createdBy)}</span>`:'';
   // Due date
   const diff=t.dueDate?daysDiff(t.dueDate):null;
   const overdue=diff!==null&&diff<0;
@@ -1942,7 +2028,6 @@ function makeCard(id,t){
     <div class="card-footer" style="margin-top:7px;">
       <span class="status-pill ${statusClass}" onclick="cycleStatus('${id}',event)">${statusText||'— status'}</span>
       <div style="display:flex;align-items:center;gap:5px;">
-        ${createdByHTML}
         <div class="card-btn tick-btn" onclick="completeTask('${id}',event)" title="Mark done">✓</div>
         <div class="card-btn" onclick="openEditTask('${id}')" title="Edit">✎</div>
         <div class="card-btn delete" onclick="deleteTask('${id}')" title="Delete">✕</div>
@@ -2023,6 +2108,7 @@ function openAddTask(col){
   document.getElementById('task-priority').value='normal';
   document.getElementById('task-due').value='';
   document.getElementById('task-modal').classList.add('visible');
+  document.getElementById('task-created-by').style.display='none';
   setTimeout(()=>document.getElementById('task-title').focus(),50);
 }
 
@@ -2046,6 +2132,9 @@ function openEditTask(id){
   document.getElementById('task-status').value=t.status||'none';
   document.getElementById('task-priority').value=t.priority||'normal';
   document.getElementById('task-due').value=t.dueDate||'';
+  const createdEl=document.getElementById('task-created-by');
+  if(t.createdBy){createdEl.textContent='Added by '+t.createdBy;createdEl.style.display='block';}
+  else{createdEl.style.display='none';}
   document.getElementById('task-modal').classList.add('visible');
   setTimeout(()=>document.getElementById('task-title').focus(),50);
 }
@@ -2212,9 +2301,15 @@ document.addEventListener("DOMContentLoaded", initMobileColumns);
     </div>
     <div class="modal-row">
       <div>
-        <label>Date</label>
+        <label>Start date</label>
         <input type="date" id="event-date" />
       </div>
+      <div>
+        <label>End date (optional)</label>
+        <input type="date" id="event-end-date" />
+      </div>
+    </div>
+    <div class="modal-row">
       <div>
         <label>Time (optional)</label>
         <input type="time" id="event-time" />
