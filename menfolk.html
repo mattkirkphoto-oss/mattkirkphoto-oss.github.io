@@ -31,6 +31,7 @@
   --red-bg:rgba(184,79,79,0.15);
   --red-border:rgba(184,79,79,0.4);
   --radius:6px;
+  --radius-lg:12px;
   --sidebar:240px;
   --header:48px;
   --announce:44px;
@@ -191,7 +192,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .cal-event-pill.meeting{background:rgba(55,138,221,0.25);color:#7cb9f0;}
 .cal-event-pill.shoot{background:rgba(196,124,58,0.25);color:#e09a5a;}
 .cal-event-pill.other{background:rgba(138,136,128,0.2);color:#9e9d99;}
-.cal-event-pill{background:rgba(138,136,128,0.15);color:#9e9d99;}
 .cal-more{font-size:9px;color:var(--text-tertiary);font-family:DM Mono,monospace;padding:1px 4px;}
 
 /* EVENT TYPE COLOURS for chips */
@@ -270,9 +270,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .priority-tag.low{background:rgba(138,136,128,0.15);color:var(--text-tertiary);}
 .card-meta{font-family:'DM Mono',monospace;font-size:9px;color:var(--text-tertiary);letter-spacing:0.04em;}
 
-.sort-toggle{height:18px;padding:0 5px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.04em;border:0.5px solid var(--border);border-radius:3px;background:transparent;color:var(--text-tertiary);cursor:pointer;transition:all 0.1s;}
-.sort-toggle.sort-active{background:var(--accent);color:#0f0f0d;border-color:var(--accent);}
-.sort-toggle:hover:not(.sort-active){color:var(--text);}
 .due-badge{font-family:'DM Mono',monospace;font-size:10px;padding:2px 6px;border-radius:3px;display:inline-block;margin-top:4px;letter-spacing:0.03em;}
 .due-badge.due-ok{background:rgba(74,158,107,0.15);color:var(--green);}
 .due-badge.due-soon{background:rgba(196,124,58,0.2);color:var(--orange);}
@@ -301,8 +298,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .inbox-empty{padding:20px 14px;font-size:12px;color:var(--text-tertiary);font-family:'DM Mono',monospace;text-align:center;}
 .inbox-open-btn{display:block;width:100%;padding:11px 14px;background:var(--accent);color:#0f0f0d;border:none;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;text-align:center;transition:opacity 0.1s;}
 .inbox-open-btn:hover{opacity:0.85;}
-#app{display:none;}
-#app.visible{display:flex;}
 
 /* ═══════════════════════════════════════════════════════════════
    MOBILE OPTIMISATION (max-width: 680px)
@@ -403,8 +398,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   .card-btn { width: 28px; height: 28px; font-size: 13px; }
   .status-pill { height: 22px; font-size: 10px; }
 
-  /* Sort toggles smaller */
-  .sort-toggle { height: 20px; padding: 0 6px; font-size: 9px; }
   .col-count { font-size: 10px; }
 
   /* Overlays full width */
@@ -499,7 +492,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
     <button class="announce-edit-btn" onclick="openAnnounceModal()">Edit</button>
   </div>
 
-
   <!-- EVENTS STRIP -->
   <div id="events-strip">
     <span class="events-strip-label">📆 Upcoming</span>
@@ -575,8 +567,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
         </div>
         <div class="col-body" id="body-meg" ondragover="onDragOver(event)" ondrop="onDrop(event,'meg')" ondragleave="onDragLeave(event)"></div>
       </div>
+      <div class="col-divider col-divider-done"></div>
       <div class="col done-col" id="col-done">
-        <div class="col-header"><span class="col-title">Done</span><span class="col-count" id="count-done">0</span></div>
+        <div class="col-header">
+          <span class="col-title">Done</span>
+          <div style="display:flex;align-items:center;gap:3px;">
+            <select id="sort-done-select" class="col-sort-select" onchange="setColSort('done',this.value)" title="Sort"><option value="manual">Manual</option><option value="priority">Priority</option><option value="date">Due date</option></select>
+            <span class="col-count" id="count-done">0</span>
+          </div>
+        </div>
         <div class="col-body" id="body-done" ondragover="onDragOver(event)" ondrop="onDrop(event,'done')" ondragleave="onDragLeave(event)"></div>
       </div>
     </div>
@@ -691,8 +690,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   </div>
 </div>
 
-
-
 <!-- AVAILABILITY OVERLAY -->
 <div id="avail-overlay" onclick="onAvailOverlayClick(event)">
   <div id="avail-panel">
@@ -745,10 +742,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
     </div>
   </div>
 </div>
-
-
-
-
 
 <!-- INBOX PANEL -->
 <div id="inbox-overlay" onclick="onInboxOverlayClick(event)">
@@ -906,8 +899,6 @@ function dueDateLabel(dateStr){
   const d=new Date(dateStr+'T00:00:00');
   return 'Due '+d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
 }
-
-
 
 // ═══════════════════════════════════════════════════════════════
 // AVAILABILITY PANEL
@@ -1521,7 +1512,6 @@ function calPrev(){
 }
 function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCal();}
 
-
 function renderMonthJumps(){
   let el=document.getElementById('cal-month-jumps');
   if(!el) return;
@@ -1684,7 +1674,6 @@ function renderEventsStrip(){
     el.appendChild(chip);
   });
 }
-
 
 function showDayEventsPopup(dateStr,dayEvents){
   const d=new Date(dateStr+'T12:00:00');
@@ -1911,7 +1900,6 @@ function sortedColTasks(col){
 }
 
 function renderAll(){
-  setTimeout(initMobileColumns, 50);
   COLS.forEach(col=>{
     const body=document.getElementById(`body-${col}`);
     const sort=colSort[col]||'priority';
@@ -1995,7 +1983,6 @@ async function onDrop(e,col){
   try{await fbSet(`tasks/${draggingId}`,tasks[draggingId]);}
   catch(e){console.error('Move failed',e);}
 }
-
 
 async function completeTask(id,e){
   e.stopPropagation();
@@ -2145,13 +2132,9 @@ document.getElementById('cat-new-input')?.addEventListener('keydown',e=>{if(e.ke
 document.getElementById('login-pw-new').addEventListener('keydown',e=>{if(e.key==='Enter') submitPassword();});
 document.getElementById('login-pw-confirm').addEventListener('keydown',e=>{if(e.key==='Enter') submitPassword();});
 
-
 // --- ANNOUNCEMENT ---
 
 lastRawAnnouncement='';
-
-
-
 
 // --- MODALS ---
 
@@ -2166,7 +2149,6 @@ document.addEventListener('keydown',e=>{
     closeInbox();
   }
 });
-
 
 document.getElementById('event-title')?.addEventListener('keydown',e=>{if(e.key==='Enter') saveEvent();});
 document.getElementById('cat-new-input')?.addEventListener('keydown',e=>{if(e.key==='Enter') addCat();});
