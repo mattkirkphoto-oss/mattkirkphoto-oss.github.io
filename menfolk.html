@@ -199,6 +199,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .cal-event-pill.other{background:rgba(138,136,128,0.2);color:#9e9d99;}
 .cal-event-pill.task-deadline{background:rgba(184,79,79,0.2);color:#e07070;border-left:2px solid #b84f4f;}
 .cal-event-pill.task-deadline:hover{opacity:0.8;}
+.cal-event-pill.task-deadline.task-done{background:rgba(74,158,107,0.18);color:var(--green);border-left:2px solid var(--green);text-decoration:line-through;opacity:0.75;}
 /* Multi-day span pills */
 .cal-event-pill.span-start{border-radius:3px 0 0 3px;margin-right:0;}
 .cal-event-pill.span-mid{border-radius:0;margin:0 0;opacity:0.7;}
@@ -450,6 +451,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .pw-wrap input{width:100%;padding-right:40px;}
 .pw-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-tertiary);font-size:14px;padding:0;height:auto;line-height:1;}
 .pw-toggle:hover{color:var(--text);}
+/* Hide native browser password reveal (Edge/IE) so only our custom 👁 shows */
+input[type="password"]::-ms-reveal,input[type="password"]::-ms-clear{display:none;}
+input[type="password"]::-webkit-credentials-auto-fill-button{display:none!important;visibility:hidden;}
 
 .col-sort-select{height:22px;padding:0 4px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.04em;border:0.5px solid var(--border-strong);border-radius:4px;background:var(--bg-card);color:var(--text-secondary);cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%236b6a66'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 4px center;padding-right:16px;}
 .col-sort-select:focus{border-color:var(--accent);color:var(--text);}
@@ -457,6 +461,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .col-divider{width:1px;background:var(--border-strong);flex-shrink:0;margin:0 2px;border-radius:1px;}
 .col-divider-done{background:var(--accent-dim);}
 .inbox-read{opacity:0.5;}
+.due-shortcut{flex:1;height:24px;padding:0 6px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.03em;border:0.5px solid var(--border-strong);border-radius:4px;background:var(--bg-card);color:var(--text-secondary);cursor:pointer;transition:all 0.1s;}
+.due-shortcut:hover{background:var(--bg-hover);color:var(--text);border-color:var(--accent);}
 @media(max-width:680px){.col-divider{width:100%;height:1px;margin:0;}}
 </style>
 </head>
@@ -506,7 +512,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 
   <!-- EVENTS STRIP -->
   <div id="events-strip">
-    <span class="events-strip-label">📆 Upcoming</span>
+    <span class="events-strip-label" id="upcoming-expand-btn" onclick="openUpcomingList()" style="cursor:pointer;" title="View everything">📆 Upcoming ▾</span>
     <div class="events-strip-list" id="events-strip-list"><span class="no-events">No upcoming events</span></div>
   </div>
 
@@ -665,6 +671,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <div>
         <label>Due date (optional)</label>
         <input type="date" id="task-due" />
+        <div style="display:flex;gap:5px;margin-top:5px;">
+          <button type="button" class="due-shortcut" onclick="setDueShortcut(0)">Today</button>
+          <button type="button" class="due-shortcut" onclick="setDueShortcut(1)">Tomorrow</button>
+          <button type="button" class="due-shortcut" onclick="setDueShortcut(7)">+1 week</button>
+        </div>
       </div>
     </div>
     <div class="modal-actions">
@@ -805,14 +816,20 @@ function renderInboxPanel(){
   inboxData.forEach(email=>{
     const row=document.createElement('div');
     row.className='inbox-email-row'+(email.unread?'':' inbox-read');
-    const from=email.from||'Unknown sender';
+    // Subject is the primary line; sender shown if captured
     const subject=email.subject||'(no subject)';
-    const time=email.time?new Date(email.time).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+    const from=(email.from&&email.from.trim())?email.from.trim():'';
+    let time='';
+    if(email.time&&email.time.trim()){
+      const parsed=new Date(email.time);
+      if(!isNaN(parsed)) time=parsed.toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+      else time=email.time;
+    }
     row.innerHTML=`
       <div style="display:flex;align-items:flex-start;gap:8px;">
         <div style="flex:1;min-width:0;">
-          <div class="inbox-email-from" style="${email.unread?'font-weight:500;color:var(--text);':''}">${escHtml(from)}</div>
-          <div class="inbox-email-subject">${escHtml(subject)}</div>
+          <div class="inbox-email-from" style="${email.unread?'font-weight:500;color:var(--text);':''}">${escHtml(subject)}</div>
+          ${from?`<div class="inbox-email-subject">From: ${escHtml(from)}</div>`:''}
           ${time?`<div class="inbox-email-time">${time}</div>`:''}
         </div>
         <button onclick="markEmailRead('${email.id}',event)" style="flex-shrink:0;height:22px;padding:0 7px;font-size:9px;font-family:'DM Mono',monospace;background:none;border:0.5px solid var(--border-strong);border-radius:3px;color:var(--text-tertiary);cursor:pointer;letter-spacing:0.04em;" title="Mark as read">✓</button>
@@ -1476,14 +1493,27 @@ function openCalendar(){
 }
 function closeCalendar(){document.getElementById('cal-overlay').classList.remove('visible');}
 
-// Scroll wheel to navigate months
+// Scroll wheel to navigate months — accumulator + cooldown for smooth, controlled stepping
+let calScrollBound=false;
+let calWheelAccum=0;
+let calWheelCooldown=false;
 function initCalScroll(){
   const panel=document.getElementById('cal-panel');
-  if(!panel) return;
+  if(!panel||calScrollBound) return;
+  calScrollBound=true; // bind once only, prevents stacked listeners from skipping months
   panel.addEventListener('wheel',e=>{
+    // Let the month-jump pill strip scroll horizontally without changing month
+    if(e.target.closest('#cal-month-jumps')) return;
     e.preventDefault();
-    if(e.deltaY>0) calNext();
-    else calPrev();
+    if(calWheelCooldown) return;
+    calWheelAccum+=e.deltaY;
+    const THRESHOLD=60; // require a deliberate scroll before flipping month
+    if(Math.abs(calWheelAccum)>=THRESHOLD){
+      if(calWheelAccum>0) calNext(); else calPrev();
+      calWheelAccum=0;
+      calWheelCooldown=true;
+      setTimeout(()=>{calWheelCooldown=false;},260); // one month per ~quarter second max
+    }
   },{passive:false});
 }
 function onCalOverlayClick(e){if(e.target===document.getElementById('cal-overlay')) closeCalendar();}
@@ -1574,15 +1604,17 @@ function renderCal(){
     }
   });
 
-  // Task deadlines — shown as red pills, not clickable to edit
+  // Task deadlines — shown as pills; completed ones marked done
   Object.entries(tasks).forEach(([tid,t])=>{
     if(!t.dueDate) return;
+    const isDone=t.col==='done'||t.status==='complete';
     addToMap(t.dueDate,{id:'task-'+tid,ev:{
-      title:'⚑ '+t.title,
+      title:(isDone?'✓ ':'⚑ ')+t.title,
       type:'task-deadline',
       date:t.dueDate,
       _taskId:tid,
-    },spanRole:'single',isTask:true});
+      _done:isDone,
+    },spanRole:'single',isTask:true,isDone});
   });
 
   for(let i=0;i<blanks;i++){
@@ -1603,10 +1635,11 @@ function renderCal(){
     cell.innerHTML=`<div class="cal-day-num">${d}</div>`;
 
     const maxShow=3;
-    dayEntries.slice(0,maxShow).forEach(({id,ev,spanRole,isTask})=>{
+    dayEntries.slice(0,maxShow).forEach(({id,ev,spanRole,isTask,isDone})=>{
       const pill=document.createElement('div');
       const spanCls=spanRole==='single'?'':(' span-'+spanRole);
-      pill.className=`cal-event-pill ${ev.type||'other'}${spanCls}`;
+      const doneCls=isDone?' task-done':'';
+      pill.className=`cal-event-pill ${ev.type||'other'}${spanCls}${doneCls}`;
       // Only show title on start/single; mid/end show blank bar
       const showTitle=spanRole==='single'||spanRole==='start';
       if(showTitle){
@@ -1724,12 +1757,12 @@ function renderEventsStrip(){
   // Regular events (use start date for filtering)
   const upcomingEvents=Object.entries(events)
     .filter(([,e])=>(e.endDate||e.date)>=todayStr)
-    .map(([,e])=>({title:e.title,date:e.date,endDate:e.endDate||'',time:e.time||'',type:e.type||'other',ev:e}));
+    .map(([id,e])=>({id,title:e.title,date:e.date,endDate:e.endDate||'',time:e.time||'',type:e.type||'other',ev:e,isTask:false}));
 
-  // Task deadlines
-  const upcomingTasks=Object.values(tasks)
-    .filter(t=>t.dueDate&&t.dueDate>=todayStr)
-    .map(t=>({title:t.title,date:t.dueDate,endDate:'',time:'',type:'task-deadline',isTask:true}));
+  // Task deadlines — exclude completed/done tasks
+  const upcomingTasks=Object.entries(tasks)
+    .filter(([,t])=>t.dueDate&&t.dueDate>=todayStr&&t.col!=='done'&&t.status!=='complete')
+    .map(([id,t])=>({id,title:t.title,date:t.dueDate,endDate:'',time:'',type:'task-deadline',isTask:true}));
 
   const upcoming=[...upcomingEvents,...upcomingTasks]
     .sort((a,b)=>a.date.localeCompare(b.date)||(a.time).localeCompare(b.time))
@@ -1744,13 +1777,89 @@ function renderEventsStrip(){
     const dateStr=d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
     const dateLabel=item.endDate?`${dateStr} – ${new Date(item.endDate+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}`:dateStr;
     const prefix=item.isTask?'⚑ ':'';
-    chip.innerHTML=`<span class="event-chip-dot dot-${item.type}"></span><span>${prefix}${item.title}</span><span class="event-chip-date">${dateLabel}${item.time?' '+item.time.slice(0,5):''}</span>`;
+    chip.innerHTML=`<span class="event-chip-dot dot-${item.type}"></span><span>${prefix}${escHtml(item.title)}</span><span class="event-chip-date">${dateLabel}${item.time?' '+item.time.slice(0,5):''}</span>`;
     chip.onclick=()=>{
-      calYear=d.getFullYear();calMonth=d.getMonth();
-      openCalendar();
+      if(item.isTask){
+        // Open the task directly
+        openEditTask(item.id);
+      } else {
+        // Open calendar at the right month, then open this event's detail
+        calYear=d.getFullYear();calMonth=d.getMonth();
+        openCalendar();
+        setTimeout(()=>openEditEvent(item.id),120);
+      }
     };
     el.appendChild(chip);
   });
+}
+
+function openUpcomingList(){
+  const body=document.getElementById('upcoming-list-body');
+  const today=new Date();today.setHours(0,0,0,0);
+  const todayStr=today.toISOString().slice(0,10);
+
+  // Gather all events (incl. multi-day, by start date) and non-done tasks
+  const items=[];
+  Object.entries(events).forEach(([id,e])=>{
+    if(!e.date) return;
+    if((e.endDate||e.date)>=todayStr){
+      items.push({id,kind:'event',title:e.title,date:e.date,endDate:e.endDate||'',time:e.time||'',type:e.type||'other'});
+    }
+  });
+  Object.entries(tasks).forEach(([id,t])=>{
+    if(!t.dueDate) return;
+    const done=t.col==='done'||t.status==='complete';
+    if(t.dueDate>=todayStr){
+      items.push({id,kind:'task',title:t.title,date:t.dueDate,endDate:'',time:'',type:'task-deadline',done});
+    }
+  });
+
+  items.sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''));
+
+  if(items.length===0){
+    body.innerHTML='<p style="font-size:13px;color:var(--text-tertiary);font-family:\'DM Mono\',monospace;padding:14px 4px;">Nothing upcoming.</p>';
+  } else {
+    // Group by date
+    let html='';let lastDate=null;
+    items.forEach(item=>{
+      if(item.date!==lastDate){
+        const d=new Date(item.date+'T12:00:00');
+        const dayLabel=d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+        const isToday=item.date===todayStr;
+        html+=`<div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:${isToday?'var(--accent)':'var(--text-tertiary)'};margin:12px 0 6px;">${dayLabel}${isToday?' · Today':''}</div>`;
+        lastDate=item.date;
+      }
+      const dot=catColor(item.type);
+      const isTask=item.kind==='task';
+      const dateLabel=item.endDate?` <span style="color:var(--text-tertiary);font-size:10px;">→ ${new Date(item.endDate+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span>`:'';
+      const struck=isTask&&item.done?'text-decoration:line-through;opacity:0.6;':'';
+      const meta=isTask?(item.done?'Task · Done ✓':'Task deadline'):((item.time?item.time.slice(0,5)+' · ':'')+item.type);
+      html+=`<div class="upcoming-row" data-kind="${item.kind}" data-id="${item.id}" data-date="${item.date}" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:6px;border:0.5px solid var(--border);background:var(--bg-card);margin-bottom:5px;cursor:pointer;">
+        <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${dot};"></span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;color:var(--text);${struck}">${escHtml(item.title)}${dateLabel}</div>
+          <div style="font-size:10px;color:var(--text-tertiary);font-family:'DM Mono',monospace;">${meta}</div>
+        </div>
+      </div>`;
+    });
+    body.innerHTML=html;
+    // Wire up clicks
+    body.querySelectorAll('.upcoming-row').forEach(row=>{
+      row.addEventListener('click',()=>{
+        const kind=row.dataset.kind, id=row.dataset.id, date=row.dataset.date;
+        closeModal('upcoming-modal');
+        if(kind==='task'){
+          openEditTask(id);
+        } else {
+          const d=new Date(date+'T12:00:00');
+          calYear=d.getFullYear();calMonth=d.getMonth();
+          openCalendar();
+          setTimeout(()=>openEditEvent(id),120);
+        }
+      });
+    });
+  }
+  document.getElementById('upcoming-modal').classList.add('visible');
 }
 
 function showDayEventsPopup(dateStr,dayEvents,allEntries){
@@ -1764,7 +1873,9 @@ function showDayEventsPopup(dateStr,dayEvents,allEntries){
     const row=document.createElement('div');
     row.style.cssText='display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:5px;border:0.5px solid var(--border);background:var(--bg-card);margin-bottom:5px;cursor:pointer;';
     const spanLabel=ev.endDate?`<span style="font-size:10px;color:var(--text-tertiary);font-family:'DM Mono',monospace;"> · ${ev.date} – ${ev.endDate}</span>`:'';
-    row.innerHTML=`<span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${catColor(ev.type||'other')}"></span><div style="flex:1;min-width:0;"><div style="font-size:13px;color:var(--text);">${escHtml(isTask?ev.title.replace('⚑ ',''):ev.title)}</div><div style="font-size:11px;color:var(--text-tertiary);font-family:'DM Mono',monospace;">${isTask?'Task deadline':(ev.time?ev.time.slice(0,5)+' · ':'')+( ev.type||'other')+(ev.location?' · '+escHtml(ev.location):'')}</div></div>${spanLabel}`;
+    const taskDone=isTask&&ev._done;
+    const cleanTitle=isTask?ev.title.replace(/^[✓⚑]\s*/,''):ev.title;
+    row.innerHTML=`<span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${taskDone?'var(--green)':catColor(ev.type||'other')}"></span><div style="flex:1;min-width:0;"><div style="font-size:13px;color:var(--text);${taskDone?'text-decoration:line-through;opacity:0.7;':''}">${escHtml(cleanTitle)}</div><div style="font-size:11px;color:var(--text-tertiary);font-family:'DM Mono',monospace;">${isTask?(taskDone?'Task deadline · Done ✓':'Task deadline'):(ev.time?ev.time.slice(0,5)+' · ':'')+( ev.type||'other')+(ev.location?' · '+escHtml(ev.location):'')}</div></div>${spanLabel}`;
     if(!isTask) row.onclick=()=>{closeModal('day-events-modal');openEditEvent(id);};
     else row.onclick=()=>{closeModal('day-events-modal');openEditTask(ev._taskId);};
     list.appendChild(row);
@@ -2130,6 +2241,11 @@ function openEditTask(id){
   document.getElementById('task-modal').classList.add('visible');
   setTimeout(()=>document.getElementById('task-title').focus(),50);
 }
+function setDueShortcut(daysAhead){
+  const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+daysAhead);
+  const iso=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  document.getElementById('task-due').value=iso;
+}
 async function saveTask(){
   const title=document.getElementById('task-title').value.trim();
   if(!title) return;
@@ -2163,6 +2279,8 @@ async function deleteTask(id){
 }
 
 // --- ANNOUNCEMENT ---
+let currentAnnouncementSig=null;   // signature of the live announcement
+let announcePopupShownThisSession=false;
 async function loadAnnouncement(data){
   const display=data&&(data.display||data.text);
   const el=document.getElementById('announce-text');
@@ -2170,6 +2288,37 @@ async function loadAnnouncement(data){
   else{el.textContent='No announcements — click to add one';el.classList.add('empty');}
   // Pre-fill edit modal with just the text (not the attribution)
   lastRawAnnouncement=data&&data.text||'';
+
+  // --- Unseen announcement pop-up ---
+  // Signature = text + time, so editing/reposting counts as new.
+  const sig=(data&&data.text)?((data.text||'')+'|'+(data.time||'')):null;
+  currentAnnouncementSig=sig;
+  if(sig&&currentUser&&!announcePopupShownThisSession){
+    try{
+      const seen=await fbGet(`seenAnnouncements/${encodeURIComponent(currentUser)}`);
+      if(seen!==sig){
+        showAnnouncePopup(data);
+        announcePopupShownThisSession=true;
+      }
+    }catch(e){/* if we can't check, don't nag */}
+  }
+}
+
+function showAnnouncePopup(data){
+  document.getElementById('announce-popup-text').textContent=data.text||'';
+  const meta=[];
+  if(data.author) meta.push(data.author);
+  if(data.time) meta.push(data.time);
+  document.getElementById('announce-popup-meta').textContent=meta.join(' · ');
+  document.getElementById('announce-popup-modal').classList.add('visible');
+}
+
+async function dismissAnnouncePopup(){
+  document.getElementById('announce-popup-modal').classList.remove('visible');
+  // Record that this user has now seen the current announcement
+  if(currentUser&&currentAnnouncementSig){
+    try{await fbSet(`seenAnnouncements/${encodeURIComponent(currentUser)}`,currentAnnouncementSig);}catch(e){}
+  }
 }
 let lastRawAnnouncement='';
 function openAnnounceModal(){
@@ -2186,7 +2335,12 @@ async function saveAnnouncement(){
   if(text){
     const display=`${text} — ${author}, ${timeStr}`;
     el.textContent=display;el.classList.remove('empty');
-    try{await fbSet('announcement',{text,author,time:timeStr,display});}
+    try{
+      await fbSet('announcement',{text,author,time:timeStr,display});
+      // Author has seen their own announcement
+      announcePopupShownThisSession=true;
+      if(currentUser){try{await fbSet(`seenAnnouncements/${encodeURIComponent(currentUser)}`,text+'|'+timeStr);}catch(e){}}
+    }
     catch(e){console.error('Announcement failed',e);}
   } else {
     el.textContent='No announcements — click to add one';el.classList.add('empty');
@@ -2219,29 +2373,6 @@ document.addEventListener('keydown',e=>{
 });
 document.getElementById('task-title').addEventListener('keydown',e=>{if(e.key==='Enter') saveTask();});
 document.getElementById('announce-input').addEventListener('keydown',e=>{if(e.key==='Enter') saveAnnouncement();});
-document.getElementById('event-title')?.addEventListener('keydown',e=>{if(e.key==='Enter') saveEvent();});
-document.getElementById('cat-new-input')?.addEventListener('keydown',e=>{if(e.key==='Enter') addCat();});
-document.getElementById('login-pw-new').addEventListener('keydown',e=>{if(e.key==='Enter') submitPassword();});
-document.getElementById('login-pw-confirm').addEventListener('keydown',e=>{if(e.key==='Enter') submitPassword();});
-
-// --- ANNOUNCEMENT ---
-
-lastRawAnnouncement='';
-
-// --- MODALS ---
-
-document.querySelectorAll('.modal-backdrop').forEach(el=>{
-  el.addEventListener('click',e=>{if(e.target===el) el.classList.remove('visible');});
-});
-document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){
-    document.querySelectorAll('.modal-backdrop.visible').forEach(m=>m.classList.remove('visible'));
-    closeCalendar();
-    closeAvail();
-    closeInbox();
-  }
-});
-
 document.getElementById('event-title')?.addEventListener('keydown',e=>{if(e.key==='Enter') saveEvent();});
 document.getElementById('cat-new-input')?.addEventListener('keydown',e=>{if(e.key==='Enter') addCat();});
 document.getElementById('login-pw-new').addEventListener('keydown',e=>{if(e.key==='Enter') submitPassword();});
@@ -2282,6 +2413,32 @@ window.addEventListener('resize', ()=>{
 document.addEventListener("DOMContentLoaded", initMobileColumns);
 
 </script>
+
+<!-- UPCOMING FULL LIST MODAL -->
+<div class="modal-backdrop" id="upcoming-modal">
+  <div class="modal" style="width:480px;max-height:80vh;">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div class="modal-title" style="margin:0;">Everything Upcoming</div>
+      <button class="cal-close" onclick="closeModal('upcoming-modal')" style="margin:0;">✕</button>
+    </div>
+    <div id="upcoming-list-body" style="overflow-y:auto;max-height:calc(80vh - 90px);margin-top:4px;"></div>
+  </div>
+</div>
+
+<!-- ANNOUNCEMENT POPUP MODAL -->
+<div class="modal-backdrop" id="announce-popup-modal">
+  <div class="modal" style="width:420px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+      <span style="font-size:20px;">📌</span>
+      <div class="modal-title" style="margin:0;">New Announcement</div>
+    </div>
+    <div id="announce-popup-text" style="font-size:15px;color:var(--text);line-height:1.5;padding:6px 0;"></div>
+    <div id="announce-popup-meta" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-tertiary);letter-spacing:0.04em;"></div>
+    <div class="modal-actions">
+      <button class="modal-btn primary" onclick="dismissAnnouncePopup()">Got it</button>
+    </div>
+  </div>
+</div>
 
 <!-- EVENT MODAL -->
 <div class="modal-backdrop" id="event-modal">
