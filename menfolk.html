@@ -586,7 +586,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
     </select>
     <div class="header-spacer"></div>
     <button class="add-task-btn" onclick="openCalendar()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">📆 Calendar</button><button class="add-task-btn" onclick="openAvail()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">📅 Availability</button><button id="inbox-btn" class="add-task-btn hidden" onclick="toggleInbox()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">✉ Inbox <span class="inbox-badge" id="inbox-badge" style="display:none;">1</span></button>
-    <button id="admin-reset-btn" class="add-task-btn hidden" onclick="openAdminReset()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">⚙ Passwords</button><button class="add-task-btn" onclick="openAddTask()">+ Add Task</button>
+    <button id="admin-reset-btn" class="add-task-btn hidden" onclick="openAdminReset()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">⚙ Passwords</button><button class="add-task-btn" onclick="openAddTask()">+ Add Task</button><button id="crew-add-btn" class="add-task-btn hidden" onclick="openAddTask(currentUser.toLowerCase())">+ Add Task</button>
   </div>
 
   <!-- BODY -->
@@ -632,6 +632,14 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
           <span class="col-count" id="count-meg">0</span>
         </div>
         <div class="col-body" id="body-meg" ondragover="onDragOver(event)" ondrop="onDrop(event,'meg')" ondragleave="onDragLeave(event)"></div>
+      </div>
+      <div class="col-divider"></div>
+      <div class="col" id="col-callum">
+        <div class="col-header">
+          <span class="col-title">Callum</span>
+          <span class="col-count" id="count-callum">0</span>
+        </div>
+        <div class="col-body" id="body-callum" ondragover="onDragOver(event)" ondrop="onDrop(event,'callum')" ondragleave="onDragLeave(event)"></div>
       </div>
       <div class="col-divider col-divider-done"></div>
       <div class="col done-col" id="col-done">
@@ -703,6 +711,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
           <option value="dani">Dani</option>
           <option value="zoe">Zoe</option>
           <option value="meg">Meg</option>
+          <option value="callum">Callum</option>
           <option value="done">Done</option>
         </select>
       </div>
@@ -950,9 +959,11 @@ async function markEmailRead(id,e){
 }
 
 const DB='https://menfolk-production-default-rtdb.europe-west1.firebasedatabase.app';
-const COLS=['todo','matthew','dani','zoe','meg','done'];
-const TEAM=['Matthew','Meg','Zoe','Dani'];
+const COLS=['todo','matthew','dani','zoe','meg','callum','done'];
+const TEAM=['Matthew','Meg','Zoe','Dani','Callum'];
+const CREW=['Callum']; // restricted to own column only
 let currentUser=null;
+function isCrew(){return CREW.includes(currentUser);}
 
 let tasks={};
 let draggingId=null;
@@ -1834,6 +1845,7 @@ function calNext(){
 }
 
 function openAddEvent(dateStr){
+  if(isCrew()) return; // Callum can view but not add events
   editingEventId=null;addingDateStr=dateStr;
   document.getElementById('event-modal-title').textContent='Add Event';
   document.getElementById('event-title').value='';
@@ -1850,6 +1862,11 @@ function openAddEvent(dateStr){
 
 function openEditEvent(id){
   if(!events[id]) return;
+  if(isCrew()){
+    // Crew can view event details but not edit — show a read-only info modal
+    showEventReadOnly(events[id]);
+    return;
+  }
   editingEventId=id;
   const ev=events[id];
   document.getElementById('event-modal-title').textContent='Edit Event';
@@ -2049,6 +2066,19 @@ function catColor(type){
   const colors={'audition':'#a78bfa','meeting':'#7cb9f0','shoot':'#e09a5a','rehearsal':'#f472b6','location-scout':'#34d399','wrap':'#fbbf24','other':'#9e9d99','task-deadline':'#b84f4f'};
   return colors[type]||'#9e9d99';
 }
+
+function showEventReadOnly(ev){
+  const d=ev.date?new Date(ev.date+'T12:00:00'):null;
+  const dateLabel=d?d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'';
+  const endLabel=ev.endDate&&ev.endDate!==ev.date?' — '+new Date(ev.endDate+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long'}):'';
+  document.getElementById('event-readonly-title').textContent=ev.title||'';
+  document.getElementById('event-readonly-meta').innerHTML=
+    `${dateLabel}${endLabel}${ev.time?' · '+ev.time.slice(0,5):''}` +
+    (ev.type?`<br><span style="text-transform:capitalize;">${ev.type.replace(/-/g,' ')}</span>`:'') +
+    (ev.location?`<br>📍 ${escHtml(ev.location)}`:'') +
+    (ev.notes?`<br>${escHtml(ev.notes)}`:'');
+  document.getElementById('event-readonly-modal').classList.add('visible');
+}
 // --- AUTH ---
 // ── AUTH: name first, then per-person password ──────────────────────────
 let loginName=null;
@@ -2137,14 +2167,41 @@ function enterDashboard(name){
   document.getElementById('app').classList.add('visible');
   const subEl=document.querySelector('.header-sub');
   if(subEl) subEl.textContent=`Production Board — ${name}`;
-  // Show admin reset btn only for Matthew
   const resetBtn=document.getElementById('admin-reset-btn');
   if(resetBtn){
     if(name==='Matthew') resetBtn.classList.remove('hidden');
     else resetBtn.classList.add('hidden');
   }
+  applyRoleLayout(name);
   init();
   initMobileColumns();
+}
+
+function applyRoleLayout(name){
+  const crew=CREW.includes(name);
+  // Columns visible to crew: only their own + todo (read-only) + done (read-only)
+  const crewVisibleCols=['callum'];
+  // Hide producer columns from crew
+  ['todo','matthew','dani','zoe','meg','done'].forEach(col=>{
+    const el=document.getElementById('col-'+col);
+    const divider=el?el.previousElementSibling:null;
+    if(el){
+      el.style.display=crew?'none':'';
+      if(divider&&divider.classList.contains('col-divider')) divider.style.display=crew?'none':'';
+    }
+  });
+  // Hide the global sort + add-task button from crew view (they use column-specific add)
+  const addBtn=document.querySelector('.add-task-btn[onclick="openAddTask()"]');
+  if(addBtn) addBtn.style.display=crew?'none':'';
+  const crewAddBtn=document.getElementById('crew-add-btn');
+  if(crewAddBtn){
+    if(crew) crewAddBtn.classList.remove('hidden');
+    else crewAddBtn.classList.add('hidden');
+  }
+  const sortSel=document.getElementById('global-sort-select');
+  if(sortSel) sortSel.style.display=crew?'none':'';
+  // Show/hide availability write access — crew sees panels read-only (handled via openAvail)
+  // Calendar: crew can view but not add events — handled in openAddEvent
 }
 
 function goBackToNamePicker(){
@@ -2390,12 +2447,16 @@ function openAddTask(col){
   document.getElementById('modal-title').textContent='New Task';
   document.getElementById('task-title').value='';
   document.getElementById('task-notes').value='';
-  document.getElementById('task-col').value=col||'todo';
+  // Crew always goes to their own column
+  document.getElementById('task-col').value=isCrew()?currentUser.toLowerCase():(col||'todo');
   document.getElementById('task-status').value='none';
   document.getElementById('task-priority').value='normal';
   document.getElementById('task-due').value='';
   document.getElementById('task-modal').classList.add('visible');
   document.getElementById('task-created-by').style.display='none';
+  // Hide column selector for crew
+  const colRow=document.getElementById('task-col').closest('.modal-row');
+  if(colRow) colRow.style.display=isCrew()?'none':'';
   setTimeout(()=>document.getElementById('task-title').focus(),50);
 }
 
@@ -2440,6 +2501,11 @@ async function saveTask(){
     return;
   }
   const col=document.getElementById('task-col').value;
+  // Crew can only save tasks to their own column
+  if(isCrew()&&col!=='callum'){
+    alert('You can only add tasks to your own column.');
+    return;
+  }
   const status=document.getElementById('task-status').value;
   const notes=document.getElementById('task-notes').value.trim();
   const priority=document.getElementById('task-priority').value;
@@ -2634,6 +2700,17 @@ document.addEventListener("DOMContentLoaded", initMobileColumns);
   </div>
 </div>
 
+
+<!-- EVENT READ-ONLY MODAL (crew view) -->
+<div class="modal-backdrop" id="event-readonly-modal">
+  <div class="modal" style="width:380px;">
+    <div class="modal-title" id="event-readonly-title"></div>
+    <div id="event-readonly-meta" style="font-size:13px;color:var(--text-secondary);line-height:1.7;padding:4px 0;"></div>
+    <div class="modal-actions">
+      <button class="modal-btn primary" onclick="closeModal('event-readonly-modal')">Close</button>
+    </div>
+  </div>
+</div>
 <!-- EVENT MODAL -->
 <div class="modal-backdrop" id="event-modal">
   <div class="modal" style="width:440px;">
