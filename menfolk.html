@@ -80,7 +80,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 #body{display:flex;flex:1;overflow:hidden;}
 
 /* KANBAN */
-#kanban{flex:1;overflow-x:auto;overflow-y:hidden;padding:14px;display:flex;gap:10px;}
+#kanban{flex:1;overflow-x:auto;overflow-y:hidden;padding:14px;display:flex;gap:10px;cursor:grab;}
+#kanban:active{cursor:grabbing;}
 .col{flex:0 0 200px;display:flex;flex-direction:column;gap:8px;min-width:0;}
 .col-header{display:flex;align-items:center;justify-content:space-between;padding:0 4px;margin-bottom:2px;}
 .col-title{font-family:DM Mono,monospace;font-size:10px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-tertiary);}
@@ -543,6 +544,38 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
 /* The kanban horizontal scrollbar specifically */
 #kanban::-webkit-scrollbar{height:8px;}
 #kanban::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:4px;border:2px solid var(--bg);}
+
+.ann-log-row{padding:10px 12px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg-card);}
+.announce-edit-btn{transition:background 0.12s,color 0.12s;}
+.announce-edit-btn:hover{background:var(--bg-hover);}
+
+/* "+ Add task" button at the bottom of each column */
+.col-add-btn{
+  width:100%;
+  height:32px;
+  background:transparent;
+  border:1px dashed var(--border);
+  border-radius:var(--radius);
+  color:var(--text-tertiary);
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  cursor:pointer;
+  margin-top:6px;
+  flex-shrink:0;
+  transition:all 0.12s;
+}
+.col-add-btn:hover{
+  border-color:var(--accent);
+  color:var(--accent);
+  background:rgba(200,185,122,0.04);
+}
+.col-add-btn:active{transform:scale(0.98);}
+/* Hide the empty-column hint since we now have an explicit button */
+.col-body:empty::after{display:none;}
+/* Crew see the add button only on their own column; hide on others.
+   Handled by applyRoleLayout which hides the whole column anyway. */
 </style>
 </head>
 <body>
@@ -585,8 +618,8 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
   <!-- ANNOUNCE BAR -->
   <div id="announce-bar">
     <span class="announce-label">📌 Notice</span>
-    <span id="announce-text" class="empty" onclick="openAnnounceModal()">No announcements — click to add one</span>
-    <button class="announce-edit-btn" onclick="openAnnounceModal()">Edit</button>
+    <span id="announce-text" class="empty" onclick="openAnnounceView()">No announcements yet</span>
+    <button class="announce-edit-btn" onclick="openAnnounceModal()" title="New announcement">+ New</button>
   </div>
 
   <!-- HEADER -->
@@ -598,7 +631,6 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
     <select id="global-sort-select" class="col-sort-select" onchange="setGlobalSort(this.value)" title="Sort all columns" style="height:26px;font-size:10px;">
       <option value="date">↕ Due date</option>
       <option value="priority">↕ Priority</option>
-      <option value="manual">↕ Manual</option>
     </select>
     <div class="header-spacer"></div>
     <button class="add-task-btn" onclick="openCalendar()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">📆 Calendar</button><button class="add-task-btn" onclick="openAvail()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">📅 Availability</button><button id="inbox-btn" class="add-task-btn hidden" onclick="toggleInbox()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">✉ Inbox <span class="inbox-badge" id="inbox-badge" style="display:none;">1</span></button>
@@ -616,6 +648,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
           <span class="col-count" id="count-todo">0</span>
         </div>
         <div class="col-body" id="body-todo" ondragover="onDragOver(event)" ondrop="onDrop(event,'todo')" ondragleave="onDragLeave(event)"></div>
+        <button class="col-add-btn" data-col="todo" onclick="openAddTask('todo')">+ Add task</button>
       </div>
             <div class="col-divider"></div>
       <div class="col" id="col-matthew">
@@ -624,6 +657,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
           <span class="col-count" id="count-matthew">0</span>
         </div>
         <div class="col-body" id="body-matthew" ondragover="onDragOver(event)" ondrop="onDrop(event,'matthew')" ondragleave="onDragLeave(event)"></div>
+        <button class="col-add-btn" data-col="matthew" onclick="openAddTask('matthew')">+ Add task</button>
       </div>
             <div class="col-divider"></div>
       <div class="col" id="col-dani">
@@ -632,6 +666,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
           <span class="col-count" id="count-dani">0</span>
         </div>
         <div class="col-body" id="body-dani" ondragover="onDragOver(event)" ondrop="onDrop(event,'dani')" ondragleave="onDragLeave(event)"></div>
+        <button class="col-add-btn" data-col="dani" onclick="openAddTask('dani')">+ Add task</button>
       </div>
             <div class="col-divider"></div>
       <div class="col" id="col-zoe">
@@ -640,6 +675,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
           <span class="col-count" id="count-zoe">0</span>
         </div>
         <div class="col-body" id="body-zoe" ondragover="onDragOver(event)" ondrop="onDrop(event,'zoe')" ondragleave="onDragLeave(event)"></div>
+        <button class="col-add-btn" data-col="zoe" onclick="openAddTask('zoe')">+ Add task</button>
       </div>
             <div class="col-divider"></div>
       <div class="col" id="col-meg">
@@ -648,6 +684,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
           <span class="col-count" id="count-meg">0</span>
         </div>
         <div class="col-body" id="body-meg" ondragover="onDragOver(event)" ondrop="onDrop(event,'meg')" ondragleave="onDragLeave(event)"></div>
+        <button class="col-add-btn" data-col="meg" onclick="openAddTask('meg')">+ Add task</button>
       </div>
       <div class="col-divider"></div>
       <div class="col" id="col-callum">
@@ -656,6 +693,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
           <span class="col-count" id="count-callum">0</span>
         </div>
         <div class="col-body" id="body-callum" ondragover="onDragOver(event)" ondrop="onDrop(event,'callum')" ondragleave="onDragLeave(event)"></div>
+        <button class="col-add-btn" data-col="callum" onclick="openAddTask('callum')">+ Add task</button>
       </div>
       <div class="col-divider"></div>
       <div class="col" id="col-hannah">
@@ -664,6 +702,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
           <span class="col-count" id="count-hannah">0</span>
         </div>
         <div class="col-body" id="body-hannah" ondragover="onDragOver(event)" ondrop="onDrop(event,'hannah')" ondragleave="onDragLeave(event)"></div>
+        <button class="col-add-btn" data-col="hannah" onclick="openAddTask('hannah')">+ Add task</button>
       </div>
       <div class="col-divider"></div>
       <div class="col" id="col-joe">
@@ -672,6 +711,16 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
           <span class="col-count" id="count-joe">0</span>
         </div>
         <div class="col-body" id="body-joe" ondragover="onDragOver(event)" ondrop="onDrop(event,'joe')" ondragleave="onDragLeave(event)"></div>
+        <button class="col-add-btn" data-col="joe" onclick="openAddTask('joe')">+ Add task</button>
+      </div>
+      <div class="col-divider"></div>
+      <div class="col" id="col-natalie">
+        <div class="col-header">
+          <span class="col-title">Natalie</span>
+          <span class="col-count" id="count-natalie">0</span>
+        </div>
+        <div class="col-body" id="body-natalie" ondragover="onDragOver(event)" ondrop="onDrop(event,'natalie')" ondragleave="onDragLeave(event)"></div>
+        <button class="col-add-btn" data-col="natalie" onclick="openAddTask('natalie')">+ Add task</button>
       </div>
       <div class="col-divider col-divider-done"></div>
       <div class="col done-col" id="col-done">
@@ -767,6 +816,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
           <option value="callum">Callum</option>
           <option value="hannah">Hannah</option>
           <option value="joe">Joe</option>
+          <option value="natalie">Natalie</option>
           <option value="done">Done</option>
         </select>
       </div>
@@ -804,6 +854,24 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
       <button class="modal-btn primary" onclick="saveTask()">Save Task</button>
     </div>
     <div id="task-created-by" style="display:none;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-tertiary);letter-spacing:0.06em;text-align:center;margin-top:2px;"></div>
+  </div>
+</div>
+
+
+<!-- ANNOUNCEMENT VIEW MODAL -->
+<div class="modal-backdrop" id="announce-view-modal">
+  <div class="modal" style="width:480px;max-height:80vh;">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div class="modal-title" style="margin:0;">📌 Notice</div>
+      <button class="cal-close" onclick="closeModal('announce-view-modal')" style="margin:0;">✕</button>
+    </div>
+    <div id="announce-view-current" style="background:var(--bg-card);border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:14px;margin-top:4px;"></div>
+    <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-tertiary);margin-top:14px;margin-bottom:6px;">Previous</div>
+    <div id="announce-view-log" style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
+    <div class="modal-actions">
+      <button id="announce-view-new-btn" class="modal-btn primary" style="display:none;" onclick="closeModal('announce-view-modal');openAnnounceModal();">+ New Announcement</button>
+      <button class="modal-btn" onclick="closeModal('announce-view-modal')">Close</button>
+    </div>
   </div>
 </div>
 
@@ -908,7 +976,10 @@ async function loadInbox(){
     const btn=document.getElementById('inbox-btn');
     const badge=document.getElementById('inbox-badge');
     if(!btn) return;
+    // Crew don't see the inbox at all
+    if(isCrew()){btn.classList.add('hidden');btn.style.display='none';return;}
     btn.classList.remove('hidden');
+    btn.style.display='';
     if(!data){inboxData=[];renderInboxPanel();return;}
     // Convert object to array, sort by time desc
     inboxData=Object.entries(data)
@@ -966,6 +1037,7 @@ function renderInboxPanel(){
 }
 
 function toggleInbox(){
+  if(isCrew()) return; // crew has no inbox access
   const overlay=document.getElementById('inbox-overlay');
   overlay.classList.toggle('visible');
 }
@@ -1015,9 +1087,9 @@ async function markEmailRead(id,e){
 
 const DB='https://menfolk-production-default-rtdb.europe-west1.firebasedatabase.app';
 const PRODUCERS=['Matthew','Meg','Zoe','Dani'];
-const CREW=['Callum','Hannah','Joe']; // restricted: own column + own events only
+const CREW=['Callum','Hannah','Joe','Natalie']; // restricted: own column + own events only
 const TEAM=[...PRODUCERS,...CREW];
-const COLS=['todo','matthew','dani','zoe','meg','callum','hannah','joe','done'];
+const COLS=['todo','matthew','dani','zoe','meg','callum','hannah','joe','natalie','done'];
 const ADMIN='Matthew'; // sole password manager
 let currentUser=null;
 function isCrew(){return CREW.includes(currentUser);}
@@ -1617,6 +1689,14 @@ const MONTH_NAMES=['January','February','March','April','May','June','July','Aug
 const EVENT_TYPES=['meeting','audition','shoot','other'];
 
 function openCalendar(){
+  // Always open at today's month
+  const now=new Date();
+  calYear=now.getFullYear();
+  calMonth=now.getMonth();
+  // Clamp to minimum allowed (May 2026)
+  if(calYear<MIN_CAL_YEAR||(calYear===MIN_CAL_YEAR&&calMonth<MIN_CAL_MONTH)){
+    calYear=MIN_CAL_YEAR;calMonth=MIN_CAL_MONTH;
+  }
   document.getElementById('cal-overlay').classList.add('visible');
   renderCal();
   // After slide-in animation, ensure correct scroll position
@@ -2371,6 +2451,7 @@ function enterDashboard(name){
   applyRoleLayout(name);
   init();
   initMobileColumns();
+  initKanbanDragScroll();
   applyMobileDefaults();
 }
 
@@ -2398,6 +2479,9 @@ function applyRoleLayout(name){
   if(annEditBtn) annEditBtn.style.display=crew?'none':'';
   const annText=document.getElementById('announce-text');
   if(annText) annText.style.cursor=crew?'default':'pointer';
+  // Inbox: hidden entirely for crew
+  const inboxBtn=document.getElementById('inbox-btn');
+  if(inboxBtn) inboxBtn.style.display=crew?'none':'';
 }
 
 function goBackToNamePicker(){
@@ -2480,6 +2564,10 @@ async function loadAll(){
     events=(data&&data.events)||{};
     // Notifications for current user
     myNotifs=(data&&data.notifications&&data.notifications[encodeURIComponent(currentUser)])||{};
+    // Announcement history
+    if(data&&data.announcementHistory){
+      announcementHistory=Array.isArray(data.announcementHistory)?data.announcementHistory:Object.values(data.announcementHistory);
+    } else announcementHistory=[];
     renderAll();
     renderDashboard();
     loadAnnouncement(data&&data.announcement);
@@ -2490,11 +2578,12 @@ async function loadAll(){
 
 // --- RENDER ---
 
-let globalSort='date'; // single sort preference for all columns
+let globalSort='date'; // 'date' or 'priority' only
 
 function setGlobalSort(mode){
+  // Only 'date' or 'priority' are valid now — coerce anything else to 'date'
+  if(mode!=='date'&&mode!=='priority') mode='date';
   globalSort=mode;
-  // Update the select in case called programmatically
   const sel=document.getElementById('global-sort-select');
   if(sel) sel.value=mode;
   renderAll();
@@ -2514,10 +2603,8 @@ function sortedColTasks(col){
       const pb=pOrder[b[1].priority||'normal']??1;
       if(pa!==pb) return pa-pb;
       const ad=a[1].dueDate||'9999-99-99',bd=b[1].dueDate||'9999-99-99';
-      return ad.localeCompare(bd)||(a[1].order||0)-(b[1].order||0);
+      return ad.localeCompare(bd);
     });
-  } else {
-    colTasks.sort((a,b)=>(a[1].order||0)-(b[1].order||0));
   }
   return colTasks;
 }
@@ -2594,14 +2681,22 @@ async function onDrop(e,col){
   e.currentTarget.classList.remove('drag-over');
   if(!draggingId||!tasks[draggingId]) return;
 
-  // Silently switch to manual when dragging — no prompt
-  if(globalSort!=='manual') setGlobalSort('manual');
+  // Drag moves a card BETWEEN columns. Order within a column is governed by the
+  // active sort (due date or priority) — manual ordering removed.
+  // Apply role check: crew can only drop into their own column.
+  if(isCrew()&&col!==userCol()){ renderAll(); return; }
 
-  const colTasksSorted=sortedColTasks(col).filter(([id])=>id!==draggingId);
-  tasks[draggingId]={...tasks[draggingId],col,order:colTasksSorted.length};
+  const prevCol=tasks[draggingId].col;
+  tasks[draggingId]={...tasks[draggingId],col};
   renderAll();
   try{await fbSet(`tasks/${draggingId}`,tasks[draggingId]);}
   catch(e){console.error('Move failed',e);}
+
+  // Notify the column owner if reassigned by someone else
+  const colOwnerName=colToName(col);
+  if(col!==prevCol&&colOwnerName&&colOwnerName!==currentUser){
+    pushNotif(colOwnerName,{kind:'task',message:`You were assigned a task: "${tasks[draggingId].title}"`,by:currentUser});
+  }
 }
 
 async function completeTask(id,e){
@@ -2658,14 +2753,7 @@ function openAddTask(col){
   setTimeout(()=>document.getElementById('task-title').focus(),50);
 }
 
-// Click empty space in a column body to add a task to that column
-document.querySelectorAll('.col-body').forEach(body=>{
-  body.addEventListener('click',e=>{
-    if(e.target!==body) return; // only fire on the empty background, not on cards
-    const col=body.id.replace('body-','');
-    openAddTask(col);
-  });
-});
+// Click-to-add removed: each column now has a visible '+ Add task' button
 function openEditTask(id){
   if(!tasks[id]) return;
   editingId=id;
@@ -2748,16 +2836,69 @@ async function deleteTask(id){
   renderAll();
 }
 
+
+// ═══════════════════════════════════════════════════════════════
+// ANNOUNCEMENT VIEW + HISTORY
+// ═══════════════════════════════════════════════════════════════
+let announcementHistory=[]; // array of {text,author,time,at}
+
+async function loadAnnouncementHistory(){
+  try{
+    const data=await fbGet('announcementHistory');
+    if(Array.isArray(data)) announcementHistory=data;
+    else if(data&&typeof data==='object') announcementHistory=Object.values(data);
+    else announcementHistory=[];
+  }catch(e){announcementHistory=[];}
+}
+
+function openAnnounceView(){
+  // Always reload history to be current
+  loadAnnouncementHistory().then(()=>{
+    const cur=document.getElementById('announce-text').textContent;
+    const isEmpty=document.getElementById('announce-text').classList.contains('empty');
+    const curBox=document.getElementById('announce-view-current');
+    if(isEmpty||!lastRawAnnouncement){
+      curBox.innerHTML='<div style="font-size:13px;color:var(--text-tertiary);font-style:italic;padding:14px 4px;">No active announcement.</div>';
+    } else {
+      curBox.innerHTML=`<div style="font-size:15px;color:var(--text);line-height:1.5;">${escHtml(lastRawAnnouncement)}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-tertiary);margin-top:6px;letter-spacing:0.04em;">${escHtml(lastAnnouncementMeta)}</div>`;
+    }
+    // History list (latest first, exclude the currently-active one)
+    const logEl=document.getElementById('announce-view-log');
+    const hist=[...announcementHistory].sort((a,b)=>(b.at||0)-(a.at||0));
+    // Skip the entry that matches the current one
+    const sig=currentAnnouncementSig;
+    const past=hist.filter(h=>((h.text||'')+'|'+(h.time||''))!==sig).slice(0,5);
+    if(past.length===0){
+      logEl.innerHTML='<div style="font-size:12px;color:var(--text-tertiary);font-family:\'DM Mono\',monospace;padding:10px 4px;">No previous announcements.</div>';
+    } else {
+      logEl.innerHTML=past.map(h=>{
+        const meta=[h.author||'',h.time||''].filter(Boolean).join(' · ');
+        return `<div class="ann-log-row">
+          <div style="font-size:13px;color:var(--text-secondary);line-height:1.4;">${escHtml(h.text||'')}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-tertiary);margin-top:4px;letter-spacing:0.04em;">${escHtml(meta)}</div>
+        </div>`;
+      }).join('');
+    }
+    // Show/hide the New button in the view modal for producers
+    const newBtn=document.getElementById('announce-view-new-btn');
+    if(newBtn) newBtn.style.display=isProducer()?'':'none';
+    document.getElementById('announce-view-modal').classList.add('visible');
+  });
+}
+
 // --- ANNOUNCEMENT ---
 let currentAnnouncementSig=null;   // signature of the live announcement
+let lastAnnouncementMeta='';      // "Author · time" of current announcement
 let announcePopupShownThisSession=false;
 async function loadAnnouncement(data){
   const display=data&&(data.display||data.text);
   const el=document.getElementById('announce-text');
   if(display){el.textContent=display;el.classList.remove('empty');}
-  else{el.textContent='No announcements — click to add one';el.classList.add('empty');}
+  else{el.textContent='No announcements yet';el.classList.add('empty');}
   // Pre-fill edit modal with just the text (not the attribution)
   lastRawAnnouncement=data&&data.text||'';
+  lastAnnouncementMeta=data?[data.author||'',data.time||''].filter(Boolean).join(' · '):'';
 
   // --- Unseen announcement pop-up ---
   // Signature = text + time, so editing/reposting counts as new.
@@ -2809,24 +2950,35 @@ async function saveAnnouncement(){
     el.textContent=display;el.classList.remove('empty');
     try{
       await fbSet('announcement',{text,author,time:timeStr,display});
+      // Append to history (keep last 10)
+      await loadAnnouncementHistory();
+      announcementHistory.push({text,author,time:timeStr,at:Date.now()});
+      // Keep only the most recent 10
+      announcementHistory=announcementHistory.sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,10);
+      try{await fbSet('announcementHistory',announcementHistory);}catch(e){}
       // Author has seen their own announcement
       announcePopupShownThisSession=true;
+      lastRawAnnouncement=text;
+      lastAnnouncementMeta=`${author} · ${timeStr}`;
+      currentAnnouncementSig=text+'|'+timeStr;
       if(currentUser){try{await fbSet(`seenAnnouncements/${encodeURIComponent(currentUser)}`,text+'|'+timeStr);}catch(e){}}
     }
     catch(e){console.error('Announcement failed',e);}
   } else {
-    el.textContent='No announcements — click to add one';el.classList.add('empty');
+    el.textContent='No announcements yet';el.classList.add('empty');
     try{await fbSet('announcement',{text:'',author:'',time:'',display:''});}
     catch(e){}
+    lastRawAnnouncement='';lastAnnouncementMeta='';
   }
   closeModal('announce-modal');
 }
 async function clearAnnouncement(){
   const el=document.getElementById('announce-text');
-  el.textContent='No announcements — click to add one';
+  el.textContent='No announcements yet';
   el.classList.add('empty');
   try{await fbSet('announcement',{text:''});}
   catch(e){}
+  lastRawAnnouncement='';lastAnnouncementMeta='';currentAnnouncementSig=null;
   closeModal('announce-modal');
 }
 
@@ -2875,6 +3027,41 @@ function togglePwVis(id, btn){
     input.type = 'password';
     btn.style.opacity = '0.5';
   }
+}
+
+
+// ── Horizontal drag-to-scroll for the kanban ─────────────────────────────
+// Click-drag anywhere on the kanban background (or the empty spaces around it) to
+// scroll horizontally. Cards keep their own drag, buttons/inputs are untouched.
+let kanbanDragScrollBound=false;
+function initKanbanDragScroll(){
+  if(kanbanDragScrollBound) return;
+  const kanban=document.getElementById('kanban');
+  if(!kanban) return;
+  kanbanDragScrollBound=true;
+  let isDown=false, startX=0, startScroll=0, moved=false;
+
+  kanban.addEventListener('mousedown', e=>{
+    // Skip interactive elements — never the buttons, cards, status pills, etc.
+    if(e.target.closest('.card,.card-btn,.status-pill,.col-add-btn,select,button,input,textarea,a')) return;
+    isDown=true; moved=false;
+    startX=e.pageX;
+    startScroll=kanban.scrollLeft;
+    kanban.style.cursor='grabbing';
+    kanban.style.userSelect='none';
+  });
+  window.addEventListener('mouseup', ()=>{
+    if(!isDown) return;
+    isDown=false;
+    kanban.style.cursor='';
+    kanban.style.userSelect='';
+  });
+  window.addEventListener('mousemove', e=>{
+    if(!isDown) return;
+    const dx=e.pageX-startX;
+    if(Math.abs(dx)>3) moved=true;
+    kanban.scrollLeft=startScroll-dx;
+  });
 }
 
 // ── Mobile collapsible columns + dashboard + notice ───────────────────────
