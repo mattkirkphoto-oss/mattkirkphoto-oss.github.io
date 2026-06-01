@@ -73,6 +73,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .header-spacer{flex:1;}
 .add-task-btn{height:30px;padding:0 14px;background:var(--accent);color:#0f0f0d;border:none;border-radius:var(--radius);font-family:DM Mono,monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;font-weight:500;transition:opacity 0.15s;display:inline-flex;align-items:center;gap:5px;}
 .add-task-btn:hover{opacity:0.85;}
+.add-task-btn:active{transform:scale(0.97);}
 .add-task-btn.hidden{display:none!important;}
 
 /* BODY AREA */
@@ -83,10 +84,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .col{flex:0 0 200px;display:flex;flex-direction:column;gap:8px;min-width:0;}
 .col-header{display:flex;align-items:center;justify-content:space-between;padding:0 4px;margin-bottom:2px;}
 .col-title{font-family:DM Mono,monospace;font-size:10px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-tertiary);}
-.col-count{font-family:DM Mono,monospace;font-size:10px;color:var(--text-tertiary);background:var(--bg-card);padding:1px 6px;border-radius:10px;}
+.col-count{font-family:DM Mono,monospace;font-size:10px;color:var(--text-tertiary);background:var(--bg-card);padding:1px 6px;border-radius:10px;transition:all 0.15s;}
+.col-count.count-overdue{background:var(--red-bg);color:var(--red);border:0.5px solid var(--red-border);}
 .col-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:2px 2px 40px;scrollbar-width:thin;scrollbar-color:var(--border) transparent;cursor:pointer;}
-.col-body:empty::after,.col-body .col-empty-hint{content:'+ Add task';display:flex;align-items:center;justify-content:center;height:48px;border:1px dashed var(--border);border-radius:var(--radius);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;color:var(--text-tertiary);opacity:0;transition:opacity 0.15s;pointer-events:none;}
-.col-body:hover::after{opacity:1;}
+.col-body:empty::after{content:'+ Add task';display:flex;align-items:center;justify-content:center;height:44px;border:1px dashed var(--border);border-radius:var(--radius);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;color:var(--text-tertiary);opacity:0.35;transition:opacity 0.15s;pointer-events:none;}
+.col-body:hover:empty::after{opacity:0.7;}
 .col-body::-webkit-scrollbar{width:3px;}
 .col-body::-webkit-scrollbar-track{background:transparent;}
 .col-body::-webkit-scrollbar-thumb{background:var(--border);}
@@ -101,12 +103,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 
 /* CARDS */
 .card{background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;cursor:grab;transition:transform 0.1s,box-shadow 0.1s,border-color 0.1s;position:relative;user-select:none;}
-.card:hover{border-color:var(--border-strong);background:var(--bg-hover);}
+.card:hover{border-color:var(--border-strong);background:var(--bg-hover);transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,0.18);}
+.card:active{transform:translateY(0);}
 .card.dragging{opacity:0.4;cursor:grabbing;}
 .card-title{font-size:13px;color:var(--text);line-height:1.4;margin-bottom:6px;word-break:break-word;}
 .card-notes{font-size:11px;color:var(--text-secondary);line-height:1.5;margin-bottom:8px;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .card-footer{display:flex;align-items:center;justify-content:space-between;gap:6px;}
-.status-pill{height:18px;padding:0 7px;border-radius:10px;font-family:DM Mono,monospace;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;font-weight:500;border:0.5px solid;display:flex;align-items:center;cursor:pointer;white-space:nowrap;}
+.status-pill{height:18px;padding:0 7px;border-radius:10px;font-family:DM Mono,monospace;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;font-weight:500;border:0.5px solid;display:flex;align-items:center;cursor:pointer;white-space:nowrap;transition:transform 0.1s,background 0.15s,color 0.15s;}
+.status-pill:active{transform:scale(0.94);}
 .status-pill.complete{background:var(--green-bg);color:var(--green);border-color:var(--green-border);}
 .status-pill.in-progress{background:var(--orange-bg);color:var(--orange);border-color:var(--orange-border);}
 .status-pill.issue{background:var(--red-bg);color:var(--red);border-color:var(--red-border);}
@@ -163,7 +167,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .events-strip-label{font-family:DM Mono,monospace;font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-tertiary);padding-right:12px;border-right:0.5px solid var(--border);white-space:nowrap;margin-right:12px;}
 .events-strip-list{display:flex;gap:16px;overflow:hidden;flex:1;align-items:center;}
 .event-chip{display:flex;align-items:center;gap:6px;white-space:nowrap;font-size:12px;color:var(--text-secondary);cursor:pointer;}
-.event-chip:hover{color:var(--text);}
+.event-chip{transition:color 0.12s,transform 0.12s;}
+.event-chip:hover{color:var(--text);transform:translateY(-1px);}
 .event-chip-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
 .event-chip-date{font-family:DM Mono,monospace;font-size:10px;color:var(--text-tertiary);}
 .no-events{font-size:12px;color:var(--text-tertiary);font-style:italic;}
@@ -179,7 +184,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .cal-nav-btn:hover{color:var(--text);border-color:var(--border-strong);}
 .cal-close{width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-tertiary);margin-left:4px;}
 .cal-close:hover{color:var(--text);}
-#cal-body{flex:1;overflow-y:auto;padding:16px 20px;}
+/* #cal-body padding moved to continuous scroll CSS */
 .cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;}
 .cal-weekday{font-family:DM Mono,monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-tertiary);text-align:center;padding:4px 0;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
@@ -190,7 +195,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .cal-day.today{border-color:var(--accent);}
 .cal-day.has-events{border-color:var(--border-strong);}
 .cal-day-num{font-family:DM Mono,monospace;font-size:11px;color:var(--text-tertiary);line-height:1;}
-.cal-day.today .cal-day-num{color:var(--accent);font-weight:500;}
+.cal-day.today{border-color:var(--accent);background:rgba(200,185,122,0.06);}
+.cal-day.today .cal-day-num{color:var(--accent);font-weight:600;}
 .cal-event-pill{font-size:9px;padding:2px 5px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;font-family:DM Mono,monospace;letter-spacing:0.02em;}
 .cal-event-pill:hover{opacity:0.8;}
 .cal-event-pill.audition{background:rgba(139,92,246,0.25);color:#a78bfa;}
@@ -289,7 +295,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .due-badge.due-overdue{background:rgba(184,79,79,0.2);color:var(--red);}
 .card.overdue{border-left:3px solid var(--red)!important;}
 .tick-btn{color:var(--green)!important;}
-.tick-btn:hover{background:var(--green-bg)!important;border-color:var(--green-border)!important;}
+.tick-btn:hover{background:var(--green-bg)!important;border-color:var(--green-border)!important;color:var(--green)!important;}
+.tick-btn:active{transform:scale(0.88);}
+.card-btn:active{transform:scale(0.88);}
 .card-actions{opacity:1!important;}
 
 /* INBOX */
@@ -317,34 +325,105 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 680px) {
 
-  /* Header */
-  #header { padding: 0 10px; gap: 6px; overflow-x: auto; }
-  .header-title { font-size: 16px; }
+  /* Let the whole app scroll vertically instead of trapping scroll in columns */
+  body { height: auto; min-height: 100vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  #app { height: auto; min-height: 100vh; overflow: visible; }
+  #app.visible { display: flex; }
+
+  /* Header — wrap buttons instead of horizontal scroll */
+  #header { height: auto; min-height: var(--header); padding: 8px 10px; gap: 6px; flex-wrap: wrap; }
+  .header-title { font-size: 17px; }
   .header-sub { display: none; }
-  .add-task-btn { height: 32px; padding: 0 10px; font-size: 10px; }
-  #admin-reset-btn, #inbox-btn { height: 32px; padding: 0 8px; font-size: 10px; }
+  .header-spacer { display: none; }
+  #global-sort-select { order: 5; }
+  .add-task-btn { height: 34px; padding: 0 11px; font-size: 10px; margin-right: 0 !important; }
+  #admin-reset-btn, #inbox-btn { height: 34px; padding: 0 9px; font-size: 10px; margin-right: 0 !important; }
+  /* Header buttons share rows evenly */
+  #header > button, #header > select { flex: 0 1 auto; }
 
   /* Announce bar */
-  #announce-bar { min-height: 36px; height: auto; padding: 6px 0; }
+  #announce-bar { min-height: 36px; height: auto; padding: 6px 0; flex-shrink: 0; }
   #announce-text { font-size: 12px; white-space: normal; line-height: 1.4; }
 
   /* Events strip */
-  #events-strip { min-height: 32px; height: auto; padding: 4px 10px; flex-wrap: wrap; gap: 4px; }
-  .events-strip-label { font-size: 9px; padding-right: 8px; }
+  #events-strip { min-height: 32px; height: auto; padding: 6px 10px; flex-wrap: wrap; gap: 6px; flex-shrink: 0; }
+  .events-strip-label { font-size: 10px; padding-right: 8px; }
+  .events-strip-list { flex-wrap: wrap; gap: 8px 14px; }
   .event-chip { font-size: 11px; }
 
-  /* Body layout — stack sidebar below kanban */
-  #body { flex-direction: column; overflow: visible; height: auto; }
+  /* Body — natural flow, no nested overflow */
+  #body { flex-direction: column; overflow: visible; height: auto; flex: none; }
 
-  /* Sidebar becomes a bottom quick-links bar */
+  /* Kanban — vertical stacked columns, page scrolls (not the kanban) */
+  #kanban {
+    flex-direction: column;
+    overflow: visible;
+    padding: 8px;
+    gap: 8px;
+    order: 1;
+    flex: none;
+  }
+
+  .col { flex: none; width: 100%; gap: 6px; }
+
+  /* Column body grows to fit all cards — NO inner scroll cap on mobile */
+  .col-body {
+    max-height: none;
+    overflow: visible;
+    padding: 2px 0 4px;
+    gap: 8px;
+    transition: none;
+  }
+  /* Collapsed state still works for tidiness */
+  .col.collapsed .col-body { display: none; }
+  /* Hide the desktop empty-hint on mobile (it confuses touch users) */
+  .col-body:hover::after, .col-body:empty::after { display: none; }
+
+  /* Column header — tappable to collapse, clearer styling */
+  .col-header {
+    cursor: pointer;
+    padding: 11px 12px;
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border-strong);
+    margin-bottom: 2px;
+    user-select: none;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+  .col-title { font-size: 12px; }
+  .col-header::after {
+    content: '▾';
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-left: 6px;
+  }
+  .col.collapsed .col-header::after { content: '▸'; }
+
+  /* Hide the thin column dividers when stacked vertically */
+  .col-divider, .col-divider-done { display: none; }
+
+  /* Cards — bigger touch targets, always-visible action buttons, more readable */
+  .card { padding: 13px 13px; }
+  .card-title { font-size: 14px; }
+  .card-notes { font-size: 12px; -webkit-line-clamp: 3; }
+  .card-btn { width: 32px; height: 32px; font-size: 14px; }
+  .card-actions { opacity: 1 !important; }
+  .status-pill { height: 26px; font-size: 11px; padding: 0 10px; }
+  .due-badge { font-size: 11px; padding: 3px 8px; }
+  .priority-tag { height: 18px; font-size: 10px; }
+  .col-count { font-size: 11px; }
+
+  /* SIDEBAR — bottom quick-links bar */
   #sidebar {
     width: 100%;
     border-left: none;
     border-top: 0.5px solid var(--border);
     flex-direction: row;
     flex-wrap: wrap;
-    padding: 8px 10px;
-    gap: 6px;
+    padding: 10px;
+    gap: 8px;
     order: 2;
     flex-shrink: 0;
   }
@@ -352,94 +431,47 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   .sidebar-label { display: none; }
   .sidebar-divider { display: none; }
   .sidebar-link {
-    flex: 1 1 auto;
+    flex: 1 1 30%;
     min-width: 0;
-    padding: 7px 10px;
+    padding: 10px;
     margin-bottom: 0;
     font-size: 11px;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
+    text-align: center;
+    gap: 4px;
   }
+  .sidebar-link-icon { font-size: 18px; }
   .sidebar-link-sub { display: none; }
+  .sidebar-link-title { font-size: 10px; }
   /* Hide status key on mobile */
   #sidebar .sidebar-section:last-child { display: none; }
 
-  /* Kanban — vertical stacked columns */
-  #kanban {
-    flex-direction: column;
-    overflow-x: hidden;
-    overflow-y: auto;
-    padding: 8px;
-    gap: 6px;
-    order: 1;
-    flex: 1;
-  }
-
-  .col { flex: none; width: 100%; }
-
-  /* Collapsible columns on mobile */
-  .col-body {
-    max-height: 600px;
-    overflow-y: auto;
-    transition: max-height 0.25s ease, padding 0.2s;
-  }
-  .col.collapsed .col-body {
-    max-height: 0 !important;
-    padding: 0;
-    overflow: hidden;
-  }
-
-  .col-header {
-    cursor: pointer;
-    padding: 8px 6px;
-    background: var(--bg-card);
-    border-radius: var(--radius);
-    border: 0.5px solid var(--border);
-    margin-bottom: 4px;
-    user-select: none;
-  }
-  .col-header::after {
-    content: '▾';
-    font-size: 11px;
-    color: var(--text-tertiary);
-    margin-left: 6px;
-  }
-  .col.collapsed .col-header::after { content: '▸'; }
-
-  /* Cards slightly more padded for touch */
-  .card { padding: 12px 12px; }
-  .card-btn { width: 28px; height: 28px; font-size: 13px; }
-  .status-pill { height: 22px; font-size: 10px; }
-
-  .col-count { font-size: 10px; }
-
-  /* Overlays full width */
-  #cal-panel, #avail-panel {
-    width: 100% !important;
-    max-width: 100vw;
-  }
-  #cal-overlay, #avail-overlay {
-    align-items: flex-end;
-  }
+  /* Overlays full width, slide up from bottom */
+  #cal-panel, #avail-panel { width: 100% !important; max-width: 100vw; }
+  #cal-overlay, #avail-overlay { align-items: flex-end; }
   #cal-panel, #avail-panel {
     border-radius: 12px 12px 0 0;
     border-left: none;
     border-top: 0.5px solid var(--border-strong);
-    max-height: 90vh;
+    max-height: 92vh;
   }
   #cal-body, #avail-body { padding: 12px; }
 
-  /* Modals full width */
-  .modal { width: calc(100vw - 24px) !important; max-width: 100%; margin: 12px; }
+  /* Calendar grid — taller touch cells, readable */
+  .cal-day { height: 84px; font-size: 11px; padding: 4px; }
+  .cal-day-num { font-size: 12px; }
+  .cal-event-pill { font-size: 9px; padding: 2px 4px; }
+  #cal-month-jumps { gap: 5px; padding: 10px 12px; }
+  #cal-header { padding: 14px 12px; }
+
+  /* Modals full width, scrollable if tall */
+  .modal { width: calc(100vw - 24px) !important; max-width: 100%; margin: 12px; max-height: 88vh; overflow-y: auto; }
   .modal-row { flex-direction: column; }
 
   /* Inbox panel */
-  #inbox-panel { width: calc(100vw - 24px) !important; margin-right: 12px; }
-
-  /* Calendar grid smaller text */
-  .cal-day { font-size: 11px; }
-  .cal-event-pill { font-size: 8px; }
-  #cal-month-jumps { gap: 4px; }
+  #inbox-overlay { padding-top: 0; align-items: flex-start; }
+  #inbox-panel { width: calc(100vw - 24px) !important; margin: 12px; max-height: 80vh; overflow-y: auto; }
 
   /* Login */
   .login-title { font-size: 38px; }
@@ -463,7 +495,32 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
 .inbox-read{opacity:0.5;}
 .due-shortcut{flex:1;height:24px;padding:0 6px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.03em;border:0.5px solid var(--border-strong);border-radius:4px;background:var(--bg-card);color:var(--text-secondary);cursor:pointer;transition:all 0.1s;}
 .due-shortcut:hover{background:var(--bg-hover);color:var(--text);border-color:var(--accent);}
-@media(max-width:680px){.col-divider{width:100%;height:1px;margin:0;}}
+
+/* CONTINUOUS SCROLL CALENDAR */
+#cal-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:0;scroll-behavior:smooth;}
+.cal-weekdays-sticky{
+  position:sticky;top:0;z-index:10;
+  background:var(--bg-panel);
+  padding:8px 20px 4px;
+  border-bottom:0.5px solid var(--border);
+  margin:0;
+}
+#cal-scroll-body{padding:0 20px 40px;}
+.cal-month-block{scroll-snap-align:start;padding:16px 0 8px;}
+.cal-month-block-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:16px;letter-spacing:0.1em;
+  padding:0 0 8px;
+  transition:color 0.3s,opacity 0.3s;
+}
+.cal-month-block.is-active .cal-month-block-title{color:var(--text);}
+.cal-month-block.is-adjacent .cal-month-block-title{color:var(--text-secondary);opacity:0.7;}
+.cal-month-block.is-far .cal-month-block-title{color:var(--text-tertiary);opacity:0.45;}
+.cal-month-block.is-active .cal-grid{opacity:1;}
+.cal-month-block.is-adjacent .cal-grid{opacity:0.6;}
+.cal-month-block.is-far .cal-grid{opacity:0.28;}
+.cal-month-block .cal-grid{transition:opacity 0.3s;}
+.cal-month-divider{height:0.5px;background:var(--border);margin:4px 0 0;}
 </style>
 </head>
 <body>
@@ -746,11 +803,13 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
     </div>
     <div id="cal-month-jumps" style="display:flex;gap:5px;flex-wrap:wrap;padding:10px 20px 0;flex-shrink:0;overflow-x:auto;border-bottom:0.5px solid var(--border);padding-bottom:10px;"></div>
     <div id="cal-body">
-      <div class="cal-weekdays">
+      <!-- sticky weekday header -->
+      <div class="cal-weekdays cal-weekdays-sticky">
         <div class="cal-weekday">Mon</div><div class="cal-weekday">Tue</div><div class="cal-weekday">Wed</div>
         <div class="cal-weekday">Thu</div><div class="cal-weekday">Fri</div><div class="cal-weekday">Sat</div><div class="cal-weekday">Sun</div>
       </div>
-      <div class="cal-grid" id="cal-grid"></div>
+      <!-- all months rendered here, scrolled not swapped -->
+      <div id="cal-scroll-body"></div>
     </div>
   </div>
 </div>
@@ -1489,33 +1548,12 @@ const EVENT_TYPES=['meeting','audition','shoot','other'];
 function openCalendar(){
   document.getElementById('cal-overlay').classList.add('visible');
   renderCal();
-  initCalScroll();
+  // After slide-in animation, ensure correct scroll position
+  setTimeout(()=>scrollToActiveMonth(false),50);
 }
 function closeCalendar(){document.getElementById('cal-overlay').classList.remove('visible');}
 
-// Scroll wheel to navigate months — accumulator + cooldown for smooth, controlled stepping
-let calScrollBound=false;
-let calWheelAccum=0;
-let calWheelCooldown=false;
-function initCalScroll(){
-  const panel=document.getElementById('cal-panel');
-  if(!panel||calScrollBound) return;
-  calScrollBound=true; // bind once only, prevents stacked listeners from skipping months
-  panel.addEventListener('wheel',e=>{
-    // Let the month-jump pill strip scroll horizontally without changing month
-    if(e.target.closest('#cal-month-jumps')) return;
-    e.preventDefault();
-    if(calWheelCooldown) return;
-    calWheelAccum+=e.deltaY;
-    const THRESHOLD=60; // require a deliberate scroll before flipping month
-    if(Math.abs(calWheelAccum)>=THRESHOLD){
-      if(calWheelAccum>0) calNext(); else calPrev();
-      calWheelAccum=0;
-      calWheelCooldown=true;
-      setTimeout(()=>{calWheelCooldown=false;},260); // one month per ~quarter second max
-    }
-  },{passive:false});
-}
+
 function onCalOverlayClick(e){if(e.target===document.getElementById('cal-overlay')) closeCalendar();}
 function calToday(){
   const now=new Date();
@@ -1525,7 +1563,7 @@ function calToday(){
   if(calYear<MIN_CAL_YEAR||(calYear===MIN_CAL_YEAR&&calMonth<MIN_CAL_MONTH)){
     calYear=MIN_CAL_YEAR;calMonth=MIN_CAL_MONTH;
   }
-  renderCal();
+  scrollToActiveMonth();
   // Briefly highlight today's cell
   setTimeout(()=>{
     const today=new Date();
@@ -1535,104 +1573,82 @@ function calToday(){
   },50);
 }
 
-function calPrev(){
-  calMonth--;if(calMonth<0){calMonth=11;calYear--;}
-  if(calYear<MIN_CAL_YEAR||(calYear===MIN_CAL_YEAR&&calMonth<MIN_CAL_MONTH)){calYear=MIN_CAL_YEAR;calMonth=MIN_CAL_MONTH;}
-  renderCal();
-}
-function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCal();}
 
-function renderMonthJumps(){
-  let el=document.getElementById('cal-month-jumps');
-  if(!el) return;
-  el.innerHTML='';
-  // Show months from May 2026 forward for next 12 months
+
+
+// ── CONTINUOUS SCROLL CALENDAR ─────────────────────────────────────────────
+// All months are rendered at once in a scroll container.
+// calYear/calMonth = currently "active" month (highlighted, scrolled to on open/jump).
+
+function getMonthList(){
   const months=[];
-  for(let i=0;i<12;i++){
+  for(let i=0;i<14;i++){  // May 2026 → June 2027
     const m=(MIN_CAL_MONTH+i)%12;
     const y=MIN_CAL_YEAR+Math.floor((MIN_CAL_MONTH+i)/12);
     months.push({m,y});
   }
-  months.forEach(({m,y})=>{
-    const btn=document.createElement('button');
-    const isActive=m===calMonth&&y===calYear;
-    btn.style.cssText=`height:24px;padding:0 10px;border-radius:12px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.04em;border:0.5px solid;cursor:pointer;white-space:nowrap;transition:all 0.1s;background:${isActive?'var(--accent)':'transparent'};color:${isActive?'#0f0f0d':'var(--text-tertiary)'};border-color:${isActive?'var(--accent)':'var(--border-strong)'};`;
-    btn.textContent=MONTH_NAMES[m].slice(0,3)+' '+y;
-    btn.onclick=(e)=>{e.stopPropagation();calYear=y;calMonth=m;renderCal();};
-    el.appendChild(btn);
-  });
+  return months;
 }
-function renderCal(){
-  document.getElementById('cal-header-title').textContent=MONTH_NAMES[calMonth]+' '+calYear;
-  const prevBtn=document.querySelector('#cal-panel .cal-nav-btn:first-of-type');
-  if(prevBtn) prevBtn.style.opacity=(calYear===MIN_CAL_YEAR&&calMonth===MIN_CAL_MONTH)?'0.25':'1';
-  renderMonthJumps();
-  const grid=document.getElementById('cal-grid');
-  grid.innerHTML='';
-  const firstDay=new Date(calYear,calMonth,1).getDay();
-  const blanks=(firstDay===0?6:firstDay-1);
-  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
-  const today=new Date();
 
-  // Build a map: dateStr -> [{id, ev, spanRole}]
-  // spanRole: 'single' | 'start' | 'mid' | 'end'
+function buildDayMap(yr,mo){
   const dayMap={};
-  const addToMap=(dateStr,entry)=>{
-    if(!dayMap[dateStr]) dayMap[dateStr]=[];
-    dayMap[dateStr].push(entry);
-  };
+  const addToMap=(ds,entry)=>{if(!dayMap[ds]) dayMap[ds]=[];dayMap[ds].push(entry);};
 
-  // Regular events (including multi-day)
   Object.entries(events).forEach(([eid,ev])=>{
-    const start=ev.date;
-    const end=ev.endDate||ev.date;
+    const start=ev.date; const end=ev.endDate||ev.date;
     if(!start) return;
-    if(start===end){
-      addToMap(start,{id:eid,ev,spanRole:'single'});
-    } else {
-      // Enumerate every date in the span
+    if(start===end){ addToMap(start,{id:eid,ev,spanRole:'single'}); }
+    else {
       let cur=new Date(start+'T12:00:00');
       const endD=new Date(end+'T12:00:00');
       let first=true;
       while(cur<=endD){
         const ds=cur.toISOString().slice(0,10);
-        const isLast=ds===end;
-        addToMap(ds,{id:eid,ev,spanRole:first?'start':(isLast?'end':'mid')});
-        first=false;
-        cur.setDate(cur.getDate()+1);
+        const [ey,em]=ds.split('-').map(Number);
+        if(ey===yr&&em-1===mo){  // only include days in this month
+          addToMap(ds,{id:eid,ev,spanRole:first?'start':(ds===end?'end':'mid')});
+        }
+        first=false; cur.setDate(cur.getDate()+1);
       }
     }
   });
 
-  // Task deadlines — shown as pills; completed ones marked done
   Object.entries(tasks).forEach(([tid,t])=>{
     if(!t.dueDate) return;
+    const [ey,em]=t.dueDate.split('-').map(Number);
+    if(ey!==yr||em-1!==mo) return;
     const isDone=t.col==='done'||t.status==='complete';
     addToMap(t.dueDate,{id:'task-'+tid,ev:{
       title:(isDone?'✓ ':'⚑ ')+t.title,
-      type:'task-deadline',
-      date:t.dueDate,
-      _taskId:tid,
-      _done:isDone,
+      type:'task-deadline',date:t.dueDate,_taskId:tid,_done:isDone,
     },spanRole:'single',isTask:true,isDone});
   });
+  return dayMap;
+}
+
+function buildMonthGrid(yr, mo){
+  const frag=document.createDocumentFragment();
+  const dayMap=buildDayMap(yr,mo);
+  const firstDay=new Date(yr,mo,1).getDay();
+  const blanks=(firstDay===0?6:firstDay-1);
+  const daysInMonth=new Date(yr,mo+1,0).getDate();
+  const today=new Date();
 
   for(let i=0;i<blanks;i++){
-    const empty=document.createElement('div');empty.className='cal-day empty';grid.appendChild(empty);
+    const e=document.createElement('div');e.className='cal-day empty';frag.appendChild(e);
   }
   for(let d=1;d<=daysInMonth;d++){
-    const dateStr=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dateStr=`${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const dayEntries=(dayMap[dateStr]||[]).sort((a,b)=>{
-      // Tasks last, events first; within events sort by time
       if(a.isTask&&!b.isTask) return 1;
       if(!a.isTask&&b.isTask) return -1;
       return (a.ev.time||'').localeCompare(b.ev.time||'');
     });
-    const isToday=today.getFullYear()===calYear&&today.getMonth()===calMonth&&today.getDate()===d;
-
+    const isToday=today.getFullYear()===yr&&today.getMonth()===mo&&today.getDate()===d;
     const cell=document.createElement('div');
     cell.className='cal-day'+(isToday?' today':'')+(dayEntries.length?' has-events':'');
     cell.innerHTML=`<div class="cal-day-num">${d}</div>`;
+    cell.dataset.date=dateStr;
 
     const maxShow=3;
     dayEntries.slice(0,maxShow).forEach(({id,ev,spanRole,isTask,isDone})=>{
@@ -1640,20 +1656,14 @@ function renderCal(){
       const spanCls=spanRole==='single'?'':(' span-'+spanRole);
       const doneCls=isDone?' task-done':'';
       pill.className=`cal-event-pill ${ev.type||'other'}${spanCls}${doneCls}`;
-      // Only show title on start/single; mid/end show blank bar
       const showTitle=spanRole==='single'||spanRole==='start';
-      if(showTitle){
-        pill.textContent=(ev.time&&spanRole==='single'?ev.time.slice(0,5)+' ':'')+ev.title;
-      } else {
-        pill.innerHTML='&nbsp;';
-      }
-      const spanLabel=ev.endDate?` (${ev.date} – ${ev.endDate})`:'';
-      pill.title=ev.title+spanLabel+(ev.location?' @ '+ev.location:'')+(ev.notes?' — '+ev.notes:'');
-      if(!isTask){
-        pill.addEventListener('click',e=>{e.stopPropagation();openEditEvent(id);});
-      } else {
+      if(showTitle){ pill.textContent=(ev.time&&spanRole==='single'?ev.time.slice(0,5)+' ':'')+ev.title; }
+      else { pill.innerHTML='&nbsp;'; }
+      const spanLabel=ev.endDate?` (${ev.date}\u2013${ev.endDate})`:'';
+      pill.title=ev.title+spanLabel+(ev.location?' @ '+ev.location:'')+(ev.notes?' \u2014 '+ev.notes:'');
+      if(!isTask){ pill.addEventListener('click',e=>{e.stopPropagation();openEditEvent(id);}); }
+      else {
         pill.style.cursor='pointer';
-        pill.title='Click to view task: '+ev.title.replace('⚑ ','');
         pill.addEventListener('click',e=>{e.stopPropagation();openEditTask(ev._taskId);});
       }
       cell.appendChild(pill);
@@ -1662,19 +1672,139 @@ function renderCal(){
       const more=document.createElement('div');
       more.className='cal-more';more.textContent=`+${dayEntries.length-maxShow} more`;
       more.style.cursor='pointer';
-      // For popup, pass only real events (non-tasks) for editing; tasks shown as info
       const realEvents=dayEntries.filter(e=>!e.isTask).map(e=>[e.id,e.ev]);
-      more.addEventListener('click',e=>{
-        e.stopPropagation();
-        showDayEventsPopup(dateStr,realEvents,dayEntries);
-      });
+      more.addEventListener('click',e=>{e.stopPropagation();showDayEventsPopup(dateStr,realEvents,dayEntries);});
       cell.appendChild(more);
     }
-
-    cell.dataset.date=dateStr;
     cell.addEventListener('click',()=>openAddEvent(dateStr));
-    grid.appendChild(cell);
+    frag.appendChild(cell);
   }
+  return frag;
+}
+
+function renderMonthJumps(){
+  const el=document.getElementById('cal-month-jumps');
+  if(!el) return;
+  el.innerHTML='';
+  getMonthList().forEach(({m,y})=>{
+    const btn=document.createElement('button');
+    const isActive=m===calMonth&&y===calYear;
+    btn.style.cssText=`height:24px;padding:0 10px;border-radius:12px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.04em;border:0.5px solid;cursor:pointer;white-space:nowrap;transition:all 0.15s;background:${isActive?'var(--accent)':'transparent'};color:${isActive?'#0f0f0d':'var(--text-tertiary)'};border-color:${isActive?'var(--accent)':'var(--border-strong)'};`;
+    btn.textContent=MONTH_NAMES[m].slice(0,3)+' '+y;
+    btn.onclick=(e)=>{e.stopPropagation();calYear=y;calMonth=m;scrollToActiveMonth();renderMonthJumps();};
+    el.appendChild(btn);
+  });
+}
+
+let calScrollObserver=null;
+let calScrollBody=null;
+
+function renderCal(){
+  // Update header title
+  document.getElementById('cal-header-title').textContent=MONTH_NAMES[calMonth]+' '+calYear;
+  const prevBtn=document.querySelector('#cal-panel .cal-nav-btn:first-of-type');
+  if(prevBtn) prevBtn.style.opacity=(calYear===MIN_CAL_YEAR&&calMonth===MIN_CAL_MONTH)?'0.25':'1';
+  renderMonthJumps();
+
+  calScrollBody=document.getElementById('cal-scroll-body');
+  if(!calScrollBody) return;
+
+  // Only rebuild if not yet built or events changed
+  if(!calScrollBody._built){
+    calScrollBody.innerHTML='';
+    getMonthList().forEach(({m,y})=>{
+      const block=document.createElement('div');
+      block.className='cal-month-block is-far';
+      block.dataset.month=m;block.dataset.year=y;
+      block.id=`cal-block-${y}-${m}`;
+
+      const title=document.createElement('div');
+      title.className='cal-month-block-title';
+      title.textContent=MONTH_NAMES[m]+' '+y;
+      block.appendChild(title);
+
+      const grid=document.createElement('div');
+      grid.className='cal-grid';
+      grid.appendChild(buildMonthGrid(y,m));
+      block.appendChild(grid);
+
+      const divider=document.createElement('div');
+      divider.className='cal-month-divider';
+      block.appendChild(divider);
+
+      calScrollBody.appendChild(block);
+    });
+    calScrollBody._built=true;
+    initScrollObserver();
+  } else {
+    // Rebuild just the grids (events/tasks may have changed)
+    getMonthList().forEach(({m,y})=>{
+      const block=document.getElementById(`cal-block-${y}-${m}`);
+      if(!block) return;
+      const grid=block.querySelector('.cal-grid');
+      if(grid){grid.innerHTML='';grid.appendChild(buildMonthGrid(y,m));}
+    });
+  }
+  scrollToActiveMonth(false); // no smooth scroll on initial render
+}
+
+function scrollToActiveMonth(smooth=true){
+  const block=document.getElementById(`cal-block-${calYear}-${calMonth}`);
+  const body=document.getElementById('cal-body');
+  if(!block||!body) return;
+  body.scrollTo({top:block.offsetTop - 44, behavior:smooth?'smooth':'instant'});
+  updateMonthDimming();
+}
+
+function updateMonthDimming(){
+  const activeId=`cal-block-${calYear}-${calMonth}`;
+  document.querySelectorAll('.cal-month-block').forEach(block=>{
+    const diff=Math.abs(
+      (Number(block.dataset.year)*12+Number(block.dataset.month))
+      -(calYear*12+calMonth)
+    );
+    block.classList.toggle('is-active',diff===0);
+    block.classList.toggle('is-adjacent',diff===1);
+    block.classList.toggle('is-far',diff>1);
+  });
+  // Update header title
+  document.getElementById('cal-header-title').textContent=MONTH_NAMES[calMonth]+' '+calYear;
+  renderMonthJumps();
+}
+
+function initScrollObserver(){
+  if(calScrollObserver) calScrollObserver.disconnect();
+  const body=document.getElementById('cal-body');
+  if(!body) return;
+  // Use IntersectionObserver to detect which month is most visible
+  calScrollObserver=new IntersectionObserver(entries=>{
+    let best=null, bestRatio=0;
+    entries.forEach(entry=>{
+      if(entry.isIntersecting&&entry.intersectionRatio>bestRatio){
+        bestRatio=entry.intersectionRatio;
+        best=entry.target;
+      }
+    });
+    if(best){
+      const newM=Number(best.dataset.month);
+      const newY=Number(best.dataset.year);
+      if(newM!==calMonth||newY!==calYear){
+        calMonth=newM; calYear=newY;
+        updateMonthDimming();
+      }
+    }
+  },{root:body, threshold:[0.3,0.5,0.7]});
+  document.querySelectorAll('.cal-month-block').forEach(b=>calScrollObserver.observe(b));
+}
+
+function calPrev(){
+  if(calYear===MIN_CAL_YEAR&&calMonth===MIN_CAL_MONTH) return;
+  calMonth--;if(calMonth<0){calMonth=11;calYear--;}
+  scrollToActiveMonth();
+}
+function calNext(){
+  calMonth++;if(calMonth>11){calMonth=0;calYear++;}
+  scrollToActiveMonth();
 }
 
 function openAddEvent(dateStr){
@@ -1711,7 +1841,13 @@ function openEditEvent(id){
 
 async function saveEvent(){
   const title=document.getElementById('event-title').value.trim();
-  if(!title) return;
+  if(!title){
+    const ti=document.getElementById('event-title');
+    ti.style.borderColor='var(--red)';
+    setTimeout(()=>{ti.style.borderColor='';},1200);
+    ti.focus();
+    return;
+  }
   const startDate=document.getElementById('event-date').value;
   const endDate=document.getElementById('event-end-date').value;
   const ev={
@@ -1982,6 +2118,7 @@ function enterDashboard(name){
     else resetBtn.classList.add('hidden');
   }
   init();
+  initMobileColumns();
 }
 
 function goBackToNamePicker(){
@@ -2039,14 +2176,22 @@ async function fbPush(path,data){
 
 // --- INIT + LIVE SYNC ---
 let pollInterval=null;
+let initDone=false;
+function startPolling(){
+  clearInterval(pollInterval);
+  pollInterval=setInterval(loadAll,8000);
+}
 async function init(){
   await loadAll();
   await loadCategories();
-  pollInterval=setInterval(loadAll,8000);
-  document.addEventListener('visibilitychange',()=>{
-    if(document.hidden){clearInterval(pollInterval);}
-    else{loadAll();pollInterval=setInterval(loadAll,8000);}
-  });
+  startPolling();
+  if(!initDone){
+    initDone=true;
+    document.addEventListener('visibilitychange',()=>{
+      if(document.hidden){clearInterval(pollInterval);}
+      else{loadAll();startPolling();}
+    });
+  }
 }
 
 async function loadAll(){
@@ -2104,7 +2249,15 @@ function renderAll(){
     const colTasks=sortedColTasks(col);
     body.innerHTML='';
     colTasks.forEach(([id,t])=>body.appendChild(makeCard(id,t)));
-    document.getElementById(`count-${col}`).textContent=colTasks.length;
+    const countEl=document.getElementById(`count-${col}`);
+    countEl.textContent=colTasks.length;
+    // Flag columns with overdue tasks (not Done)
+    const hasOverdue=col!=='done'&&colTasks.some(([,t])=>{
+      if(!t.dueDate||t.status==='complete') return false;
+      const dd=daysDiff(t.dueDate);
+      return dd!==null&&dd<0;
+    });
+    countEl.classList.toggle('count-overdue',hasOverdue);
   });
 }
 
@@ -2173,14 +2326,23 @@ async function onDrop(e,col){
 async function completeTask(id,e){
   e.stopPropagation();
   if(!tasks[id]) return;
+  if(tasks[id].col==='done'){return;} // already done
   const card=document.querySelector(`.card[data-id="${id}"]`);
-  if(card){card.style.transition='opacity 0.35s,transform 0.35s';card.style.opacity='0.3';card.style.transform='scale(0.96)';}
-  setTimeout(async()=>{
+  const finish=async()=>{
+    if(!tasks[id]) return;
     const colTasks=Object.values(tasks).filter(t=>t.col==='done');
     tasks[id]={...tasks[id],col:'done',status:'complete',order:colTasks.length};
     renderAll();
+    renderEventsStrip();
     try{await fbSet(`tasks/${id}`,tasks[id]);}catch(e){console.error(e);}
-  },320);
+  };
+  if(card){
+    card.style.transition='opacity 0.3s,transform 0.3s';
+    card.style.opacity='0.25';card.style.transform='scale(0.95)';
+    setTimeout(finish,300);
+  } else {
+    finish();
+  }
 }
 // --- STATUS CYCLE ---
 const STATUS_CYCLE=['none','in-progress','complete','issue'];
@@ -2244,7 +2406,13 @@ function setDueShortcut(daysAhead){
 }
 async function saveTask(){
   const title=document.getElementById('task-title').value.trim();
-  if(!title) return;
+  if(!title){
+    const ti=document.getElementById('task-title');
+    ti.style.borderColor='var(--red)';
+    setTimeout(()=>{ti.style.borderColor='';},1200);
+    ti.focus();
+    return;
+  }
   const col=document.getElementById('task-col').value;
   const status=document.getElementById('task-status').value;
   const notes=document.getElementById('task-notes').value.trim();
@@ -2389,12 +2557,16 @@ function togglePwVis(id, btn){
 }
 
 // ── Mobile collapsible columns ────────────────────────────────────────────
+let mobileColsBound=false;
 function initMobileColumns(){
-  if(window.innerWidth > 680) return;
+  if(mobileColsBound) return;       // bind once; headers are static so this is safe
+  mobileColsBound=true;
   document.querySelectorAll('.col-header').forEach(header=>{
     header.addEventListener('click', e=>{
-      // Don't collapse if clicking sort buttons
-      if(e.target.classList.contains('sort-toggle')||e.target.classList.contains('col-count')) return;
+      // Only collapse on mobile widths
+      if(window.innerWidth > 680) return;
+      // Don't collapse when interacting with controls inside the header
+      if(e.target.closest('.col-count, select, button')) return;
       const col=header.closest('.col');
       col.classList.toggle('collapsed');
     });
