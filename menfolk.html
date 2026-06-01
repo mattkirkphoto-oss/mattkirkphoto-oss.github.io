@@ -1754,13 +1754,18 @@ function scrollToActiveMonth(smooth=true){
   const block=document.getElementById(`cal-block-${calYear}-${calMonth}`);
   const body=document.getElementById('cal-body');
   if(!block||!body) return;
-  // Suppress the IntersectionObserver during programmatic scroll
   calScrollProgrammatic=true;
   clearTimeout(calScrollProgrammaticTimer);
-  body.scrollTo({top:block.offsetTop - 44, behavior:smooth?'smooth':'instant'});
+  // Measure the sticky weekday header height to use as the offset
+  const stickyHeader=body.querySelector('.cal-weekdays-sticky');
+  const stickyH=stickyHeader?stickyHeader.getBoundingClientRect().height:36;
+  // block.offsetTop is relative to cal-scroll-body; add cal-scroll-body.offsetTop for cal-body coords
+  const scrollBody=document.getElementById('cal-scroll-body');
+  const scrollBodyTop=scrollBody?scrollBody.offsetTop:0;
+  const targetTop=scrollBodyTop+block.offsetTop - stickyH - 10;
+  body.scrollTo({top:Math.max(0,targetTop), behavior:smooth?'smooth':'instant'});
   updateMonthDimming();
-  // Re-enable observer after scroll settles (smooth scroll ~400ms max)
-  calScrollProgrammaticTimer=setTimeout(()=>{calScrollProgrammatic=false;},smooth?500:50);
+  calScrollProgrammaticTimer=setTimeout(()=>{calScrollProgrammatic=false;},smooth?520:50);
 }
 
 function updateMonthDimming(){
@@ -1779,31 +1784,43 @@ function updateMonthDimming(){
   renderMonthJumps();
 }
 
+let calScrollDebounce=null;
 function initScrollObserver(){
   if(calScrollObserver) calScrollObserver.disconnect();
   const body=document.getElementById('cal-body');
   if(!body) return;
-  // Use IntersectionObserver to detect which month is most visible
-  calScrollObserver=new IntersectionObserver(entries=>{
-    // Don't update state during programmatic scroll — avoids pill strip flicker
+  // On free scroll: find which month title is closest to just below the sticky header
+  body.addEventListener('scroll',()=>{
     if(calScrollProgrammatic) return;
-    let best=null, bestRatio=0;
-    entries.forEach(entry=>{
-      if(entry.isIntersecting&&entry.intersectionRatio>bestRatio){
-        bestRatio=entry.intersectionRatio;
-        best=entry.target;
+    clearTimeout(calScrollDebounce);
+    calScrollDebounce=setTimeout(()=>{
+      const stickyHeader=body.querySelector('.cal-weekdays-sticky');
+      const stickyBottom=stickyHeader?(stickyHeader.getBoundingClientRect().bottom):body.getBoundingClientRect().top+36;
+      let closestBlock=null, closestDist=Infinity;
+      document.querySelectorAll('.cal-month-block').forEach(block=>{
+        const titleEl=block.querySelector('.cal-month-block-title');
+        if(!titleEl) return;
+        const rect=titleEl.getBoundingClientRect();
+        // We want the title that is at or just below the sticky header
+        const dist=Math.abs(rect.top - stickyBottom);
+        // Prefer blocks whose title is below the sticky header (not scrolled past)
+        const belowFactor=rect.top<stickyBottom?2:1; // slight penalty if scrolled past
+        const adjustedDist=dist*belowFactor;
+        if(adjustedDist<closestDist){
+          closestDist=adjustedDist;
+          closestBlock=block;
+        }
+      });
+      if(closestBlock){
+        const newM=Number(closestBlock.dataset.month);
+        const newY=Number(closestBlock.dataset.year);
+        if(newM!==calMonth||newY!==calYear){
+          calMonth=newM; calYear=newY;
+          updateMonthDimming();
+        }
       }
-    });
-    if(best){
-      const newM=Number(best.dataset.month);
-      const newY=Number(best.dataset.year);
-      if(newM!==calMonth||newY!==calYear){
-        calMonth=newM; calYear=newY;
-        updateMonthDimming();
-      }
-    }
-  },{root:body, threshold:[0.3,0.5,0.7]});
-  document.querySelectorAll('.cal-month-block').forEach(b=>calScrollObserver.observe(b));
+    },60); // short debounce — responsive but not on every pixel
+  });
 }
 
 function calPrev(){
