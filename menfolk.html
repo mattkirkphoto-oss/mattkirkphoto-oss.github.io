@@ -162,17 +162,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 #announce-modal .modal{width:500px;}
 #announce-input{font-family:'DM Sans',sans-serif;font-size:14px;}
 
-/* UPCOMING EVENTS STRIP */
-#events-strip{background:var(--bg-panel);border-bottom:0.5px solid var(--border);padding:0 14px;display:flex;align-items:center;gap:0;min-height:36px;flex-shrink:0;overflow:hidden;}
-.events-strip-label{font-family:DM Mono,monospace;font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-tertiary);padding-right:12px;border-right:0.5px solid var(--border);white-space:nowrap;margin-right:12px;}
-.events-strip-list{display:flex;gap:16px;overflow:hidden;flex:1;align-items:center;}
-.event-chip{display:flex;align-items:center;gap:6px;white-space:nowrap;font-size:12px;color:var(--text-secondary);cursor:pointer;}
-.event-chip{transition:color 0.12s,transform 0.12s;}
-.event-chip:hover{color:var(--text);transform:translateY(-1px);}
-.event-chip-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
-.event-chip-date{font-family:DM Mono,monospace;font-size:10px;color:var(--text-tertiary);}
-.no-events{font-size:12px;color:var(--text-tertiary);font-style:italic;}
-
 /* CALENDAR OVERLAY */
 #cal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:none;align-items:stretch;justify-content:flex-end;}
 #cal-overlay.visible{display:flex;}
@@ -206,10 +195,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .cal-event-pill.task-deadline{background:rgba(184,79,79,0.2);color:#e07070;border-left:2px solid #b84f4f;}
 .cal-event-pill.task-deadline:hover{opacity:0.8;}
 .cal-event-pill.task-deadline.task-done{background:rgba(74,158,107,0.18);color:var(--green);border-left:2px solid var(--green);text-decoration:line-through;opacity:0.75;}
-/* Multi-day span pills */
-.cal-event-pill.span-start{border-radius:3px 0 0 3px;margin-right:0;}
-.cal-event-pill.span-mid{border-radius:0;margin:0 0;opacity:0.7;}
-.cal-event-pill.span-end{border-radius:0 3px 3px 0;margin-left:0;opacity:0.7;}
+/* Multi-day span pills — read as one continuous bar.
+   Grid gap is 3px; negative margins of -4px bridge it so segments visually join. */
+.cal-event-pill.is-multiday{font-weight:500;opacity:1;border-left:none;}
+.cal-event-pill.span-start{border-radius:3px 0 0 3px;margin-right:-4px;}
+.cal-event-pill.span-mid{border-radius:0;margin-left:-4px;margin-right:-4px;text-align:left;}
+.cal-event-pill.span-end{border-radius:0 3px 3px 0;margin-left:-4px;}
+/* Subtle left accent marks the true start of a multi-day run */
+.cal-event-pill.span-start::before{content:'';display:inline-block;width:3px;height:9px;border-radius:2px;background:currentColor;margin-right:4px;vertical-align:middle;opacity:0.9;}
 .cal-more{font-size:9px;color:var(--text-tertiary);font-family:DM Mono,monospace;padding:1px 4px;}
 
 /* EVENT TYPE COLOURS for chips */
@@ -325,87 +318,101 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 680px) {
 
-  /* Let the whole app scroll vertically instead of trapping scroll in columns */
   body { height: auto; min-height: 100vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   #app { height: auto; min-height: 100vh; overflow: visible; }
   #app.visible { display: flex; }
 
-  /* Header — wrap buttons instead of horizontal scroll */
-  #header { height: auto; min-height: var(--header); padding: 8px 10px; gap: 6px; flex-wrap: wrap; }
+  /* HEADER — compact, wraps */
+  #header { height: auto; min-height: var(--header); padding: 8px 10px; gap: 6px; flex-wrap: wrap; position: sticky; top: 0; z-index: 50; }
   .header-title { font-size: 17px; }
   .header-sub { display: none; }
   .header-spacer { display: none; }
   #global-sort-select { order: 5; }
   .add-task-btn { height: 34px; padding: 0 11px; font-size: 10px; margin-right: 0 !important; }
   #admin-reset-btn, #inbox-btn { height: 34px; padding: 0 9px; font-size: 10px; margin-right: 0 !important; }
-  /* Header buttons share rows evenly */
   #header > button, #header > select { flex: 0 1 auto; }
 
-  /* Announce bar */
-  #announce-bar { min-height: 36px; height: auto; padding: 6px 0; flex-shrink: 0; }
-  #announce-text { font-size: 12px; white-space: normal; line-height: 1.4; }
+  /* ANNOUNCE BAR — collapsed to a tappable strip by default */
+  #announce-bar { min-height: 38px; height: auto; flex-shrink: 0; }
+  #announce-text { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+  #announce-bar.mobile-collapsed #announce-text { color: var(--text-tertiary); }
 
-  /* Events strip */
-  #events-strip { min-height: 32px; height: auto; padding: 6px 10px; flex-wrap: wrap; gap: 6px; flex-shrink: 0; }
-  .events-strip-label { font-size: 10px; padding-right: 8px; }
-  .events-strip-list { flex-wrap: wrap; gap: 8px 14px; }
-  .event-chip { font-size: 11px; }
-
-  /* Body — natural flow, no nested overflow */
+  /* BODY — natural vertical flow */
   #body { flex-direction: column; overflow: visible; height: auto; flex: none; }
 
-  /* Kanban — vertical stacked columns, page scrolls (not the kanban) */
-  #kanban {
+  /* DASHBOARD comes FIRST on mobile, collapsed by default */
+  #sidebar {
+    width: 100%;
+    border-left: none;
+    border-bottom: 0.5px solid var(--border);
+    border-top: none;
     flex-direction: column;
+    padding: 0;
+    order: 0;
+    flex-shrink: 0;
     overflow: visible;
-    padding: 8px;
-    gap: 8px;
-    order: 1;
-    flex: none;
   }
-
-  .col { flex: none; width: 100%; gap: 6px; }
-
-  /* Column body grows to fit all cards — NO inner scroll cap on mobile */
-  .col-body {
-    max-height: none;
-    overflow: visible;
-    padding: 2px 0 4px;
-    gap: 8px;
-    transition: none;
+  #dashboard-panel { padding: 0; border-bottom: 0.5px solid var(--border); }
+  /* Dashboard collapsed: only the header bar shows, tap to expand */
+  #dashboard-panel .dash-header {
+    margin: 0; padding: 12px 14px; cursor: pointer;
+    background: var(--bg-card); border-bottom: 0.5px solid var(--border);
   }
-  /* Collapsed state still works for tidiness */
+  #dashboard-panel .dash-header::after {
+    content: '▾'; font-size: 13px; color: var(--text-tertiary); margin-left: auto;
+  }
+  #dashboard-panel.mobile-collapsed .dash-header::after { content: '▸'; }
+  #dashboard-panel .dash-notif-bar,
+  #dashboard-panel .dash-section,
+  #dashboard-panel .dash-section-divider { margin-left: 14px; margin-right: 14px; }
+  #dashboard-panel .dash-section:last-child { margin-bottom: 14px; }
+  #dashboard-panel.mobile-collapsed .dash-notif-bar,
+  #dashboard-panel.mobile-collapsed .dash-section,
+  #dashboard-panel.mobile-collapsed .dash-section-divider { display: none; }
+  /* keep notif bar visible even when collapsed if there are notifs */
+  #dashboard-panel.mobile-collapsed .dash-notif-bar.force-show { display: flex; margin: 10px 14px; }
+
+  /* Quick links become a compact row */
+  #sidebar .sidebar-section { padding: 10px 14px; }
+  .sidebar-label { display: none; }
+  .sidebar-divider { display: none; }
+  #sidebar .sidebar-section { display: flex; flex-direction: row; flex-wrap: wrap; gap: 8px; }
+  .sidebar-link { flex: 1 1 28%; min-width: 0; padding: 9px; margin-bottom: 0; flex-direction: column; align-items: center; text-align: center; gap: 4px; }
+  .sidebar-link-icon { font-size: 18px; }
+  .sidebar-link-sub { display: none; }
+  .sidebar-link-title { font-size: 10px; }
+
+  /* KANBAN — vertical stack, clearer per-person headers */
+  #kanban { flex-direction: column; overflow: visible; padding: 10px; gap: 10px; order: 1; flex: none; }
+  .col { flex: none; width: 100%; gap: 0; }
+
+  .col-body { max-height: none; overflow: visible; padding: 8px 0 4px; gap: 8px; transition: none; }
   .col.collapsed .col-body { display: none; }
-  /* Hide the desktop empty-hint on mobile (it confuses touch users) */
   .col-body:hover::after, .col-body:empty::after { display: none; }
 
-  /* Column header — tappable to collapse, clearer styling */
+  /* Bold, clear, tappable column headers with accent bar */
   .col-header {
     cursor: pointer;
-    padding: 11px 12px;
+    padding: 13px 14px;
     background: var(--bg-card);
     border-radius: var(--radius);
     border: 0.5px solid var(--border-strong);
-    margin-bottom: 2px;
+    border-left: 3px solid var(--accent);
+    margin: 0;
     user-select: none;
     position: sticky;
-    top: 0;
+    top: 56px;
     z-index: 5;
   }
-  .col-title { font-size: 12px; }
-  .col-header::after {
-    content: '▾';
-    font-size: 12px;
-    color: var(--text-tertiary);
-    margin-left: 6px;
-  }
+  .col-title { font-size: 14px; color: var(--text); letter-spacing: 0.08em; }
+  .col.done-col .col-header { border-left-color: var(--accent-dim); }
+  .col-header::after { content: '▾'; font-size: 13px; color: var(--text-tertiary); margin-left: 8px; }
   .col.collapsed .col-header::after { content: '▸'; }
 
-  /* Hide the thin column dividers when stacked vertically */
   .col-divider, .col-divider-done { display: none; }
 
-  /* Cards — bigger touch targets, always-visible action buttons, more readable */
-  .card { padding: 13px 13px; }
+  /* Cards — larger touch targets, more readable */
+  .card { padding: 14px; }
   .card-title { font-size: 14px; }
   .card-notes { font-size: 12px; -webkit-line-clamp: 3; }
   .card-btn { width: 32px; height: 32px; font-size: 14px; }
@@ -413,67 +420,27 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   .status-pill { height: 26px; font-size: 11px; padding: 0 10px; }
   .due-badge { font-size: 11px; padding: 3px 8px; }
   .priority-tag { height: 18px; font-size: 10px; }
-  .col-count { font-size: 11px; }
+  .col-count { font-size: 12px; padding: 2px 9px; }
 
-  /* SIDEBAR — bottom quick-links bar */
-  #sidebar {
-    width: 100%;
-    border-left: none;
-    border-top: 0.5px solid var(--border);
-    flex-direction: row;
-    flex-wrap: wrap;
-    padding: 10px;
-    gap: 8px;
-    order: 2;
-    flex-shrink: 0;
-  }
-  .sidebar-section { padding: 0; display: contents; }
-  .sidebar-label { display: none; }
-  .sidebar-divider { display: none; }
-  .sidebar-link {
-    flex: 1 1 30%;
-    min-width: 0;
-    padding: 10px;
-    margin-bottom: 0;
-    font-size: 11px;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 4px;
-  }
-  .sidebar-link-icon { font-size: 18px; }
-  .sidebar-link-sub { display: none; }
-  .sidebar-link-title { font-size: 10px; }
-  /* Hide status key on mobile */
-  #sidebar .sidebar-section:last-child { display: none; }
-
-  /* Overlays full width, slide up from bottom */
+  /* Overlays slide up full width */
   #cal-panel, #avail-panel { width: 100% !important; max-width: 100vw; }
   #cal-overlay, #avail-overlay { align-items: flex-end; }
-  #cal-panel, #avail-panel {
-    border-radius: 12px 12px 0 0;
-    border-left: none;
-    border-top: 0.5px solid var(--border-strong);
-    max-height: 92vh;
-  }
+  #cal-panel, #avail-panel { border-radius: 12px 12px 0 0; border-left: none; border-top: 0.5px solid var(--border-strong); max-height: 92vh; }
   #cal-body, #avail-body { padding: 12px; }
 
-  /* Calendar grid — taller touch cells, readable */
   .cal-day { height: 84px; font-size: 11px; padding: 4px; }
   .cal-day-num { font-size: 12px; }
   .cal-event-pill { font-size: 9px; padding: 2px 4px; }
   #cal-month-jumps { gap: 5px; padding: 10px 12px; }
   #cal-header { padding: 14px 12px; }
 
-  /* Modals full width, scrollable if tall */
   .modal { width: calc(100vw - 24px) !important; max-width: 100%; margin: 12px; max-height: 88vh; overflow-y: auto; }
   .modal-row { flex-direction: column; }
+  .dash-full-cols { flex-direction: column; }
 
-  /* Inbox panel */
   #inbox-overlay { padding-top: 0; align-items: flex-start; }
   #inbox-panel { width: calc(100vw - 24px) !important; margin: 12px; max-height: 80vh; overflow-y: auto; }
 
-  /* Login */
   .login-title { font-size: 38px; }
   #login-step-3 { width: calc(100vw - 48px) !important; }
   #name-picker { width: calc(100vw - 80px) !important; }
@@ -493,6 +460,10 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
 .col-divider{width:1px;background:var(--border-strong);flex-shrink:0;margin:0 2px;border-radius:1px;}
 .col-divider-done{background:var(--accent-dim);}
 .inbox-read{opacity:0.5;}
+.attendee-chip{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 11px;border-radius:14px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.03em;border:0.5px solid var(--border-strong);background:var(--bg-card);color:var(--text-secondary);cursor:pointer;transition:all 0.12s;user-select:none;}
+.attendee-chip:hover{border-color:var(--accent);color:var(--text);}
+.attendee-chip.selected{background:var(--accent);color:#0f0f0d;border-color:var(--accent);font-weight:500;}
+.attendee-chip .att-check{font-size:10px;}
 .due-shortcut{flex:1;height:24px;padding:0 6px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.03em;border:0.5px solid var(--border-strong);border-radius:4px;background:var(--bg-card);color:var(--text-secondary);cursor:pointer;transition:all 0.1s;}
 .due-shortcut:hover{background:var(--bg-hover);color:var(--text);border-color:var(--accent);}
 
@@ -506,7 +477,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
   margin:0;
 }
 #cal-scroll-body{padding:0 20px 40px;}
-.cal-month-block{scroll-snap-align:start;padding:16px 0 8px;}
+.cal-month-block{scroll-snap-align:start;padding:16px 0 8px;scroll-margin-top:48px;}
 .cal-month-block-title{
   font-family:'Bebas Neue',sans-serif;
   font-size:16px;letter-spacing:0.1em;
@@ -521,6 +492,57 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
 .cal-month-block.is-far .cal-grid{opacity:0.28;}
 .cal-month-block .cal-grid{transition:opacity 0.3s;}
 .cal-month-divider{height:0.5px;background:var(--border);margin:4px 0 0;}
+
+/* DASHBOARD OVERVIEW PANEL */
+#sidebar{overflow-y:auto;}
+#dashboard-panel{padding:14px;border-bottom:0.5px solid var(--border);}
+.dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.dash-title{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:0.08em;color:var(--accent);}
+.dash-expand{width:26px;height:26px;display:flex;align-items:center;justify-content:center;background:var(--bg-card);border:0.5px solid var(--border-strong);border-radius:5px;color:var(--text-secondary);cursor:pointer;font-size:13px;transition:all 0.1s;}
+.dash-expand:hover{color:var(--text);border-color:var(--accent);}
+.dash-notif-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(200,185,122,0.12);border:0.5px solid var(--accent);border-radius:var(--radius);padding:9px 11px;margin-bottom:12px;cursor:pointer;font-size:12px;color:var(--accent);font-family:'DM Mono',monospace;letter-spacing:0.03em;transition:background 0.12s;animation:notifPulse 2s ease-in-out infinite;}
+.dash-notif-bar:hover{background:rgba(200,185,122,0.2);}
+@keyframes notifPulse{0%,100%{border-color:var(--accent);}50%{border-color:rgba(200,185,122,0.4);}}
+#dash-notif-count{background:var(--red);color:#fff;border-radius:9px;padding:0 6px;font-size:10px;margin-left:2px;}
+.dash-section{margin-bottom:4px;}
+.dash-section-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:8px;}
+.dash-section-divider{height:0.5px;background:var(--border);margin:12px 0;}
+.dash-list{display:flex;flex-direction:column;gap:5px;}
+.dash-item{display:flex;align-items:flex-start;gap:8px;padding:8px 9px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg-card);cursor:pointer;transition:border-color 0.1s,background 0.1s;}
+.dash-item:hover{border-color:var(--border-strong);background:var(--bg-hover);}
+.dash-item-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.dash-item-body{flex:1;min-width:0;}
+.dash-item-title{font-size:12px;color:var(--text);line-height:1.35;word-break:break-word;}
+.dash-item-meta{font-size:10px;color:var(--text-tertiary);font-family:'DM Mono',monospace;margin-top:2px;}
+.dash-item.is-overdue .dash-item-meta{color:var(--red);}
+.dash-item.is-soon .dash-item-meta{color:var(--orange);}
+.dash-item.is-unassigned{border-style:dashed;}
+.dash-empty{font-size:11px;color:var(--text-tertiary);font-family:'DM Mono',monospace;font-style:italic;padding:4px 2px;}
+.dash-subhead{font-size:9px;font-family:'DM Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent-dim);margin:8px 0 5px;}
+
+/* DASHBOARD FULL MODAL */
+#dash-full-modal .modal{width:560px;max-height:85vh;}
+.dash-full-cols{display:flex;gap:18px;}
+.dash-full-col{flex:1;min-width:0;}
+.dash-full-col h3{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid var(--border);}
+.dash-full-list{display:flex;flex-direction:column;gap:6px;max-height:55vh;overflow-y:auto;padding-right:4px;}
+
+/* NOTIFICATIONS MODAL */
+.notif-row{display:flex;align-items:flex-start;gap:10px;padding:11px 12px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg-card);margin-bottom:6px;}
+.notif-icon{font-size:15px;flex-shrink:0;}
+.notif-text{flex:1;min-width:0;font-size:13px;color:var(--text);line-height:1.4;}
+.notif-time{font-size:10px;color:var(--text-tertiary);font-family:'DM Mono',monospace;margin-top:3px;}
+
+/* GLOBAL SCROLLBAR STYLING — thin & dark, not an eyesore */
+*{scrollbar-width:thin;scrollbar-color:var(--border-strong) transparent;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:4px;border:2px solid var(--bg);}
+::-webkit-scrollbar-thumb:hover{background:var(--text-tertiary);}
+::-webkit-scrollbar-corner{background:transparent;}
+/* The kanban horizontal scrollbar specifically */
+#kanban::-webkit-scrollbar{height:8px;}
+#kanban::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:4px;border:2px solid var(--bg);}
 </style>
 </head>
 <body>
@@ -567,12 +589,6 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
     <button class="announce-edit-btn" onclick="openAnnounceModal()">Edit</button>
   </div>
 
-  <!-- EVENTS STRIP -->
-  <div id="events-strip">
-    <span class="events-strip-label" id="upcoming-expand-btn" onclick="openUpcomingList()" style="cursor:pointer;" title="View everything">📆 Upcoming ▾</span>
-    <div class="events-strip-list" id="events-strip-list"><span class="no-events">No upcoming events</span></div>
-  </div>
-
   <!-- HEADER -->
   <div id="header">
     <div class="header-title">MENFOLK</div>
@@ -586,7 +602,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
     </select>
     <div class="header-spacer"></div>
     <button class="add-task-btn" onclick="openCalendar()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">📆 Calendar</button><button class="add-task-btn" onclick="openAvail()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">📅 Availability</button><button id="inbox-btn" class="add-task-btn hidden" onclick="toggleInbox()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">✉ Inbox <span class="inbox-badge" id="inbox-badge" style="display:none;">1</span></button>
-    <button id="admin-reset-btn" class="add-task-btn hidden" onclick="openAdminReset()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">⚙ Passwords</button><button class="add-task-btn" onclick="openAddTask()">+ Add Task</button><button id="crew-add-btn" class="add-task-btn hidden" onclick="openAddTask(currentUser.toLowerCase())">+ Add Task</button>
+    <button id="admin-reset-btn" class="add-task-btn hidden" onclick="openAdminReset()" style="background:var(--bg-card);color:var(--text);border:0.5px solid var(--border-strong);margin-right:6px;">⚙ Passwords</button><button class="add-task-btn" onclick="openAddTask()">+ Add Task</button><button id="crew-add-btn" class="add-task-btn hidden" onclick="openAddTask(userCol())">+ Add Task</button>
   </div>
 
   <!-- BODY -->
@@ -641,6 +657,22 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
         </div>
         <div class="col-body" id="body-callum" ondragover="onDragOver(event)" ondrop="onDrop(event,'callum')" ondragleave="onDragLeave(event)"></div>
       </div>
+      <div class="col-divider"></div>
+      <div class="col" id="col-hannah">
+        <div class="col-header">
+          <span class="col-title">Hannah</span>
+          <span class="col-count" id="count-hannah">0</span>
+        </div>
+        <div class="col-body" id="body-hannah" ondragover="onDragOver(event)" ondrop="onDrop(event,'hannah')" ondragleave="onDragLeave(event)"></div>
+      </div>
+      <div class="col-divider"></div>
+      <div class="col" id="col-joe">
+        <div class="col-header">
+          <span class="col-title">Joe</span>
+          <span class="col-count" id="count-joe">0</span>
+        </div>
+        <div class="col-body" id="body-joe" ondragover="onDragOver(event)" ondrop="onDrop(event,'joe')" ondragleave="onDragLeave(event)"></div>
+      </div>
       <div class="col-divider col-divider-done"></div>
       <div class="col done-col" id="col-done">
         <div class="col-header">
@@ -653,6 +685,36 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
 
     <!-- SIDEBAR -->
     <div id="sidebar">
+      <!-- DASHBOARD OVERVIEW -->
+      <div id="dashboard-panel">
+        <div class="dash-header">
+          <span class="dash-title">◆ My Dashboard</span>
+          <button id="dash-expand-btn" class="dash-expand" onclick="openDashboardFull()" title="Expand">⤢</button>
+        </div>
+
+        <!-- Notifications -->
+        <div id="dash-notifs" class="dash-notif-bar" style="display:none;" onclick="openNotifs()">
+          <span>🔔 Notifications <span id="dash-notif-count">0</span></span>
+          <span style="font-size:10px;color:var(--text-tertiary);">tap to view</span>
+        </div>
+
+        <!-- Upcoming Events -->
+        <div class="dash-section">
+          <div class="dash-section-label">📆 Upcoming Events</div>
+          <div id="dash-events" class="dash-list"></div>
+        </div>
+
+        <div class="dash-section-divider"></div>
+
+        <!-- Upcoming To-Do -->
+        <div class="dash-section">
+          <div class="dash-section-label">✓ Upcoming To-Do</div>
+          <div id="dash-todos" class="dash-list"></div>
+        </div>
+      </div>
+
+      <div class="sidebar-divider" style="margin:0 14px;"></div>
+
       <div class="sidebar-section">
         <div class="sidebar-label">Quick Links</div>
         <a class="sidebar-link" href="https://outlook.live.com/mail/" target="_blank">
@@ -676,15 +738,6 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
             <span class="sidebar-link-sub">mattkirkham.com</span>
           </div>
         </a>
-      </div>
-      <div class="sidebar-divider" style="margin:0 14px;"></div>
-      <div class="sidebar-section">
-        <div class="sidebar-label">Status Key</div>
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary)"><span class="status-pill complete">Complete</span></div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary)"><span class="status-pill in-progress">In Progress</span></div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary)"><span class="status-pill issue">Issue</span></div>
-        </div>
       </div>
     </div>
   </div>
@@ -712,6 +765,8 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
           <option value="zoe">Zoe</option>
           <option value="meg">Meg</option>
           <option value="callum">Callum</option>
+          <option value="hannah">Hannah</option>
+          <option value="joe">Joe</option>
           <option value="done">Done</option>
         </select>
       </div>
@@ -959,11 +1014,15 @@ async function markEmailRead(id,e){
 }
 
 const DB='https://menfolk-production-default-rtdb.europe-west1.firebasedatabase.app';
-const COLS=['todo','matthew','dani','zoe','meg','callum','done'];
-const TEAM=['Matthew','Meg','Zoe','Dani','Callum'];
-const CREW=['Callum']; // restricted to own column only
+const PRODUCERS=['Matthew','Meg','Zoe','Dani'];
+const CREW=['Callum','Hannah','Joe']; // restricted: own column + own events only
+const TEAM=[...PRODUCERS,...CREW];
+const COLS=['todo','matthew','dani','zoe','meg','callum','hannah','joe','done'];
+const ADMIN='Matthew'; // sole password manager
 let currentUser=null;
 function isCrew(){return CREW.includes(currentUser);}
+function isProducer(){return PRODUCERS.includes(currentUser);}
+function userCol(name){return (name||currentUser||'').toLowerCase();}
 
 let tasks={};
 let draggingId=null;
@@ -1552,6 +1611,7 @@ let calMonth=4; // Start at May 2026
 let events={};
 let editingEventId=null;
 let addingDateStr=null;
+let selectedAttendees=[]; // names selected in the event modal
 
 const MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const EVENT_TYPES=['meeting','audition','shoot','other'];
@@ -1601,6 +1661,10 @@ function getMonthList(){
   return months;
 }
 
+function canSeeEvent(ev){
+  if(!isCrew()) return true; // producers see all
+  return Array.isArray(ev.attendees)&&ev.attendees.includes(currentUser);
+}
 function buildDayMap(yr,mo){
   const dayMap={};
   const addToMap=(ds,entry)=>{if(!dayMap[ds]) dayMap[ds]=[];dayMap[ds].push(entry);};
@@ -1608,6 +1672,7 @@ function buildDayMap(yr,mo){
   Object.entries(events).forEach(([eid,ev])=>{
     const start=ev.date; const end=ev.endDate||ev.date;
     if(!start) return;
+    if(!canSeeEvent(ev)) return; // crew only see events they attend
     if(start===end){ addToMap(start,{id:eid,ev,spanRole:'single'}); }
     else {
       let cur=new Date(start+'T12:00:00');
@@ -1626,6 +1691,7 @@ function buildDayMap(yr,mo){
 
   Object.entries(tasks).forEach(([tid,t])=>{
     if(!t.dueDate) return;
+    if(isCrew()&&t.col!==userCol()) return; // crew only see their own task deadlines
     const [ey,em]=t.dueDate.split('-').map(Number);
     if(ey!==yr||em-1!==mo) return;
     const isDone=t.col==='done'||t.status==='complete';
@@ -1651,6 +1717,16 @@ function buildMonthGrid(yr, mo){
   for(let d=1;d<=daysInMonth;d++){
     const dateStr=`${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const dayEntries=(dayMap[dateStr]||[]).sort((a,b)=>{
+      // Multi-day spans first (so the continuous bar stays at a stable top position),
+      // then single events by time, then task deadlines last.
+      const aSpan=a.spanRole&&a.spanRole!=='single';
+      const bSpan=b.spanRole&&b.spanRole!=='single';
+      if(aSpan&&!bSpan) return -1;
+      if(!aSpan&&bSpan) return 1;
+      if(aSpan&&bSpan){
+        // keep multi-day events grouped by their id so overlapping spans don't interleave
+        return String(a.id).localeCompare(String(b.id));
+      }
       if(a.isTask&&!b.isTask) return 1;
       if(!a.isTask&&b.isTask) return -1;
       return (a.ev.time||'').localeCompare(b.ev.time||'');
@@ -1664,9 +1740,10 @@ function buildMonthGrid(yr, mo){
     const maxShow=3;
     dayEntries.slice(0,maxShow).forEach(({id,ev,spanRole,isTask,isDone})=>{
       const pill=document.createElement('div');
-      const spanCls=spanRole==='single'?'':(' span-'+spanRole);
+      const isSpan=spanRole&&spanRole!=='single';
+      const spanCls=isSpan?(' span-'+spanRole):'';
       const doneCls=isDone?' task-done':'';
-      pill.className=`cal-event-pill ${ev.type||'other'}${spanCls}${doneCls}`;
+      pill.className=`cal-event-pill ${ev.type||'other'}${spanCls}${doneCls}${isSpan?' is-multiday':''}`;
       const showTitle=spanRole==='single'||spanRole==='start';
       if(showTitle){ pill.textContent=(ev.time&&spanRole==='single'?ev.time.slice(0,5)+' ':'')+ev.title; }
       else { pill.innerHTML='&nbsp;'; }
@@ -1767,16 +1844,24 @@ function scrollToActiveMonth(smooth=true){
   if(!block||!body) return;
   calScrollProgrammatic=true;
   clearTimeout(calScrollProgrammaticTimer);
-  // Measure the sticky weekday header height to use as the offset
+  // Compute exact offset: position of block within the scroll container minus the
+  // sticky weekday header height, so the month title sits just under the header.
   const stickyHeader=body.querySelector('.cal-weekdays-sticky');
-  const stickyH=stickyHeader?stickyHeader.getBoundingClientRect().height:36;
-  // block.offsetTop is relative to cal-scroll-body; add cal-scroll-body.offsetTop for cal-body coords
+  const stickyH=stickyHeader?stickyHeader.offsetHeight:40;
+  // offsetTop of block relative to its offsetParent (cal-scroll-body); that parent's
+  // offsetTop within cal-body must be added.
   const scrollBody=document.getElementById('cal-scroll-body');
-  const scrollBodyTop=scrollBody?scrollBody.offsetTop:0;
-  const targetTop=scrollBodyTop+block.offsetTop - stickyH - 10;
-  body.scrollTo({top:Math.max(0,targetTop), behavior:smooth?'smooth':'instant'});
+  let top=block.offsetTop;
+  // Walk up offsetParents until we reach cal-body to get true position
+  let node=block.offsetParent;
+  while(node&&node!==body){
+    top+=node.offsetTop;
+    node=node.offsetParent;
+  }
+  const targetTop=Math.max(0, top - stickyH - 6);
+  body.scrollTo({top:targetTop, behavior:smooth?'smooth':'auto'});
   updateMonthDimming();
-  calScrollProgrammaticTimer=setTimeout(()=>{calScrollProgrammatic=false;},smooth?520:50);
+  calScrollProgrammaticTimer=setTimeout(()=>{calScrollProgrammatic=false;},smooth?560:60);
 }
 
 function updateMonthDimming(){
@@ -1844,6 +1929,30 @@ function calNext(){
   scrollToActiveMonth();
 }
 
+function renderAttendeeChips(){
+  const el=document.getElementById('event-attendees');
+  if(!el) return;
+  el.innerHTML='';
+  TEAM.forEach(name=>{
+    const chip=document.createElement('div');
+    const sel=selectedAttendees.includes(name);
+    chip.className='attendee-chip'+(sel?' selected':'');
+    chip.innerHTML=(sel?'<span class="att-check">✓</span>':'')+name;
+    chip.onclick=()=>{
+      if(selectedAttendees.includes(name)) selectedAttendees=selectedAttendees.filter(n=>n!==name);
+      else selectedAttendees.push(name);
+      renderAttendeeChips();
+    };
+    el.appendChild(chip);
+  });
+}
+function setAttendees(which){
+  if(which==='producers') selectedAttendees=[...PRODUCERS];
+  else if(which==='all') selectedAttendees=[...TEAM];
+  else selectedAttendees=[];
+  renderAttendeeChips();
+}
+
 function openAddEvent(dateStr){
   if(isCrew()) return; // Callum can view but not add events
   editingEventId=null;addingDateStr=dateStr;
@@ -1855,6 +1964,9 @@ function openAddEvent(dateStr){
   document.getElementById('event-type').value='meeting';
   document.getElementById('event-location').value='';
   document.getElementById('event-notes').value='';
+  selectedAttendees=[];
+  renderAttendeeChips();
+  document.getElementById('event-attendee-error').style.display='none';
   document.getElementById('event-delete-btn').style.display='none';
   document.getElementById('event-modal').classList.add('visible');
   setTimeout(()=>document.getElementById('event-title').focus(),50);
@@ -1877,6 +1989,9 @@ function openEditEvent(id){
   document.getElementById('event-type').value=ev.type||'meeting';
   document.getElementById('event-location').value=ev.location||'';
   document.getElementById('event-notes').value=ev.notes||'';
+  selectedAttendees=Array.isArray(ev.attendees)?[...ev.attendees]:[];
+  renderAttendeeChips();
+  document.getElementById('event-attendee-error').style.display='none';
   document.getElementById('event-delete-btn').style.display='block';
   document.getElementById('event-modal').classList.add('visible');
   setTimeout(()=>document.getElementById('event-title').focus(),50);
@@ -1893,6 +2008,11 @@ async function saveEvent(){
   }
   const startDate=document.getElementById('event-date').value;
   const endDate=document.getElementById('event-end-date').value;
+  // Attendees are mandatory
+  if(selectedAttendees.length===0){
+    document.getElementById('event-attendee-error').style.display='block';
+    return;
+  }
   const ev={
     title,
     date:startDate,
@@ -1901,20 +2021,30 @@ async function saveEvent(){
     type:document.getElementById('event-type').value,
     location:document.getElementById('event-location').value.trim(),
     notes:document.getElementById('event-notes').value.trim(),
+    attendees:[...selectedAttendees],
   };
   if(!ev.date) return;
   if(editingEventId){
+    const prevAttendees=Array.isArray(events[editingEventId].attendees)?events[editingEventId].attendees:[];
     events[editingEventId]=ev;
     try{await fbSet(`events/${editingEventId}`,ev);}catch(e){console.error(e);}
+    // Notify anyone newly added as attendee
+    ev.attendees.filter(a=>!prevAttendees.includes(a)&&a!==currentUser).forEach(a=>{
+      pushNotif(a,{kind:'event',message:`You were added to event: "${title}"`,by:currentUser});
+    });
   } else {
     try{
       const id=await fbPush('events',ev);
       events[id]=ev;
     } catch(e){console.error(e);}
+    // Notify all attendees (except self)
+    ev.attendees.filter(a=>a!==currentUser).forEach(a=>{
+      pushNotif(a,{kind:'event',message:`You were added to event: "${title}"`,by:currentUser});
+    });
   }
   closeModal('event-modal');
   renderCal();
-  renderEventsStrip();
+  renderDashboard();
 }
 
 async function deleteEvent(){
@@ -1925,120 +2055,187 @@ async function deleteEvent(){
   editingEventId=null;
   closeModal('event-modal');
   renderCal();
-  renderEventsStrip();
+  renderDashboard();
 }
 
-function renderEventsStrip(){
-  const el=document.getElementById('events-strip-list');
-  const today=new Date();today.setHours(0,0,0,0);
-  const todayStr=today.toISOString().slice(0,10);
+// ═══════════════════════════════════════════════════════════════
+// NOTIFICATIONS — task assignments & event attendance changes
+// ═══════════════════════════════════════════════════════════════
+let myNotifs={}; // id -> notif object for current user
 
-  // Regular events (use start date for filtering)
-  const upcomingEvents=Object.entries(events)
-    .filter(([,e])=>(e.endDate||e.date)>=todayStr)
-    .map(([id,e])=>({id,title:e.title,date:e.date,endDate:e.endDate||'',time:e.time||'',type:e.type||'other',ev:e,isTask:false}));
-
-  // Task deadlines — exclude completed/done tasks
-  const upcomingTasks=Object.entries(tasks)
-    .filter(([,t])=>t.dueDate&&t.dueDate>=todayStr&&t.col!=='done'&&t.status!=='complete')
-    .map(([id,t])=>({id,title:t.title,date:t.dueDate,endDate:'',time:'',type:'task-deadline',isTask:true}));
-
-  const upcoming=[...upcomingEvents,...upcomingTasks]
-    .sort((a,b)=>a.date.localeCompare(b.date)||(a.time).localeCompare(b.time))
-    .slice(0,6);
-
-  if(upcoming.length===0){el.innerHTML='<span class="no-events">No upcoming events</span>';return;}
-  el.innerHTML='';
-  upcoming.forEach(item=>{
-    const chip=document.createElement('div');
-    chip.className='event-chip';
-    const d=new Date(item.date+'T12:00:00');
-    const dateStr=d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
-    const dateLabel=item.endDate?`${dateStr} – ${new Date(item.endDate+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}`:dateStr;
-    const prefix=item.isTask?'⚑ ':'';
-    chip.innerHTML=`<span class="event-chip-dot dot-${item.type}"></span><span>${prefix}${escHtml(item.title)}</span><span class="event-chip-date">${dateLabel}${item.time?' '+item.time.slice(0,5):''}</span>`;
-    chip.onclick=()=>{
-      if(item.isTask){
-        // Open the task directly
-        openEditTask(item.id);
-      } else {
-        // Open calendar at the right month, then open this event's detail
-        calYear=d.getFullYear();calMonth=d.getMonth();
-        openCalendar();
-        setTimeout(()=>openEditEvent(item.id),120);
-      }
-    };
-    el.appendChild(chip);
-  });
-}
-
-function openUpcomingList(){
-  const body=document.getElementById('upcoming-list-body');
-  const today=new Date();today.setHours(0,0,0,0);
-  const todayStr=today.toISOString().slice(0,10);
-
-  // Gather all events (incl. multi-day, by start date) and non-done tasks
-  const items=[];
-  Object.entries(events).forEach(([id,e])=>{
-    if(!e.date) return;
-    if((e.endDate||e.date)>=todayStr){
-      items.push({id,kind:'event',title:e.title,date:e.date,endDate:e.endDate||'',time:e.time||'',type:e.type||'other'});
-    }
-  });
-  Object.entries(tasks).forEach(([id,t])=>{
-    if(!t.dueDate) return;
-    const done=t.col==='done'||t.status==='complete';
-    if(t.dueDate>=todayStr){
-      items.push({id,kind:'task',title:t.title,date:t.dueDate,endDate:'',time:'',type:'task-deadline',done});
-    }
-  });
-
-  items.sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''));
-
-  if(items.length===0){
-    body.innerHTML='<p style="font-size:13px;color:var(--text-tertiary);font-family:\'DM Mono\',monospace;padding:14px 4px;">Nothing upcoming.</p>';
+function updateNotifBar(){
+  const bar=document.getElementById('dash-notifs');
+  const countEl=document.getElementById('dash-notif-count');
+  if(!bar) return;
+  const count=Object.keys(myNotifs).length;
+  if(count>0){
+    bar.style.display='flex';
+    bar.classList.add('force-show');
+    countEl.textContent=count;
   } else {
-    // Group by date
-    let html='';let lastDate=null;
-    items.forEach(item=>{
-      if(item.date!==lastDate){
-        const d=new Date(item.date+'T12:00:00');
-        const dayLabel=d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
-        const isToday=item.date===todayStr;
-        html+=`<div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:${isToday?'var(--accent)':'var(--text-tertiary)'};margin:12px 0 6px;">${dayLabel}${isToday?' · Today':''}</div>`;
-        lastDate=item.date;
-      }
-      const dot=catColor(item.type);
-      const isTask=item.kind==='task';
-      const dateLabel=item.endDate?` <span style="color:var(--text-tertiary);font-size:10px;">→ ${new Date(item.endDate+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span>`:'';
-      const struck=isTask&&item.done?'text-decoration:line-through;opacity:0.6;':'';
-      const meta=isTask?(item.done?'Task · Done ✓':'Task deadline'):((item.time?item.time.slice(0,5)+' · ':'')+item.type);
-      html+=`<div class="upcoming-row" data-kind="${item.kind}" data-id="${item.id}" data-date="${item.date}" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:6px;border:0.5px solid var(--border);background:var(--bg-card);margin-bottom:5px;cursor:pointer;">
-        <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${dot};"></span>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;color:var(--text);${struck}">${escHtml(item.title)}${dateLabel}</div>
-          <div style="font-size:10px;color:var(--text-tertiary);font-family:'DM Mono',monospace;">${meta}</div>
-        </div>
-      </div>`;
-    });
-    body.innerHTML=html;
-    // Wire up clicks
-    body.querySelectorAll('.upcoming-row').forEach(row=>{
-      row.addEventListener('click',()=>{
-        const kind=row.dataset.kind, id=row.dataset.id, date=row.dataset.date;
-        closeModal('upcoming-modal');
-        if(kind==='task'){
-          openEditTask(id);
-        } else {
-          const d=new Date(date+'T12:00:00');
-          calYear=d.getFullYear();calMonth=d.getMonth();
-          openCalendar();
-          setTimeout(()=>openEditEvent(id),120);
-        }
-      });
+    bar.style.display='none';
+    bar.classList.remove('force-show');
+  }
+}
+
+async function pushNotif(toUser,notif){
+  // Don't notify yourself
+  if(toUser===currentUser) return;
+  try{await fbPush(`notifications/${encodeURIComponent(toUser)}`,{...notif,at:Date.now()});}
+  catch(e){console.error('notif push failed',e);}
+}
+
+function openNotifs(){
+  const list=document.getElementById('notif-list');
+  list.innerHTML='';
+  const entries=Object.entries(myNotifs).sort((a,b)=>(b[1].at||0)-(a[1].at||0));
+  if(entries.length===0){
+    list.innerHTML='<div class="dash-empty" style="padding:14px 4px;">No new notifications.</div>';
+  } else {
+    entries.forEach(([id,n])=>{
+      const row=document.createElement('div');
+      row.className='notif-row';
+      const icon=n.kind==='event'?'📆':'✓';
+      const when=n.at?new Date(n.at).toLocaleDateString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+      row.innerHTML=`<span class="notif-icon">${icon}</span>
+        <div class="notif-text">${escHtml(n.message)}<div class="notif-time">${n.by?'from '+escHtml(n.by)+(when?' · '+when:''):when}</div></div>`;
+      list.appendChild(row);
     });
   }
-  document.getElementById('upcoming-modal').classList.add('visible');
+  document.getElementById('notif-modal').classList.add('visible');
+}
+
+async function clearNotifs(){
+  myNotifs={};
+  updateNotifBar();
+  closeModal('notif-modal');
+  if(currentUser){
+    try{await fbDelete(`notifications/${encodeURIComponent(currentUser)}`);}catch(e){}
+  }
+}
+
+function isEventAttendee(ev){
+  // Producers see everything on their dashboard ONLY if attending; crew likewise
+  return Array.isArray(ev.attendees)&&ev.attendees.includes(currentUser);
+}
+
+function getMyUpcomingEvents(){
+  const today=new Date();today.setHours(0,0,0,0);
+  const todayStr=today.toISOString().slice(0,10);
+  return Object.entries(events)
+    .filter(([,e])=>e.date&&(e.endDate||e.date)>=todayStr&&isEventAttendee(e))
+    .map(([id,e])=>({id,title:e.title,date:e.date,endDate:e.endDate||'',time:e.time||'',type:e.type||'other'}))
+    .sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''));
+}
+
+function getMyUpcomingTodos(){
+  const today=new Date();today.setHours(0,0,0,0);
+  const todayStr=today.toISOString().slice(0,10);
+  const mine=[];
+  const unassigned=[];
+  Object.entries(tasks).forEach(([id,t])=>{
+    if(t.col==='done'||t.status==='complete') return;
+    const personal=(t.col===userCol());
+    const isUnassigned=(t.col==='todo');
+    if(personal){
+      mine.push({id,title:t.title,dueDate:t.dueDate||'',col:t.col,kind:'mine'});
+    } else if(isUnassigned&&isProducer()){
+      unassigned.push({id,title:t.title,dueDate:t.dueDate||'',col:t.col,kind:'unassigned'});
+    }
+  });
+  const byDate=(a,b)=>{
+    const ad=a.dueDate||'9999-99-99',bd=b.dueDate||'9999-99-99';
+    return ad.localeCompare(bd);
+  };
+  mine.sort(byDate); unassigned.sort(byDate);
+  return {mine,unassigned};
+}
+
+function dashEventItem(item){
+  const d=new Date(item.date+'T12:00:00');
+  const dateStr=d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+  const dateLabel=item.endDate?`${dateStr} → ${new Date(item.endDate+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}`:dateStr;
+  const div=document.createElement('div');
+  div.className='dash-item';
+  div.innerHTML=`<span class="dash-item-dot" style="background:${catColor(item.type)}"></span>
+    <div class="dash-item-body">
+      <div class="dash-item-title">${escHtml(item.title)}</div>
+      <div class="dash-item-meta">${dateLabel}${item.time?' · '+item.time.slice(0,5):''}</div>
+    </div>`;
+  div.onclick=()=>{
+    const dd=new Date(item.date+'T12:00:00');
+    calYear=dd.getFullYear();calMonth=dd.getMonth();
+    closeModal('dash-full-modal');
+    openCalendar();
+    setTimeout(()=>openEditEvent(item.id),140);
+  };
+  return div;
+}
+
+function dashTodoItem(item){
+  const div=document.createElement('div');
+  const diff=item.dueDate?daysDiff(item.dueDate):null;
+  const overdue=diff!==null&&diff<0;
+  const soon=diff!==null&&diff>=0&&diff<=2;
+  div.className='dash-item'+(overdue?' is-overdue':soon?' is-soon':'')+(item.kind==='unassigned'?' is-unassigned':'');
+  const meta=item.dueDate?dueDateLabel(item.dueDate):(item.kind==='unassigned'?'Unassigned':'No due date');
+  div.innerHTML=`<span class="dash-item-dot" style="background:${overdue?'var(--red)':soon?'var(--orange)':'var(--accent-dim)'}"></span>
+    <div class="dash-item-body">
+      <div class="dash-item-title">${escHtml(item.title)}</div>
+      <div class="dash-item-meta">${meta}</div>
+    </div>`;
+  div.onclick=()=>{closeModal('dash-full-modal');openEditTask(item.id);};
+  return div;
+}
+
+function renderDashboard(){
+  const evList=document.getElementById('dash-events');
+  const tdList=document.getElementById('dash-todos');
+  if(!evList||!tdList) return;
+
+  // Events
+  const myEvents=getMyUpcomingEvents();
+  evList.innerHTML='';
+  if(myEvents.length===0){evList.innerHTML='<div class="dash-empty">Nothing scheduled.</div>';}
+  else myEvents.slice(0,4).forEach(item=>evList.appendChild(dashEventItem(item)));
+
+  // To-dos
+  const {mine,unassigned}=getMyUpcomingTodos();
+  tdList.innerHTML='';
+  if(mine.length===0&&unassigned.length===0){
+    tdList.innerHTML='<div class="dash-empty">Nothing to do.</div>';
+  } else {
+    mine.slice(0,4).forEach(item=>tdList.appendChild(dashTodoItem(item)));
+    if(unassigned.length>0){
+      const sub=document.createElement('div');
+      sub.className='dash-subhead';sub.textContent='Unassigned';
+      tdList.appendChild(sub);
+      unassigned.slice(0,3).forEach(item=>tdList.appendChild(dashTodoItem(item)));
+    }
+  }
+  updateNotifBar();
+}
+
+function openDashboardFull(){
+  const evList=document.getElementById('dash-full-events');
+  const tdList=document.getElementById('dash-full-todos');
+  const myEvents=getMyUpcomingEvents();
+  evList.innerHTML='';
+  if(myEvents.length===0){evList.innerHTML='<div class="dash-empty">Nothing scheduled.</div>';}
+  else myEvents.forEach(item=>evList.appendChild(dashEventItem(item)));
+
+  const {mine,unassigned}=getMyUpcomingTodos();
+  tdList.innerHTML='';
+  if(mine.length===0&&unassigned.length===0){tdList.innerHTML='<div class="dash-empty">Nothing to do.</div>';}
+  else {
+    mine.forEach(item=>tdList.appendChild(dashTodoItem(item)));
+    if(unassigned.length>0){
+      const sub=document.createElement('div');sub.className='dash-subhead';sub.textContent='Unassigned (shared)';
+      tdList.appendChild(sub);
+      unassigned.forEach(item=>tdList.appendChild(dashTodoItem(item)));
+    }
+  }
+  document.getElementById('dash-full-modal').classList.add('visible');
 }
 
 function showDayEventsPopup(dateStr,dayEvents,allEntries){
@@ -2169,39 +2366,38 @@ function enterDashboard(name){
   if(subEl) subEl.textContent=`Production Board — ${name}`;
   const resetBtn=document.getElementById('admin-reset-btn');
   if(resetBtn){
-    if(name==='Matthew') resetBtn.classList.remove('hidden');
-    else resetBtn.classList.add('hidden');
+    resetBtn.classList.toggle('hidden',name!==ADMIN);
   }
   applyRoleLayout(name);
   init();
   initMobileColumns();
+  applyMobileDefaults();
 }
 
 function applyRoleLayout(name){
   const crew=CREW.includes(name);
-  // Columns visible to crew: only their own + todo (read-only) + done (read-only)
-  const crewVisibleCols=['callum'];
-  // Hide producer columns from crew
-  ['todo','matthew','dani','zoe','meg','done'].forEach(col=>{
+  const myCol=userCol(name);
+  // Crew see ONLY their own column; producers see all
+  COLS.forEach(col=>{
     const el=document.getElementById('col-'+col);
-    const divider=el?el.previousElementSibling:null;
-    if(el){
-      el.style.display=crew?'none':'';
-      if(divider&&divider.classList.contains('col-divider')) divider.style.display=crew?'none':'';
-    }
+    if(!el) return;
+    const divider=el.previousElementSibling;
+    const show=!crew||col===myCol;
+    el.style.display=show?'':'none';
+    if(divider&&divider.classList.contains('col-divider')) divider.style.display=show?'':'none';
   });
-  // Hide the global sort + add-task button from crew view (they use column-specific add)
+  // Producer-only "+ Add Task" button vs crew add button
   const addBtn=document.querySelector('.add-task-btn[onclick="openAddTask()"]');
   if(addBtn) addBtn.style.display=crew?'none':'';
   const crewAddBtn=document.getElementById('crew-add-btn');
-  if(crewAddBtn){
-    if(crew) crewAddBtn.classList.remove('hidden');
-    else crewAddBtn.classList.add('hidden');
-  }
+  if(crewAddBtn) crewAddBtn.classList.toggle('hidden',!crew);
   const sortSel=document.getElementById('global-sort-select');
   if(sortSel) sortSel.style.display=crew?'none':'';
-  // Show/hide availability write access — crew sees panels read-only (handled via openAvail)
-  // Calendar: crew can view but not add events — handled in openAddEvent
+  // Announcements: crew can read but not edit
+  const annEditBtn=document.querySelector('.announce-edit-btn');
+  if(annEditBtn) annEditBtn.style.display=crew?'none':'';
+  const annText=document.getElementById('announce-text');
+  if(annText) annText.style.cursor=crew?'default':'pointer';
 }
 
 function goBackToNamePicker(){
@@ -2219,7 +2415,7 @@ async function openAdminReset(){
   try{
     const data=await fbGet('passwords');
     list.innerHTML='';
-    TEAM.filter(n=>n!=='Matthew').forEach(name=>{
+    TEAM.filter(n=>n!==ADMIN).forEach(name=>{
       const hasPass=!!(data&&data[encodeURIComponent(name)]&&data[encodeURIComponent(name)].hash);
       const row=document.createElement('div');
       row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--border);';
@@ -2282,8 +2478,10 @@ async function loadAll(){
     const data=await fbGet('');
     tasks=(data&&data.tasks)||{};
     events=(data&&data.events)||{};
+    // Notifications for current user
+    myNotifs=(data&&data.notifications&&data.notifications[encodeURIComponent(currentUser)])||{};
     renderAll();
-    renderEventsStrip();
+    renderDashboard();
     loadAnnouncement(data&&data.announcement);
     if(document.getElementById('cal-overlay').classList.contains('visible')) renderCal();
     loadInbox();
@@ -2416,7 +2614,7 @@ async function completeTask(id,e){
     const colTasks=Object.values(tasks).filter(t=>t.col==='done');
     tasks[id]={...tasks[id],col:'done',status:'complete',order:colTasks.length};
     renderAll();
-    renderEventsStrip();
+    renderDashboard();
     try{await fbSet(`tasks/${id}`,tasks[id]);}catch(e){console.error(e);}
   };
   if(card){
@@ -2448,7 +2646,7 @@ function openAddTask(col){
   document.getElementById('task-title').value='';
   document.getElementById('task-notes').value='';
   // Crew always goes to their own column
-  document.getElementById('task-col').value=isCrew()?currentUser.toLowerCase():(col||'todo');
+  document.getElementById('task-col').value=isCrew()?userCol():(col||'todo');
   document.getElementById('task-status').value='none';
   document.getElementById('task-priority').value='normal';
   document.getElementById('task-due').value='';
@@ -2502,7 +2700,7 @@ async function saveTask(){
   }
   const col=document.getElementById('task-col').value;
   // Crew can only save tasks to their own column
-  if(isCrew()&&col!=='callum'){
+  if(isCrew()&&col!==userCol()){
     alert('You can only add tasks to your own column.');
     return;
   }
@@ -2512,19 +2710,35 @@ async function saveTask(){
   const dueDate=document.getElementById('task-due').value||'';
   const colTasks=Object.values(tasks).filter(t=>t.col===col);
 
+  // Determine if this assigns work to another person's column (for notifications)
+  const colOwnerName=colToName(col);
   if(editingId){
+    const prevCol=tasks[editingId].col;
     tasks[editingId]={...tasks[editingId],title,notes,col,status,priority,dueDate};
     try{await fbSet(`tasks/${editingId}`,tasks[editingId]);}
     catch(e){console.error('Edit failed',e);}
+    // Notify if reassigned to a different person's column
+    if(col!==prevCol&&colOwnerName&&colOwnerName!==currentUser){
+      pushNotif(colOwnerName,{kind:'task',message:`You were assigned a task: "${title}"`,by:currentUser});
+    }
   } else {
     const task={title,notes,col,status,priority,dueDate,order:colTasks.length,createdAt:Date.now(),createdBy:currentUser||''};
     try{
       const id=await fbPush('tasks',task);
       tasks[id]=task;
     } catch(e){console.error('Add failed',e);alert('Failed to save task. Check your connection.');return;}
+    // Notify the column owner if it's not the current user
+    if(colOwnerName&&colOwnerName!==currentUser){
+      pushNotif(colOwnerName,{kind:'task',message:`You were assigned a task: "${title}"`,by:currentUser});
+    }
   }
   renderAll();
   closeModal('task-modal');
+}
+// Map a column id to a person's name (or null for todo/done)
+function colToName(col){
+  const found=TEAM.find(n=>n.toLowerCase()===col);
+  return found||null;
 }
 async function deleteTask(id){
   if(!confirm('Delete this task?')) return;
@@ -2578,6 +2792,8 @@ async function dismissAnnouncePopup(){
 }
 let lastRawAnnouncement='';
 function openAnnounceModal(){
+  // Only producers can edit announcements
+  if(!isProducer()) return;
   document.getElementById('announce-input').value=lastRawAnnouncement;
   document.getElementById('announce-modal').classList.add('visible');
   setTimeout(()=>document.getElementById('announce-input').focus(),50);
@@ -2616,12 +2832,25 @@ async function clearAnnouncement(){
 
 // --- MODALS ---
 function closeModal(id){document.getElementById(id).classList.remove('visible');}
+// Modals that hold unsaved input — clicking outside asks before closing
+const ENTRY_MODALS=['task-modal','event-modal','announce-modal','cat-modal'];
+function requestCloseModal(id){
+  if(ENTRY_MODALS.includes(id)){
+    if(confirm('Close without saving? Any unsaved changes will be lost.')){
+      closeModal(id);
+    }
+  } else {
+    closeModal(id);
+  }
+}
 document.querySelectorAll('.modal-backdrop').forEach(el=>{
-  el.addEventListener('click',e=>{if(e.target===el) el.classList.remove('visible');});
+  el.addEventListener('click',e=>{if(e.target===el) requestCloseModal(el.id);});
 });
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
-    document.querySelectorAll('.modal-backdrop.visible').forEach(m=>m.classList.remove('visible'));
+    // Escape on an entry modal also confirms; others close directly
+    const openModal=document.querySelector('.modal-backdrop.visible');
+    if(openModal){requestCloseModal(openModal.id);return;}
     closeCalendar();
     closeAvail();
     closeInbox();
@@ -2648,25 +2877,51 @@ function togglePwVis(id, btn){
   }
 }
 
-// ── Mobile collapsible columns ────────────────────────────────────────────
-let mobileColsBound=false;
+// ── Mobile collapsible columns + dashboard + notice ───────────────────────
+let mobileUiBound=false;
+function isMobile(){return window.innerWidth<=680;}
 function initMobileColumns(){
-  if(mobileColsBound) return;       // bind once; headers are static so this is safe
-  mobileColsBound=true;
+  if(mobileUiBound) return;
+  mobileUiBound=true;
+
+  // Column headers collapse their column on mobile
   document.querySelectorAll('.col-header').forEach(header=>{
     header.addEventListener('click', e=>{
-      // Only collapse on mobile widths
-      if(window.innerWidth > 680) return;
-      // Don't collapse when interacting with controls inside the header
+      if(!isMobile()) return;
       if(e.target.closest('.col-count, select, button')) return;
-      const col=header.closest('.col');
-      col.classList.toggle('collapsed');
+      header.closest('.col').classList.toggle('collapsed');
     });
   });
+
+  // Dashboard header collapses the dashboard on mobile
+  const dashHeader=document.querySelector('#dashboard-panel .dash-header');
+  if(dashHeader){
+    dashHeader.addEventListener('click', e=>{
+      if(!isMobile()) return;
+      if(e.target.closest('.dash-expand')) return; // expand button still opens full view
+      document.getElementById('dashboard-panel').classList.toggle('mobile-collapsed');
+    });
+  }
+
+  // Announce bar tap toggles full text (collapsed by default on mobile)
+  applyMobileDefaults();
 }
+
+function applyMobileDefaults(){
+  const dash=document.getElementById('dashboard-panel');
+  if(dash){
+    if(isMobile()) dash.classList.add('mobile-collapsed');
+    else dash.classList.remove('mobile-collapsed');
+  }
+}
+
 window.addEventListener('resize', ()=>{
-  if(window.innerWidth > 680){
+  if(!isMobile()){
     document.querySelectorAll('.col').forEach(c=>c.classList.remove('collapsed'));
+    const dash=document.getElementById('dashboard-panel');
+    if(dash) dash.classList.remove('mobile-collapsed');
+  } else {
+    applyMobileDefaults();
   }
 });
 
@@ -2674,14 +2929,37 @@ document.addEventListener("DOMContentLoaded", initMobileColumns);
 
 </script>
 
-<!-- UPCOMING FULL LIST MODAL -->
-<div class="modal-backdrop" id="upcoming-modal">
-  <div class="modal" style="width:480px;max-height:80vh;">
-    <div style="display:flex;align-items:center;justify-content:space-between;">
-      <div class="modal-title" style="margin:0;">Everything Upcoming</div>
-      <button class="cal-close" onclick="closeModal('upcoming-modal')" style="margin:0;">✕</button>
+<!-- DASHBOARD FULL MODAL -->
+<div class="modal-backdrop" id="dash-full-modal">
+  <div class="modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <div class="modal-title" style="margin:0;color:var(--accent);">◆ My Dashboard</div>
+      <button class="cal-close" onclick="closeModal('dash-full-modal')" style="margin:0;">✕</button>
     </div>
-    <div id="upcoming-list-body" style="overflow-y:auto;max-height:calc(80vh - 90px);margin-top:4px;"></div>
+    <div class="dash-full-cols">
+      <div class="dash-full-col">
+        <h3>📆 Upcoming Events</h3>
+        <div class="dash-full-list" id="dash-full-events"></div>
+      </div>
+      <div class="dash-full-col">
+        <h3>✓ Upcoming To-Do</h3>
+        <div class="dash-full-list" id="dash-full-todos"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATIONS MODAL -->
+<div class="modal-backdrop" id="notif-modal">
+  <div class="modal" style="width:440px;max-height:80vh;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      <div class="modal-title" style="margin:0;">🔔 Notifications</div>
+      <button class="cal-close" onclick="closeModal('notif-modal')" style="margin:0;">✕</button>
+    </div>
+    <div id="notif-list" style="overflow-y:auto;max-height:calc(80vh - 130px);margin-top:4px;"></div>
+    <div class="modal-actions">
+      <button class="modal-btn primary" onclick="clearNotifs()">Clear all</button>
+    </div>
   </div>
 </div>
 
@@ -2739,6 +3017,16 @@ document.addEventListener("DOMContentLoaded", initMobileColumns);
       <label>Category</label>
       <select id="event-type"></select>
       <button id="open-cat-manager-btn" type="button" class="modal-btn" style="height:26px;font-size:10px;padding:0 10px;margin-top:6px;">Manage categories</button>
+    </div>
+    <div>
+      <label>Attendees <span style="color:var(--red);">*</span></label>
+      <div id="event-attendees" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;"></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button type="button" class="modal-btn" style="height:26px;font-size:9px;padding:0 9px;" onclick="setAttendees('producers')">+ All producers</button>
+        <button type="button" class="modal-btn" style="height:26px;font-size:9px;padding:0 9px;" onclick="setAttendees('all')">+ Everyone</button>
+        <button type="button" class="modal-btn" style="height:26px;font-size:9px;padding:0 9px;" onclick="setAttendees('none')">Clear</button>
+      </div>
+      <div id="event-attendee-error" style="display:none;font-size:11px;color:var(--red);font-family:'DM Mono',monospace;margin-top:5px;">Please select at least one attendee.</div>
     </div>
     <div>
       <label>Location (optional)</label>
