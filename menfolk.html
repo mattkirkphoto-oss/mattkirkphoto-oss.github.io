@@ -1698,6 +1698,8 @@ function renderMonthJumps(){
 
 let calScrollObserver=null;
 let calScrollBody=null;
+let calScrollProgrammatic=false;
+let calScrollProgrammaticTimer=null;
 
 function renderCal(){
   // Update header title
@@ -1752,8 +1754,13 @@ function scrollToActiveMonth(smooth=true){
   const block=document.getElementById(`cal-block-${calYear}-${calMonth}`);
   const body=document.getElementById('cal-body');
   if(!block||!body) return;
+  // Suppress the IntersectionObserver during programmatic scroll
+  calScrollProgrammatic=true;
+  clearTimeout(calScrollProgrammaticTimer);
   body.scrollTo({top:block.offsetTop - 44, behavior:smooth?'smooth':'instant'});
   updateMonthDimming();
+  // Re-enable observer after scroll settles (smooth scroll ~400ms max)
+  calScrollProgrammaticTimer=setTimeout(()=>{calScrollProgrammatic=false;},smooth?500:50);
 }
 
 function updateMonthDimming(){
@@ -1778,6 +1785,8 @@ function initScrollObserver(){
   if(!body) return;
   // Use IntersectionObserver to detect which month is most visible
   calScrollObserver=new IntersectionObserver(entries=>{
+    // Don't update state during programmatic scroll — avoids pill strip flicker
+    if(calScrollProgrammatic) return;
     let best=null, bestRatio=0;
     entries.forEach(entry=>{
       if(entry.isIntersecting&&entry.intersectionRatio>bestRatio){
