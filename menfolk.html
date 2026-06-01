@@ -523,8 +523,8 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
     <div class="header-sub">Production Board</div>
     <div class="header-divider"></div>
     <select id="global-sort-select" class="col-sort-select" onchange="setGlobalSort(this.value)" title="Sort all columns" style="height:26px;font-size:10px;">
-      <option value="priority">↕ Priority</option>
       <option value="date">↕ Due date</option>
+      <option value="priority">↕ Priority</option>
       <option value="manual">↕ Manual</option>
     </select>
     <div class="header-spacer"></div>
@@ -2064,7 +2064,7 @@ async function loadAll(){
 
 // --- RENDER ---
 
-let globalSort='priority'; // single sort preference for all columns
+let globalSort='date'; // single sort preference for all columns
 
 function setGlobalSort(mode){
   globalSort=mode;
@@ -2160,12 +2160,8 @@ async function onDrop(e,col){
   e.currentTarget.classList.remove('drag-over');
   if(!draggingId||!tasks[draggingId]) return;
 
-  // Dragging implies manual ordering — switch globally if needed
-  if(globalSort!=='manual'){
-    const ok=confirm('Switch all columns to manual sort so you can drag tasks freely?');
-    if(!ok){renderAll();return;}
-    setGlobalSort('manual');
-  }
+  // Silently switch to manual when dragging — no prompt
+  if(globalSort!=='manual') setGlobalSort('manual');
 
   const colTasksSorted=sortedColTasks(col).filter(([id])=>id!==draggingId);
   tasks[draggingId]={...tasks[draggingId],col,order:colTasksSorted.length};
