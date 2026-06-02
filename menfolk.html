@@ -865,7 +865,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
       <div class="modal-title" style="margin:0;">📌 Notice</div>
       <button class="cal-close" onclick="closeModal('announce-view-modal')" style="margin:0;">✕</button>
     </div>
-    <div id="announce-view-current" style="background:var(--bg-card);border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:14px;margin-top:4px;"></div>
+    <div id="announce-view-current" style="background:var(--bg-card);border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:14px;margin-top:4px;word-break:break-word;overflow-wrap:break-word;"></div>
     <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-tertiary);margin-top:14px;margin-bottom:6px;">Previous</div>
     <div id="announce-view-log" style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
     <div class="modal-actions">
@@ -2860,7 +2860,7 @@ function openAnnounceView(){
     if(isEmpty||!lastRawAnnouncement){
       curBox.innerHTML='<div style="font-size:13px;color:var(--text-tertiary);font-style:italic;padding:14px 4px;">No active announcement.</div>';
     } else {
-      curBox.innerHTML=`<div style="font-size:15px;color:var(--text);line-height:1.5;">${escHtml(lastRawAnnouncement)}</div>
+      curBox.innerHTML=`<div style="font-size:14px;color:var(--text);line-height:1.6;word-break:break-word;overflow-wrap:break-word;">${escHtml(lastRawAnnouncement)}</div>
         <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-tertiary);margin-top:6px;letter-spacing:0.04em;">${escHtml(lastAnnouncementMeta)}</div>`;
     }
     // History list (latest first, exclude the currently-active one)
@@ -2875,7 +2875,7 @@ function openAnnounceView(){
       logEl.innerHTML=past.map(h=>{
         const meta=[h.author||'',h.time||''].filter(Boolean).join(' · ');
         return `<div class="ann-log-row">
-          <div style="font-size:13px;color:var(--text-secondary);line-height:1.4;">${escHtml(h.text||'')}</div>
+          <div style="font-size:13px;color:var(--text-secondary);line-height:1.4;word-break:break-word;overflow-wrap:break-word;">${escHtml(h.text||'')}</div>
           <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-tertiary);margin-top:4px;letter-spacing:0.04em;">${escHtml(meta)}</div>
         </div>`;
       }).join('');
