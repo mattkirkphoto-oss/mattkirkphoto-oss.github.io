@@ -2200,8 +2200,8 @@ function isEventAttendee(ev){
 }
 
 function getMyUpcomingEvents(){
-  const today=new Date();today.setHours(0,0,0,0);
-  const todayStr=today.toISOString().slice(0,10);
+  const today=new Date();
+  const todayStr=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
   return Object.entries(events)
     .filter(([,e])=>e.date&&(e.endDate||e.date)>=todayStr&&isEventAttendee(e))
     .map(([id,e])=>({id,title:e.title,date:e.date,endDate:e.endDate||'',time:e.time||'',type:e.type||'other'}))
@@ -2209,8 +2209,8 @@ function getMyUpcomingEvents(){
 }
 
 function getMyUpcomingTodos(){
-  const today=new Date();today.setHours(0,0,0,0);
-  const todayStr=today.toISOString().slice(0,10);
+  const today=new Date();
+  const todayStr=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
   const mine=[];
   const unassigned=[];
   Object.entries(tasks).forEach(([id,t])=>{
@@ -3030,37 +3030,57 @@ function togglePwVis(id, btn){
 }
 
 
-// ── Horizontal drag-to-scroll for the kanban ─────────────────────────────
-// Click-drag anywhere on the kanban background (or the empty spaces around it) to
-// scroll horizontally. Cards keep their own drag, buttons/inputs are untouched.
+// ── Horizontal drag-to-scroll with momentum for the kanban ───────────────
 let kanbanDragScrollBound=false;
 function initKanbanDragScroll(){
   if(kanbanDragScrollBound) return;
   const kanban=document.getElementById('kanban');
   if(!kanban) return;
   kanbanDragScrollBound=true;
+
   let isDown=false, startX=0, startScroll=0, moved=false;
+  let velX=0, lastX=0, lastT=0, rafId=null;
+  const FRICTION=0.88; // velocity multiplied by this each frame (0.88 = satisfying coast)
+  const MIN_VEL=0.5;   // stop coasting below this px/frame
+
+  function cancelMomentum(){ if(rafId){cancelAnimationFrame(rafId);rafId=null;} }
+
+  function coast(){
+    velX*=FRICTION;
+    if(Math.abs(velX)<MIN_VEL){ rafId=null; return; }
+    kanban.scrollLeft+=velX;
+    rafId=requestAnimationFrame(coast);
+  }
 
   kanban.addEventListener('mousedown', e=>{
-    // Skip interactive elements — never the buttons, cards, status pills, etc.
     if(e.target.closest('.card,.card-btn,.status-pill,.col-add-btn,select,button,input,textarea,a')) return;
-    isDown=true; moved=false;
-    startX=e.pageX;
-    startScroll=kanban.scrollLeft;
+    cancelMomentum();
+    isDown=true; moved=false; velX=0;
+    startX=e.pageX; startScroll=kanban.scrollLeft;
+    lastX=e.pageX; lastT=performance.now();
     kanban.style.cursor='grabbing';
     kanban.style.userSelect='none';
   });
-  window.addEventListener('mouseup', ()=>{
-    if(!isDown) return;
-    isDown=false;
-    kanban.style.cursor='';
-    kanban.style.userSelect='';
-  });
+
   window.addEventListener('mousemove', e=>{
     if(!isDown) return;
     const dx=e.pageX-startX;
     if(Math.abs(dx)>3) moved=true;
     kanban.scrollLeft=startScroll-dx;
+    // Track instantaneous velocity over the last frame
+    const now=performance.now();
+    const dt=now-lastT||16;
+    velX=-(e.pageX-lastX)*(16/dt); // normalise to ~60fps
+    lastX=e.pageX; lastT=now;
+  });
+
+  window.addEventListener('mouseup', ()=>{
+    if(!isDown) return;
+    isDown=false;
+    kanban.style.cursor='';
+    kanban.style.userSelect='';
+    // Only coast if the user was moving quickly (|vel|>2px/frame)
+    if(Math.abs(velX)>2) rafId=requestAnimationFrame(coast);
   });
 }
 
