@@ -1,8 +1,22 @@
 {
-  "title": "Cambridge Fight Night",
-  "caption": "Oddballs Foundation Fight Night",
+  "title": "Churchill College June Event",
+  "caption": "Churchill College June Event 2026, University of Cambridge",
   "year": "2026",
-  "category": "Sports",
-  "description": "Photography coverage for the training sessions of Cambridge Fight Night, as part of the Oddballs Foundation, a charity organization that raises funds for cancer research through boxing events.",
-  "gallery": ["000.webp", "001.webp", "002.webp", "003.webp", "004.webp", "005.webp", "006.webp", "007.webp"]
+  "category": "Event",
+  "description": "Official event photography for Churchill College's June Event 2026.",
+  "gallery": [
+    "000.webp",
+    "001.webp",
+    "002.webp",
+    "003.webp",
+    "004.webp",
+    "005.webp",
+    "006.webp",
+    "007.webp",
+    "008.webp",
+    "009.webp",
+    "0010.webp",
+    "0011.webp",
+    "0012.webp"
+  ]
 }

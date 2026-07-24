@@ -1,0 +1,9 @@
+{
+  "title": "Film Premiere",
+  "caption": "'The Only Fruit' film premiere, hosted at Queens' College Cambridge",
+  "year": "2026",
+  "category": "Events",
+  "description": "Photography from the premiere screening of 'The Only Fruit', as published in Varsity Magazine.",
+  "cover": "cover.webp",
+  "gallery": ["001.webp", "002.webp", "003.webp", "004.webp", "005.webp"]
+}
