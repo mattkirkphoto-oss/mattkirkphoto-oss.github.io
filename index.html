@@ -448,12 +448,18 @@
       pointer-events:none;
     }
     #fd-hero-media iframe.loaded { opacity:0.5; }
-    /* Letterbox bars — subtle top/bottom to signal cinema */
+    /* Letterbox bars — subtle darkening at top, solid fade to page bg at bottom.
+       Bottom gradient MUST reach var(--bg) at 100% opacity so the hero merges
+       seamlessly into the page beneath — otherwise the image edge shows through. */
     #fd-hero::before {
       content:''; position:absolute; inset:0;
       background:
         linear-gradient(180deg, rgba(10,10,10,0.5) 0%, rgba(10,10,10,0) 22%),
-        linear-gradient(0deg,   rgba(10,10,10,0.85) 0%, rgba(10,10,10,0) 40%);
+        linear-gradient(0deg,
+          var(--bg) 0%,
+          var(--bg) 6%,
+          rgba(10,10,10,0.8) 24%,
+          rgba(10,10,10,0) 55%);
       pointer-events:none; z-index:2;
     }
 
