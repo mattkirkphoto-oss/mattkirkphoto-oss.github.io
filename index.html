@@ -288,25 +288,35 @@
       border-top:1px solid var(--rule);
     }
     .film-entry {
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      grid-template-areas:"media body";
-      gap:88px;
+      display:flex;
       align-items:center;
+      gap:72px;
       padding:88px 0;
       border-bottom:1px solid var(--rule);
       cursor:none;
     }
     /* Even entries flip — image on the right */
-    .film-entry:nth-child(even) {
-      grid-template-areas:"body media";
-    }
+    .film-entry:nth-child(even) { flex-direction:row-reverse; }
+
     .film-entry-media {
-      grid-area:media;
-      position:relative; aspect-ratio:16/10;
+      flex:0 0 auto;
+      /* Default sizing: fix the height, let the image's natural aspect ratio
+         drive the width. JS updates `aspect-ratio` inline once the image
+         loads, and toggles `.is-wide` for anamorphic covers that would
+         otherwise overflow the row. */
+      height:clamp(360px, 60vh, 580px);
+      width:auto;
+      aspect-ratio:16/9;                 /* Placeholder until image loads */
+      position:relative;
       background:var(--bg2); overflow:hidden; isolation:isolate;
       outline:1px solid rgba(229,224,216,0.08);
       transition:outline-color 0.4s ease;
+    }
+    /* Anamorphic / very wide covers (≥2:1): cap by width, let height
+       shrink so the row doesn't overflow horizontally. */
+    .film-entry-media.is-wide {
+      width:min(64vw, 1000px);
+      height:auto;
     }
     .film-entry:hover .film-entry-media { outline-color:rgba(229,224,216,0.28); }
     .film-entry-img {
@@ -334,16 +344,17 @@
     .film-entry-media .preview-frame.loaded { opacity:1; }
 
     .film-entry-body {
-      grid-area:body;
+      flex:1 1 0;
+      min-width:240px;
+      max-width:440px;
       display:flex; flex-direction:column; gap:22px;
-      max-width:520px;
     }
     .film-entry-idx {
       font-size:9px; font-weight:300; letter-spacing:0.42em;
       text-transform:uppercase; color:var(--mid);
     }
     .film-entry-title {
-      font-size:clamp(30px, 4.4vw, 56px);
+      font-size:clamp(28px, 3.6vw, 48px);
       font-weight:200; letter-spacing:0.015em;
       line-height:1.02; text-transform:uppercase;
       color:var(--text);
@@ -377,14 +388,22 @@
     }
     .film-entry:hover .film-entry-enter::after { width:60px; }
 
-    /* Mobile: stack, cover on top, no alternation */
+    /* Mobile: stack, cover on top, no alternation. Mobile rules override
+       inline JS styles via !important since JS sets sizes for desktop. */
     @media (max-width:900px) {
       .film-entry,
       .film-entry:nth-child(even) {
-        grid-template-columns:1fr;
-        grid-template-areas:"media" "body";
+        flex-direction:column;
+        align-items:stretch;
         gap:28px;
         padding:52px 0;
+      }
+      .film-entry-media,
+      .film-entry-media.is-wide {
+        width:100% !important;
+        height:auto !important;
+        max-width:100%;
+        max-height:70vh;
       }
       .film-entry-body { max-width:none; gap:16px; }
       .film-entry-title { font-size:clamp(28px, 8vw, 44px); }
@@ -2180,7 +2199,18 @@
 
         /* Cover format fallback (avif → webp → jpg) */
         if (img) {
-          img.addEventListener('load', () => img.classList.add('loaded'));
+          img.addEventListener('load', () => {
+            img.classList.add('loaded');
+            /* Adapt the tile to the image's real aspect ratio so covers of
+               any landscape shape (5:4 open-gate, 16:9, 2.39:1 anamorphic)
+               display without cropping. Anamorphic covers (≥2:1) get the
+               .is-wide class so they cap by width instead of overflowing. */
+            const w = img.naturalWidth, h = img.naturalHeight;
+            if (w && h) {
+              media.style.aspectRatio = `${w} / ${h}`;
+              media.classList.toggle('is-wide', (w / h) >= 2.0);
+            }
+          });
           const variants = [p.folder + 'cover.avif', p.folder + 'cover.webp', p.folder + 'cover.jpg']
             .filter(v => v !== p.cover);
           let vi = 0;
