@@ -41,6 +41,14 @@
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
     img { -webkit-touch-callout:none; }
     html { scroll-behavior: smooth; }
+    /* Suppress the default focus ring on click/tap but keep a subtle
+       keyboard-only indicator so tab-navigation is discoverable without
+       polluting the mouse-driven aesthetic. */
+    :focus { outline:none; }
+    :focus-visible {
+      outline:1px solid rgba(242,237,229,0.55);
+      outline-offset:3px;
+    }
     body {
       background: var(--bg);
       color: var(--text);
@@ -552,7 +560,7 @@
       padding-bottom:12px;
       border-bottom:1px solid var(--rule);
     }
-    .fd-block p, .fd-block-body {
+    .fd-block p {
       font-size:14px; font-weight:200; letter-spacing:0.01em;
       line-height:1.9; color:var(--text);
       max-width:640px;
@@ -950,7 +958,6 @@
     .about-l { position:sticky; top:80px; }
     .about-tag { font-size:9px; font-weight:300; letter-spacing:0.35em; text-transform:uppercase; color:var(--mid); margin-bottom:22px; display:block; }
     .about-name { font-size:clamp(28px,3vw,42px); font-weight:200; letter-spacing:0.22em; text-transform:uppercase; line-height:1.1; }
-    .about-img { width:100%; aspect-ratio:3/4; object-fit:cover; opacity:.78; margin-top:28px; display:block; }
     .about-r { padding-top:4px; }
     .about-body { font-size:15px; font-weight:200; line-height:1.92; color:rgba(242,237,229,0.95); }
     .about-body p + p { margin-top:20px; }
@@ -1764,6 +1771,7 @@
             let previewFrame = null;
             let hoverTimer   = null;
             let destroyTimer = null;
+            let msgListener  = null;   /* postMessage handler — cleared on destroy */
             const previewScale = p.previewScale || 1;
             const projectImg   = el.querySelector('.project-img');
 
@@ -1817,8 +1825,10 @@
               thumb.appendChild(previewFrame);
 
               /* Listen for Vimeo timeupdate — fires once video is actually playing.
-                 Use window message events since postMessage crosses iframe boundary. */
-              const onMsg = e => {
+                 Use window message events since postMessage crosses iframe boundary.
+                 Stash the handler in msgListener so destroyFrame can detach it if
+                 the user hovers off before the video starts. */
+              msgListener = e => {
                 try {
                   const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
                   if (data.player_origin && data.event === 'ready') {
@@ -1826,24 +1836,27 @@
                     previewFrame.contentWindow?.postMessage(JSON.stringify({ method: 'play' }), '*');
                   }
                   if (data.event === 'timeupdate' || data.method === 'timeupdate') {
-                    window.removeEventListener('message', onMsg);
+                    window.removeEventListener('message', msgListener);
+                    msgListener = null;
                     isPlaying = true;
                     if (el.matches(':hover') || previewFrame?.matches(':hover')) fadeVideoIn();
                   }
                 } catch (_) {}
               };
-              window.addEventListener('message', onMsg);
+              window.addEventListener('message', msgListener);
 
               /* Fallback — fade in after delay if postMessage never fires */
               const fallbackMs = section === 'videography' ? 800 : 1200;
               hoverTimer = setTimeout(() => {
-                window.removeEventListener('message', onMsg);
+                if (msgListener) { window.removeEventListener('message', msgListener); msgListener = null; }
                 isPlaying = true;
                 if (el.matches(':hover')) fadeVideoIn();
               }, fallbackMs);
             }
 
             function destroyFrame() {
+              if (msgListener) { window.removeEventListener('message', msgListener); msgListener = null; }
+              if (hoverTimer)  { clearTimeout(hoverTimer); hoverTimer = null; }
               if (!previewFrame) return;
               previewFrame.remove();
               previewFrame = null;
@@ -2209,8 +2222,10 @@
         /* Video hover preview — built lazily on mouseenter, destroyed on leave */
         const vimeoItem = (p.gallery || []).find(g => g.vimeo && g.vimeo !== 'YOUR_VIMEO_ID');
         if (vimeoItem && canHover) {
-          let previewFrame = null;
-          let destroyTimer = null;
+          let previewFrame  = null;
+          let destroyTimer  = null;
+          let msgListener   = null;   /* postMessage handler — cleared on destroy */
+          let failsafeTimer = null;   /* 1.2s fade-in fallback — cleared on destroy */
           const previewScale = p.previewScale || 1;
 
           function buildFrame() {
@@ -2229,20 +2244,28 @@
             previewFrame.style.width  = (fW * previewScale) + 'px';
             previewFrame.style.height = (fH * previewScale) + 'px';
             media.appendChild(previewFrame);
-            /* Fade in once the player has almost certainly started */
-            function onMsg(e) {
+            /* Fade in as soon as Vimeo signals timeupdate, otherwise fall
+               back to a 1.2s timer. Both handles are stashed so destroyFrame
+               can cancel them and avoid leaking listeners across hovers. */
+            msgListener = function(e) {
               try {
                 const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
                 if (d.event === 'timeupdate' || d.method === 'timeupdate') {
                   if (previewFrame) previewFrame.classList.add('loaded');
-                  window.removeEventListener('message', onMsg);
+                  window.removeEventListener('message', msgListener);
+                  msgListener = null;
                 }
               } catch(_) {}
-            }
-            window.addEventListener('message', onMsg);
-            setTimeout(() => { if (previewFrame) previewFrame.classList.add('loaded'); }, 1200);
+            };
+            window.addEventListener('message', msgListener);
+            failsafeTimer = setTimeout(() => {
+              if (previewFrame) previewFrame.classList.add('loaded');
+              failsafeTimer = null;
+            }, 1200);
           }
           function destroyFrame() {
+            if (msgListener)   { window.removeEventListener('message', msgListener); msgListener = null; }
+            if (failsafeTimer) { clearTimeout(failsafeTimer); failsafeTimer = null; }
             if (!previewFrame) return;
             previewFrame.remove();
             previewFrame = null;
@@ -2470,17 +2493,27 @@
     /* Hero image cycling — for films without a trailer, the hero loops
        through the cover + gallery stills instead of sitting on one image.
        This timer is cleared whenever the hero is re-rendered or the detail
-       view closes, otherwise a zombie interval keeps firing off-screen. */
+       view closes, otherwise a zombie interval keeps firing off-screen.
+       heroVimeoListener holds the postMessage handler for the video case
+       so it can be cleaned up the same way. */
     let heroCycleTimer = null;
+    let heroVimeoListener = null;
 
     function loadFilmDetailHero(p) {
       if (heroCycleTimer) { clearInterval(heroCycleTimer); heroCycleTimer = null; }
+      if (heroVimeoListener) {
+        window.removeEventListener('message', heroVimeoListener);
+        heroVimeoListener = null;
+      }
       fdHeroMedia.innerHTML = '';
       const galleryVimeo = (p.gallery || []).find(g => g.vimeo && g.vimeo !== 'YOUR_VIMEO_ID');
       const vimeoId = p.trailer || (galleryVimeo && galleryVimeo.vimeo);
 
       if (vimeoId) {
-        /* Video case unchanged: static cover behind, autoplaying iframe on top. */
+        /* Video case: place a static cover behind to hold the space while
+           the iframe boots, then fade it out once the video is actually
+           visible. Otherwise the two half-opaque layers composite into a
+           ghost-image double-exposure effect. */
         const img = document.createElement('img');
         img.alt = p.title || '';
         img.addEventListener('load', () => img.classList.add('loaded'));
@@ -2509,17 +2542,39 @@
           iframe.style.width  = fW + 'px';
           iframe.style.height = fH + 'px';
         });
-        function onMsg(e) {
+
+        function activateVideo() {
+          iframe.classList.add('loaded');
+          img.classList.remove('loaded');   /* fade the placeholder out */
+        }
+
+        /* Vimeo postMessage handshake: the player emits `ready` on its own
+           when initialised, but every other event (play, timeupdate) needs
+           an explicit `addEventListener` subscription — and subscriptions
+           sent BEFORE `ready` fires are silently dropped. So: listen first,
+           subscribe on ready, activate on play. If the video never plays
+           (autoplay blocked, network drops), no `play` event fires and the
+           cover just stays — better than fading to a black hole. */
+        heroVimeoListener = function(e) {
+          if (!/^https?:\/\/player\.vimeo\.com/.test(e.origin)) return;
           try {
             const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-            if (d.event === 'timeupdate' || d.method === 'timeupdate') {
-              iframe.classList.add('loaded');
-              window.removeEventListener('message', onMsg);
+            if (d.event === 'ready') {
+              iframe.contentWindow.postMessage(
+                JSON.stringify({ method: 'addEventListener', value: 'play' }), '*'
+              );
+              iframe.contentWindow.postMessage(
+                JSON.stringify({ method: 'addEventListener', value: 'timeupdate' }), '*'
+              );
+            } else if (d.event === 'play' || d.event === 'timeupdate') {
+              activateVideo();
+              window.removeEventListener('message', heroVimeoListener);
+              heroVimeoListener = null;
             }
           } catch(_) {}
-        }
-        window.addEventListener('message', onMsg);
-        setTimeout(() => iframe.classList.add('loaded'), 1800);
+        };
+        window.addEventListener('message', heroVimeoListener);
+
         fdHeroMedia.appendChild(iframe);
         return;
       }
@@ -2602,8 +2657,13 @@
 
     function closeFilmDetail() {
       filmDetail.classList.remove('open');
-      /* Kill the hero iframe / cycle timer so audio + CPU stop */
+      /* Kill the hero iframe / cycle timer / vimeo listener so audio, CPU,
+         and event handlers all stop. */
       if (heroCycleTimer) { clearInterval(heroCycleTimer); heroCycleTimer = null; }
+      if (heroVimeoListener) {
+        window.removeEventListener('message', heroVimeoListener);
+        heroVimeoListener = null;
+      }
       fdHeroMedia.innerHTML = '';
       if (!gallery.classList.contains('open')) {
         document.body.style.overflow = '';
