@@ -577,6 +577,26 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
 /* Crew see the add button only on their own column; hide on others.
    Handled by applyRoleLayout which hides the whole column anyway. */
 </style>
+<!-- Firebase Auth — anonymous sign-in only, so Realtime Database rules can
+     require auth != null without touching the app's own username/password
+     login screen. See fbGet/fbSet/fbDelete/fbPush below for how the token
+     is attached to each request. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.14.1/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.14.1/firebase-auth-compat.min.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDDDqSHS_iSMEotQpPxdEPq3pOWWLxUrao",
+    authDomain: "menfolk-production.firebaseapp.com",
+    databaseURL: "https://menfolk-production-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "menfolk-production",
+    storageBucket: "menfolk-production.firebasestorage.app",
+    messagingSenderId: "526161130019",
+    appId: "1:526161130019:web:67d517bda503d72565f796",
+    measurementId: "G-HWQH7QLZ0G"
+  };
+  firebase.initializeApp(firebaseConfig);
+  firebase.auth().signInAnonymously().catch(err => console.error('Anonymous auth failed:', err));
+</script>
 </head>
 <body>
 
@@ -773,7 +793,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button{display:none!import
             <span class="sidebar-link-sub">menfolkfilm@outlook.com</span>
           </div>
         </a>
-        <a class="sidebar-link" href="https://drive.google.com/drive/folders/1Rei4kAu4fq0XUeIiCxiLc4VhQqRxs7uc?usp=drive_link" target="_blank">
+        <a class="sidebar-link" href="https://drive.google.com/drive/folders/1aqDvJHNHMA1dhk3CUvmH2QbY45yaa6LK?usp=drive_link" target="_blank">
           <span class="sidebar-link-icon">📁</span>
           <div class="sidebar-link-text">
             <span class="sidebar-link-title">Production Drive</span>
@@ -2518,21 +2538,36 @@ async function resetPersonPassword(name){
 }
 
 // --- FIREBASE ---
+// Waits for the anonymous sign-in (kicked off in <head>) to complete, then
+// returns a fresh ID token. firebase.User.getIdToken() caches internally
+// and only re-fetches when the token is near expiry, so calling this on
+// every request is cheap.
+let authReadyResolve;
+const authReady = new Promise(resolve => { authReadyResolve = resolve; });
+firebase.auth().onAuthStateChanged(user => { if (user) authReadyResolve(user); });
+async function fbToken(){
+  const user = await authReady;
+  return user.getIdToken();
+}
 async function fbGet(path){
-  const r=await fetch(`${DB}/${path}.json`);
+  const token=await fbToken();
+  const r=await fetch(`${DB}/${path}.json?auth=${token}`);
   if(!r.ok) throw new Error('Read failed');
   return r.json();
 }
 async function fbSet(path,data){
-  const r=await fetch(`${DB}/${path}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  const token=await fbToken();
+  const r=await fetch(`${DB}/${path}.json?auth=${token}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
   if(!r.ok) throw new Error('Write failed');
   return r.json();
 }
 async function fbDelete(path){
-  await fetch(`${DB}/${path}.json`,{method:'DELETE'});
+  const token=await fbToken();
+  await fetch(`${DB}/${path}.json?auth=${token}`,{method:'DELETE'});
 }
 async function fbPush(path,data){
-  const r=await fetch(`${DB}/${path}.json`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  const token=await fbToken();
+  const r=await fetch(`${DB}/${path}.json?auth=${token}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
   if(!r.ok) throw new Error('Push failed');
   return (await r.json()).name;
 }
