@@ -288,35 +288,25 @@
       border-top:1px solid var(--rule);
     }
     .film-entry {
-      display:flex;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      grid-template-areas:"media body";
+      gap:88px;
       align-items:center;
-      gap:72px;
       padding:88px 0;
       border-bottom:1px solid var(--rule);
       cursor:none;
     }
     /* Even entries flip — image on the right */
-    .film-entry:nth-child(even) { flex-direction:row-reverse; }
-
+    .film-entry:nth-child(even) {
+      grid-template-areas:"body media";
+    }
     .film-entry-media {
-      flex:0 0 auto;
-      /* Default sizing: fix the height, let the image's natural aspect ratio
-         drive the width. JS updates `aspect-ratio` inline once the image
-         loads, and toggles `.is-wide` for anamorphic covers that would
-         otherwise overflow the row. */
-      height:clamp(360px, 60vh, 580px);
-      width:auto;
-      aspect-ratio:16/9;                 /* Placeholder until image loads */
-      position:relative;
+      grid-area:media;
+      position:relative; aspect-ratio:16/10;
       background:var(--bg2); overflow:hidden; isolation:isolate;
       outline:1px solid rgba(229,224,216,0.08);
       transition:outline-color 0.4s ease;
-    }
-    /* Anamorphic / very wide covers (≥2:1): cap by width, let height
-       shrink so the row doesn't overflow horizontally. */
-    .film-entry-media.is-wide {
-      width:min(64vw, 1000px);
-      height:auto;
     }
     .film-entry:hover .film-entry-media { outline-color:rgba(229,224,216,0.28); }
     .film-entry-img {
@@ -344,17 +334,16 @@
     .film-entry-media .preview-frame.loaded { opacity:1; }
 
     .film-entry-body {
-      flex:1 1 0;
-      min-width:240px;
-      max-width:440px;
+      grid-area:body;
       display:flex; flex-direction:column; gap:22px;
+      max-width:520px;
     }
     .film-entry-idx {
       font-size:9px; font-weight:300; letter-spacing:0.42em;
       text-transform:uppercase; color:var(--mid);
     }
     .film-entry-title {
-      font-size:clamp(28px, 3.6vw, 48px);
+      font-size:clamp(30px, 4.4vw, 56px);
       font-weight:200; letter-spacing:0.015em;
       line-height:1.02; text-transform:uppercase;
       color:var(--text);
@@ -388,22 +377,14 @@
     }
     .film-entry:hover .film-entry-enter::after { width:60px; }
 
-    /* Mobile: stack, cover on top, no alternation. Mobile rules override
-       inline JS styles via !important since JS sets sizes for desktop. */
+    /* Mobile: stack, cover on top, no alternation */
     @media (max-width:900px) {
       .film-entry,
       .film-entry:nth-child(even) {
-        flex-direction:column;
-        align-items:stretch;
+        grid-template-columns:1fr;
+        grid-template-areas:"media" "body";
         gap:28px;
         padding:52px 0;
-      }
-      .film-entry-media,
-      .film-entry-media.is-wide {
-        width:100% !important;
-        height:auto !important;
-        max-width:100%;
-        max-height:70vh;
       }
       .film-entry-body { max-width:none; gap:16px; }
       .film-entry-title { font-size:clamp(28px, 8vw, 44px); }
@@ -460,6 +441,14 @@
       opacity:0; transition:opacity 1.2s ease;
     }
     #fd-hero-media img.loaded { opacity:0.6; }
+    /* Cycling stills — all images stacked absolutely; only the .active one
+       is visible. Slower crossfade than the single-image loader so the
+       transition reads as intentional rather than a page refresh. */
+    #fd-hero-media img.hero-cycle-img {
+      position:absolute; inset:0;
+      opacity:0; transition:opacity 1.8s ease;
+    }
+    #fd-hero-media img.hero-cycle-img.active { opacity:0.6; }
     #fd-hero-media iframe {
       position:absolute; top:50%; left:50%;
       transform:translate(-50%,-50%);
@@ -2199,18 +2188,7 @@
 
         /* Cover format fallback (avif → webp → jpg) */
         if (img) {
-          img.addEventListener('load', () => {
-            img.classList.add('loaded');
-            /* Adapt the tile to the image's real aspect ratio so covers of
-               any landscape shape (5:4 open-gate, 16:9, 2.39:1 anamorphic)
-               display without cropping. Anamorphic covers (≥2:1) get the
-               .is-wide class so they cap by width instead of overflowing. */
-            const w = img.naturalWidth, h = img.naturalHeight;
-            if (w && h) {
-              media.style.aspectRatio = `${w} / ${h}`;
-              media.classList.toggle('is-wide', (w / h) >= 2.0);
-            }
-          });
+          img.addEventListener('load', () => img.classList.add('loaded'));
           const variants = [p.folder + 'cover.avif', p.folder + 'cover.webp', p.folder + 'cover.jpg']
             .filter(v => v !== p.cover);
           let vi = 0;
@@ -2489,33 +2467,38 @@
       });
     }
 
+    /* Hero image cycling — for films without a trailer, the hero loops
+       through the cover + gallery stills instead of sitting on one image.
+       This timer is cleared whenever the hero is re-rendered or the detail
+       view closes, otherwise a zombie interval keeps firing off-screen. */
+    let heroCycleTimer = null;
+
     function loadFilmDetailHero(p) {
+      if (heroCycleTimer) { clearInterval(heroCycleTimer); heroCycleTimer = null; }
       fdHeroMedia.innerHTML = '';
       const galleryVimeo = (p.gallery || []).find(g => g.vimeo && g.vimeo !== 'YOUR_VIMEO_ID');
       const vimeoId = p.trailer || (galleryVimeo && galleryVimeo.vimeo);
 
-      /* Always place a cover image behind, then overlay iframe if we have one.
-         This means the hero never sits blank while a Vimeo player boots up. */
-      const img = document.createElement('img');
-      img.alt = p.title || '';
-      img.addEventListener('load', () => img.classList.add('loaded'));
-      const variants = [p.cover, p.folder + 'cover.avif', p.folder + 'cover.webp', p.folder + 'cover.jpg']
-        .filter((v, i, a) => v && a.indexOf(v) === i);
-      let vi = 0;
-      function tryVariant() {
-        if (vi >= variants.length) return;
-        img.onerror = tryVariant;
-        img.src = variants[vi++];
-      }
-      tryVariant();
-      fdHeroMedia.appendChild(img);
-
       if (vimeoId) {
+        /* Video case unchanged: static cover behind, autoplaying iframe on top. */
+        const img = document.createElement('img');
+        img.alt = p.title || '';
+        img.addEventListener('load', () => img.classList.add('loaded'));
+        const variants = [p.cover, p.folder + 'cover.avif', p.folder + 'cover.webp', p.folder + 'cover.jpg']
+          .filter((v, i, a) => v && a.indexOf(v) === i);
+        let vi = 0;
+        function tryVariant() {
+          if (vi >= variants.length) return;
+          img.onerror = tryVariant;
+          img.src = variants[vi++];
+        }
+        tryVariant();
+        fdHeroMedia.appendChild(img);
+
         const iframe = document.createElement('iframe');
         iframe.src = `https://player.vimeo.com/video/${vimeoId}?background=1&autoplay=1&loop=1&muted=1`;
         iframe.allow = 'autoplay';
         iframe.tabIndex = -1;
-        /* Size to cover the hero container at 16:9, matching preview-thumb logic */
         requestAnimationFrame(() => {
           const w = fdHeroMedia.offsetWidth || window.innerWidth;
           const h = fdHeroMedia.offsetHeight || window.innerHeight;
@@ -2526,7 +2509,6 @@
           iframe.style.width  = fW + 'px';
           iframe.style.height = fH + 'px';
         });
-        /* Fade in once actually playing */
         function onMsg(e) {
           try {
             const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
@@ -2537,9 +2519,48 @@
           } catch(_) {}
         }
         window.addEventListener('message', onMsg);
-        setTimeout(() => iframe.classList.add('loaded'), 1800); // fallback
+        setTimeout(() => iframe.classList.add('loaded'), 1800);
         fdHeroMedia.appendChild(iframe);
+        return;
       }
+
+      /* No video — cycle through the cover + any still gallery items.
+         Cover leads so the strongest single image is the entry point. */
+      const stills = [];
+      if (p.cover) stills.push(p.cover);
+      (p.gallery || []).forEach(g => {
+        if (g.src && !stills.includes(g.src)) stills.push(g.src);
+      });
+
+      if (!stills.length) return;
+
+      stills.forEach((src, i) => {
+        const img = document.createElement('img');
+        img.className = 'hero-cycle-img';
+        img.alt = p.title || '';
+        img.decoding = 'async';
+        if (i > 0) img.loading = 'lazy';
+        /* First image becomes active as soon as it loads; the rest wait
+           for their turn in the cycle. */
+        img.addEventListener('load', () => {
+          if (i === 0 && !fdHeroMedia.querySelector('.hero-cycle-img.active')) {
+            img.classList.add('active');
+          }
+        });
+        img.src = src;
+        fdHeroMedia.appendChild(img);
+      });
+
+      if (stills.length < 2) return;
+
+      let cycleIdx = 0;
+      heroCycleTimer = setInterval(() => {
+        const imgs = fdHeroMedia.querySelectorAll('.hero-cycle-img');
+        if (imgs.length < 2) return;
+        imgs[cycleIdx].classList.remove('active');
+        cycleIdx = (cycleIdx + 1) % imgs.length;
+        imgs[cycleIdx].classList.add('active');
+      }, 5500);
     }
 
     function renderFilmDetail(idx) {
@@ -2581,7 +2602,8 @@
 
     function closeFilmDetail() {
       filmDetail.classList.remove('open');
-      /* Kill the hero iframe so audio/CPU stops */
+      /* Kill the hero iframe / cycle timer so audio + CPU stop */
+      if (heroCycleTimer) { clearInterval(heroCycleTimer); heroCycleTimer = null; }
       fdHeroMedia.innerHTML = '';
       if (!gallery.classList.contains('open')) {
         document.body.style.overflow = '';
