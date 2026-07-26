@@ -454,7 +454,7 @@
        transition reads as intentional rather than a page refresh. */
     #fd-hero-media img.hero-cycle-img {
       position:absolute; inset:0;
-      opacity:0; transition:opacity 1.8s ease;
+      opacity:0; transition:opacity 1.2s ease;
     }
     #fd-hero-media img.hero-cycle-img.active { opacity:0.6; }
     #fd-hero-media iframe {
@@ -2771,7 +2771,7 @@
         imgs[cycleIdx].classList.remove('active');
         cycleIdx = (cycleIdx + 1) % imgs.length;
         imgs[cycleIdx].classList.add('active');
-      }, 5500);
+      }, 3500);
     }
 
     function renderFilmDetail(idx) {
