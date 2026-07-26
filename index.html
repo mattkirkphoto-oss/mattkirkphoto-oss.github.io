@@ -591,6 +591,79 @@
       color:var(--text);
     }
 
+    /* Full credits — expandable end-credits-style block. Data comes from
+       p.fullCredits, structured as departments each with a `roles` array.
+       Coexists with the summary credits in the right column above. */
+    #fd-full-credits {
+      padding:0 44px;
+      max-width:1440px; margin:0 auto;
+      border-bottom:1px solid var(--rule);
+    }
+    #fd-full-credits.hidden { display:none; }
+    .fd-fc-toggle {
+      display:flex; align-items:center; justify-content:center; gap:22px;
+      width:100%; padding:44px 0;
+      background:none; border:none; cursor:none;
+      font-family:var(--f);
+      font-size:10px; font-weight:400; letter-spacing:0.36em;
+      text-transform:uppercase; color:var(--text);
+      opacity:0.75;
+      transition:opacity 0.25s, gap 0.4s var(--ease);
+    }
+    .fd-fc-toggle:hover { opacity:1; gap:30px; }
+    .fd-fc-chevron {
+      display:inline-block;
+      width:9px; height:9px;
+      border-right:1px solid currentColor;
+      border-bottom:1px solid currentColor;
+      transform:translateY(-2px) rotate(45deg);
+      transition:transform 0.45s var(--ease);
+    }
+    #fd-full-credits.open .fd-fc-chevron {
+      transform:translateY(2px) rotate(-135deg);
+    }
+    /* Modern collapsible via grid-template-rows 0fr → 1fr — no JS height
+       measuring needed, animates cleanly at any content length. */
+    .fd-fc-content {
+      display:grid;
+      grid-template-rows:0fr;
+      transition:grid-template-rows 0.6s var(--ease);
+    }
+    #fd-full-credits.open .fd-fc-content {
+      grid-template-rows:1fr;
+    }
+    .fd-fc-content > div { overflow:hidden; }
+    .fd-fc-inner {
+      padding:16px 0 72px;
+      display:flex; flex-direction:column; gap:52px;
+      align-items:center; text-align:center;
+    }
+    .fd-fc-dept {
+      display:flex; flex-direction:column; gap:20px;
+      align-items:center;
+      width:100%; max-width:620px;
+    }
+    .fd-fc-dept-name {
+      font-size:9px; font-weight:400; letter-spacing:0.4em;
+      text-transform:uppercase; color:var(--mid);
+      padding-bottom:14px;
+      border-bottom:1px solid var(--rule);
+      width:100%;
+    }
+    .fd-fc-role {
+      display:grid; grid-template-columns:1fr 1fr; gap:32px;
+      align-items:baseline; width:100%;
+    }
+    .fd-fc-role-label {
+      font-size:9px; font-weight:300; letter-spacing:0.28em;
+      text-transform:uppercase; color:var(--mid);
+      text-align:right;
+    }
+    .fd-fc-role-name {
+      font-size:12px; font-weight:300; letter-spacing:0.03em;
+      color:var(--text); text-align:left;
+    }
+
     /* Stills — variable aspect ratio grid, each tile sized to its image */
     #fd-stills-block {
       padding:88px 44px;
@@ -675,6 +748,12 @@
       .fd-credit { grid-template-columns:1fr; gap:4px; padding:14px 0; }
       .fd-credit-role { text-align:left; }
       .fd-nav-btn-title { font-size:13px; }
+      #fd-full-credits { padding:0 22px; }
+      .fd-fc-toggle { padding:36px 0; font-size:9px; letter-spacing:0.28em; }
+      .fd-fc-inner { padding:8px 0 52px; gap:40px; }
+      .fd-fc-role { grid-template-columns:1fr; gap:4px; text-align:center; }
+      .fd-fc-role-label { text-align:center; }
+      .fd-fc-role-name { text-align:center; }
     }
 
     #gallery {
@@ -1222,6 +1301,7 @@
           <div id="fd-credit-list"></div>
         </div>
       </div>
+      <div id="fd-full-credits"></div>
       <div id="fd-stills-block">
         <span class="fd-label">Stills</span>
         <div id="fd-stills"></div>
@@ -1429,10 +1509,33 @@
            { "role": "Director",      "name": "Matt Kirkham" },
            { "role": "Written by",    "name": "Matt Kirkham & Aoife McGrath" },
            { "role": "DOP",           "name": "Callum Watson" }
+         ],
+         "fullCredits": [
+           { "department": "Cast",
+             "roles": [
+               { "role": "Manus", "name": "Actor Name" },
+               { "role": "Brian", "name": "Actor Name" }
+             ]
+           },
+           { "department": "Direction",
+             "roles": [
+               { "role": "Director",           "name": "Matt Kirkham" },
+               { "role": "Assistant Director", "name": "Yegor Chmilewsky" }
+             ]
+           },
+           { "department": "Camera",
+             "roles": [
+               { "role": "Director of Photography", "name": "Callum Watson" },
+               { "role": "1st AC",                  "name": "Jay Yolchiyeva" }
+             ]
+           }
          ]
        }
-       Order is preserved for credits and laurels. Any field
-       left out just hides that block in the detail view.
+       Order is preserved for credits, fullCredits, and laurels. Any field
+       left out just hides that block in the detail view.  `credits` shows
+       in the summary column of the body; `fullCredits` renders inside the
+       expandable "Full Credits" section below the body — the two are
+       independent, so a film can have either, both, or neither.
     ═══════════════════════════════════════════════════════ */
 
     /* Resolved project data — populated on load from project.json files */
@@ -1467,7 +1570,8 @@
           directorNote:  meta.directorNote || '',
           role:          meta.role         || '',
           laurels:       Array.isArray(meta.laurels) ? meta.laurels : [],
-          credits:       Array.isArray(meta.credits) ? meta.credits : []
+          credits:       Array.isArray(meta.credits) ? meta.credits : [],
+          fullCredits:   Array.isArray(meta.fullCredits) ? meta.fullCredits : []
         };
       } catch (_) { return null; }
     }
@@ -2343,6 +2447,7 @@
     const fdBody       = document.getElementById('fd-body');
     const fdCredits    = document.getElementById('fd-credits');
     const fdCreditList = document.getElementById('fd-credit-list');
+    const fdFullCredits= document.getElementById('fd-full-credits');
     const fdStillsBlk  = document.getElementById('fd-stills-block');
     const fdStills     = document.getElementById('fd-stills');
     const fdPrev       = document.getElementById('fd-prev');
@@ -2378,6 +2483,57 @@
           <span class="fd-credit-name">${c.name || ''}</span>
         </div>`
       ).join('');
+    }
+
+    /* Expandable end-credits-style block below the body. Rendered from
+       p.fullCredits — an array of departments, each with a `roles` list.
+       Starts collapsed; the toggle animates the section open using the
+       grid-template-rows 0fr → 1fr trick so no JS height measurement is
+       needed regardless of how many credits there are. */
+    function renderFullCredits(fullCredits) {
+      const container = fdFullCredits;
+      if (!fullCredits || !fullCredits.length) {
+        container.innerHTML = '';
+        container.classList.add('hidden');
+        container.classList.remove('open');
+        return;
+      }
+      container.classList.remove('hidden');
+      container.classList.remove('open');   /* always start collapsed on new film */
+
+      const depts = fullCredits.map(dept => {
+        const roles = (dept.roles || []).map(r =>
+          `<div class="fd-fc-role">
+            <span class="fd-fc-role-label">${r.role || ''}</span>
+            <span class="fd-fc-role-name">${r.name || ''}</span>
+          </div>`
+        ).join('');
+        return `<div class="fd-fc-dept">
+          <span class="fd-fc-dept-name">${dept.department || ''}</span>
+          ${roles}
+        </div>`;
+      }).join('');
+
+      container.innerHTML = `
+        <button class="fd-fc-toggle" type="button" aria-expanded="false" aria-controls="fd-fc-content">
+          <span class="fd-fc-label">Full Credits</span>
+          <span class="fd-fc-chevron" aria-hidden="true"></span>
+        </button>
+        <div class="fd-fc-content" id="fd-fc-content">
+          <div><div class="fd-fc-inner">${depts}</div></div>
+        </div>
+      `;
+
+      const toggle = container.querySelector('.fd-fc-toggle');
+      const label  = container.querySelector('.fd-fc-label');
+      toggle.addEventListener('click', () => {
+        const isOpen = container.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', String(isOpen));
+        label.textContent = isOpen ? 'Hide Credits' : 'Full Credits';
+      });
+      /* Cursor consistency with the rest of the site's custom-cursor UI */
+      toggle.addEventListener('mouseenter', curView);
+      toggle.addEventListener('mouseleave', curOff);
     }
 
     function renderContentBlocks(p) {
@@ -2637,6 +2793,7 @@
       renderLaurels(p.laurels);
       renderContentBlocks(p);
       renderCredits(p.credits);
+      renderFullCredits(p.fullCredits);
       renderStillsGrid(p.gallery, idx);
 
       /* Prev / Next */
