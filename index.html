@@ -415,6 +415,21 @@
       transition:transform 0.55s var(--ease);
     }
     .film-entry:hover .film-entry-title { transform:translateX(6px); }
+    /* Title mark — Illustrator SVG artwork in place of the plain-text
+       title. Inlined (not <img>) so `fill:currentColor` in the SVG picks
+       up the site's text colour automatically. Width capped, height
+       follows the artwork's own aspect ratio — a one-line title renders
+       short and wide, a three-line title renders taller, and neither
+       needs separate CSS since the SVG's viewBox already encodes it. */
+    .film-entry-title-mark {
+      width:min(100%, 460px);
+      color:var(--text);         /* SVG uses fill:currentColor */
+      transition:transform 0.55s var(--ease);
+    }
+    .film-entry-title-mark svg {
+      display:block; width:100%; height:auto;
+    }
+    .film-entry:hover .film-entry-title-mark { transform:translateX(6px); }
     .film-entry-meta {
       font-size:10px; font-weight:300; letter-spacing:0.28em;
       text-transform:uppercase; color:var(--mid);
@@ -480,6 +495,7 @@
         width:100%;
       }
       .film-entry-title { font-size:clamp(28px, 8vw, 44px); }
+      .film-entry-title-mark { width:min(80vw, 380px); }
       .film-entry-logline { font-size:13px; }
     }
 
@@ -585,6 +601,17 @@
       color:var(--text);
       max-width:14ch;
     }
+    /* Hero title mark — same inlined-SVG approach as the section-page
+       version, just bigger since the hero has the full viewport to work
+       with. Centred (the hero overlay is a centred flex column) rather
+       than left-aligned like the section page. */
+    #fd-title-mark {
+      width:min(78vw, 720px);
+      color:var(--text);
+    }
+    #fd-title-mark svg {
+      display:block; width:100%; height:auto;
+    }
     #fd-logline {
       font-size:clamp(13px, 1.2vw, 15px);
       font-weight:200; letter-spacing:0.02em;
@@ -675,6 +702,21 @@
       color:var(--text);
     }
 
+    /* Cast — visually separated from key crew credits above it. Sits in
+       the same right-hand column but gets its own label and a wider gap
+       so it reads as "billing block" convention: crew, then Starring. */
+    #fd-cast {
+      display:flex; flex-direction:column; gap:20px;
+      margin-top:36px;
+    }
+    #fd-cast.hidden { display:none; }
+    #fd-cast-list {
+      display:flex; flex-direction:column;
+      margin-top:6px;
+    }
+    /* Cast rows reuse .fd-credit for role/name grid + divider styling,
+       just rendered inside their own labelled block. */
+
     /* Full credits — expandable end-credits-style block. Data comes from
        p.fullCredits, structured as departments each with a `roles` array.
        Coexists with the summary credits in the right column above. */
@@ -727,6 +769,14 @@
       align-items:center;
       width:100%; max-width:620px;
     }
+    /* Flat shape (no department headers) — role rows separated by a
+       hairline instead of relying on department grouping for rhythm. */
+    .fd-fc-dept--flat { gap:0; }
+    .fd-fc-dept--flat .fd-fc-role {
+      padding:14px 0;
+      border-bottom:1px solid rgba(242,237,229,0.06);
+    }
+    .fd-fc-dept--flat .fd-fc-role:last-child { border-bottom:0; }
     .fd-fc-dept-name {
       font-size:9px; font-weight:400; letter-spacing:0.4em;
       text-transform:uppercase; color:var(--mid);
@@ -818,6 +868,7 @@
       #fd-hero { height:80vh; min-height:520px; }
       #fd-hero-overlay { padding:0 22px 32px; gap:14px; }
       #fd-title { max-width:none; }
+      #fd-title-mark { width:min(84vw, 420px); }
       .fd-laurel { gap:10px; font-size:9px; letter-spacing:0.24em; flex-wrap:wrap; justify-content:center; }
       .fd-laurel > *:not(:last-child)::after { margin-left:10px; }
       #fd-body {
@@ -1374,6 +1425,7 @@
           <div id="fd-laurels"></div>
           <div id="fd-year-cat"></div>
           <h1 id="fd-title"></h1>
+          <div id="fd-title-mark" aria-hidden="true"></div>
           <p id="fd-logline"></p>
         </div>
         <div id="fd-scroll-cue">Scroll</div>
@@ -1383,6 +1435,10 @@
         <div id="fd-credits">
           <span class="fd-label">Credits</span>
           <div id="fd-credit-list"></div>
+        </div>
+        <div id="fd-cast">
+          <span class="fd-label">Starring</span>
+          <div id="fd-cast-list"></div>
         </div>
       </div>
       <div id="fd-full-credits"></div>
@@ -1552,7 +1608,6 @@
         'images/film/project-2/',
         'images/film/project-3/',
         'images/film/project-4/',
-        'images/film/project-5/',
       ],
 
     };
@@ -1577,6 +1632,15 @@
        For film projects, project.json supports additional
        fields for the film detail page. All are optional.
        {
+         "titleMark":    "title.svg",  // Illustrator title-card artwork.
+                                       // Lives in the project folder next to
+                                       // project.json. Replaces the plain-
+                                       // text title on BOTH the section-page
+                                       // index and the detail hero — line
+                                       // breaks, so leave them out of `title`
+                                       // itself (still required, used for
+                                       // alt text / accessibility / nav).
+                                       // Falls back to plain text if absent.
          "logline":      "One-line pitch, shown under the title on the hero.",
          "runtime":      "12 min",
          "trailer":      "VIMEO_ID",   // Optional dedicated hero video; falls
@@ -1590,37 +1654,51 @@
              "festival": "Cambridge Film Festival",
              "year": "2025" }
          ],
+
+         (Three-tier credit system, each tier optional and independent:
+              credits     — key crew, always visible in the body
+              cast        — key cast, always visible, shown as its own
+                             block directly below credits (billing-block
+                             convention: crew first, then "Starring")
+              fullCredits — everything else, hidden behind an expandable
+                             "Full Credits" toggle. Don't repeat names
+                             already shown in credits/cast above — the
+                             point of the split is that expanding reveals
+                             NEW information, not a re-print.)
          "credits": [
            { "role": "Director",      "name": "Matt Kirkham" },
            { "role": "Written by",    "name": "Matt Kirkham & Aoife McGrath" },
            { "role": "DOP",           "name": "Callum Watson" }
          ],
+         "cast": [
+           { "role": "Manus", "name": "Actor Name" },
+           { "role": "Brian", "name": "Actor Name" }
+         ],
+
+         (fullCredits accepts EITHER shape below — pick whichever suits
+            the film. Flat is right for small crews (most shorts); grouped
+            is worth it once a department has 3+ people. Don't mix shapes
+            within one film's fullCredits array.)
+
+         Shape A — flat (recommended for small crews, e.g. a 48-hour short):
          "fullCredits": [
-           { "department": "Cast",
-             "roles": [
-               { "role": "Manus", "name": "Actor Name" },
-               { "role": "Brian", "name": "Actor Name" }
-             ]
-           },
-           { "department": "Direction",
-             "roles": [
-               { "role": "Director",           "name": "Matt Kirkham" },
-               { "role": "Assistant Director", "name": "Yegor Chmilewsky" }
-             ]
-           },
+           { "role": "1st Assistant Camera",   "name": "Jay Yolchiyeva" },
+           { "role": "1st Assistant Director", "name": "Yegor Chmilewsky" },
+           { "role": "Sound Recordist",        "name": "Daniella Adetoye" }
+         ]
+
+         Shape B — grouped by department (worth it for larger crews):
+         "fullCredits": [
            { "department": "Camera",
              "roles": [
-               { "role": "Director of Photography", "name": "Callum Watson" },
-               { "role": "1st AC",                  "name": "Jay Yolchiyeva" }
+               { "role": "1st AC", "name": "Jay Yolchiyeva" },
+               { "role": "2nd AC", "name": "Someone Else" }
              ]
            }
          ]
        }
-       Order is preserved for credits, fullCredits, and laurels. Any field
-       left out just hides that block in the detail view.  `credits` shows
-       in the summary column of the body; `fullCredits` renders inside the
-       expandable "Full Credits" section below the body — the two are
-       independent, so a film can have either, both, or neither.
+       Order is preserved for credits, cast, fullCredits, and laurels. Any
+       field left out just hides that block in the detail view.
     ═══════════════════════════════════════════════════════ */
 
     /* Resolved project data — populated on load from project.json files */
@@ -1640,6 +1718,7 @@
           folder,
           cover:         folder + (meta.cover || 'cover.jpg'),
           title:         meta.title       || '',
+          titleMark:     meta.titleMark ? folder + meta.titleMark : '',
           caption:       meta.caption     || '',
           year:          meta.year        || '',
           category:      meta.category    || '',
@@ -1656,6 +1735,7 @@
           role:          meta.role         || '',
           laurels:       Array.isArray(meta.laurels) ? meta.laurels : [],
           credits:       Array.isArray(meta.credits) ? meta.credits : [],
+          cast:          Array.isArray(meta.cast) ? meta.cast : [],
           fullCredits:   Array.isArray(meta.fullCredits) ? meta.fullCredits : []
         };
       } catch (_) { return null; }
@@ -2379,6 +2459,7 @@
           <div class="film-entry-body">
             <span class="film-entry-idx">Film ${ord}</span>
             <h3 class="film-entry-title">${p.title}</h3>
+            <div class="film-entry-title-mark" aria-hidden="true"></div>
             <div class="film-entry-meta">${metaBits.join('')}</div>
             ${logline ? `<p class="film-entry-logline">${logline}</p>` : ''}
             <span class="film-entry-enter">Enter</span>
@@ -2393,6 +2474,9 @@
         const p     = projects[i];
         const media = el.querySelector('.film-entry-media');
         const img   = el.querySelector('.film-entry-img');
+        const titleEl     = el.querySelector('.film-entry-title');
+        const titleMarkEl = el.querySelector('.film-entry-title-mark');
+        applyTitleMark(p, titleMarkEl, titleEl);
 
         /* Cover format fallback (avif → webp → jpg) */
         if (img) {
@@ -2651,12 +2735,15 @@
     const fdHeroMedia  = document.getElementById('fd-hero-media');
     const fdYearCat    = document.getElementById('fd-year-cat');
     const fdTitle      = document.getElementById('fd-title');
+    const fdTitleMark  = document.getElementById('fd-title-mark');
     const fdLogline    = document.getElementById('fd-logline');
     const fdLaurels    = document.getElementById('fd-laurels');
     const fdContent    = document.getElementById('fd-content');
     const fdBody       = document.getElementById('fd-body');
     const fdCredits    = document.getElementById('fd-credits');
     const fdCreditList = document.getElementById('fd-credit-list');
+    const fdCast       = document.getElementById('fd-cast');
+    const fdCastList   = document.getElementById('fd-cast-list');
     const fdFullCredits= document.getElementById('fd-full-credits');
     const fdStillsBlk  = document.getElementById('fd-stills-block');
     const fdStills     = document.getElementById('fd-stills');
@@ -2695,11 +2782,87 @@
       ).join('');
     }
 
+    /* Cast — visually separate "Starring" block, always visible alongside
+       the key credits above (billing-block convention). Reuses .fd-credit
+       row styling so it looks consistent, just lives in its own labelled
+       container with extra top margin for separation. */
+    function renderCast(cast) {
+      if (!cast || !cast.length) {
+        fdCastList.innerHTML = '';
+        fdCast.classList.add('hidden');
+        return;
+      }
+      fdCast.classList.remove('hidden');
+      fdCastList.innerHTML = cast.map(c =>
+        `<div class="fd-credit">
+          <span class="fd-credit-role">${c.role || ''}</span>
+          <span class="fd-credit-name">${c.name || ''}</span>
+        </div>`
+      ).join('');
+    }
+
+    /* Title mark — fetches an Illustrator-exported SVG and inlines its
+       markup directly into the DOM (rather than using <img src="...">),
+       because only inlined SVG markup can pick up `fill:currentColor` from
+       surrounding CSS. An <img> would freeze whatever colour was baked in
+       at export time. Width/height attributes are stripped so the SVG's
+       own `viewBox` controls its aspect ratio and it scales purely from
+       the CSS width set on its container. Results are cached per URL since
+       both the section index and the hero may render the same mark. */
+    const titleMarkCache = new Map();
+    async function loadTitleMarkSVG(url) {
+      if (titleMarkCache.has(url)) return titleMarkCache.get(url);
+      const promise = (async () => {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) return null;
+          let svg = await res.text();
+          /* Strip explicit width/height so only the viewBox governs shape */
+          svg = svg.replace(/<svg([^>]*)\swidth="[^"]*"/i, '<svg$1')
+                   .replace(/<svg([^>]*)\sheight="[^"]*"/i, '<svg$1');
+          return svg;
+        } catch (_) { return null; }
+      })();
+      titleMarkCache.set(url, promise);
+      return promise;
+    }
+
+    /* Renders a title mark into `container` if p.titleMark is set, falling
+       back to plain text (already rendered by the caller) on any failure —
+       missing file, malformed SVG, network error. `textEl` is toggled
+       invisible rather than removed so accessibility tools and the browser
+       tab / nav titles still have real text to read even when the mark
+       is showing. */
+    async function applyTitleMark(p, markContainer, textEl) {
+      if (!p.titleMark) {
+        markContainer.innerHTML = '';
+        markContainer.style.display = 'none';
+        textEl.style.display = '';
+        return;
+      }
+      const svg = await loadTitleMarkSVG(p.titleMark);
+      if (!svg) {
+        /* Fetch failed — quietly keep showing the text title */
+        markContainer.innerHTML = '';
+        markContainer.style.display = 'none';
+        textEl.style.display = '';
+        return;
+      }
+      markContainer.innerHTML = svg;
+      markContainer.style.display = '';
+      textEl.style.display = 'none';
+    }
+
     /* Expandable end-credits-style block below the body. Rendered from
-       p.fullCredits — an array of departments, each with a `roles` list.
-       Starts collapsed; the toggle animates the section open using the
-       grid-template-rows 0fr → 1fr trick so no JS height measurement is
-       needed regardless of how many credits there are. */
+       p.fullCredits, which accepts TWO shapes:
+         Flat:    [{ role, name }, ...]
+         Grouped: [{ department, roles: [{ role, name }, ...] }, ...]
+       Shape is detected per-array (presence of `.department` on the first
+       item) rather than configured — flat suits small crews where a
+       department would only ever hold one name; grouped is worth it once
+       a department has 3+ people. Starts collapsed; the toggle animates
+       open using the grid-template-rows 0fr → 1fr trick so no JS height
+       measurement is needed regardless of how many credits there are. */
     function renderFullCredits(fullCredits) {
       const container = fdFullCredits;
       if (!fullCredits || !fullCredits.length) {
@@ -2711,18 +2874,20 @@
       container.classList.remove('hidden');
       container.classList.remove('open');   /* always start collapsed on new film */
 
-      const depts = fullCredits.map(dept => {
-        const roles = (dept.roles || []).map(r =>
-          `<div class="fd-fc-role">
-            <span class="fd-fc-role-label">${r.role || ''}</span>
-            <span class="fd-fc-role-name">${r.name || ''}</span>
-          </div>`
-        ).join('');
-        return `<div class="fd-fc-dept">
-          <span class="fd-fc-dept-name">${dept.department || ''}</span>
-          ${roles}
+      const isGrouped = fullCredits[0] && Array.isArray(fullCredits[0].roles);
+
+      const roleRow = r =>
+        `<div class="fd-fc-role">
+          <span class="fd-fc-role-label">${r.role || ''}</span>
+          <span class="fd-fc-role-name">${r.name || ''}</span>
         </div>`;
-      }).join('');
+
+      const inner = isGrouped
+        ? fullCredits.map(dept => `<div class="fd-fc-dept">
+            <span class="fd-fc-dept-name">${dept.department || ''}</span>
+            ${(dept.roles || []).map(roleRow).join('')}
+          </div>`).join('')
+        : `<div class="fd-fc-dept fd-fc-dept--flat">${fullCredits.map(roleRow).join('')}</div>`;
 
       container.innerHTML = `
         <button class="fd-fc-toggle" type="button" aria-expanded="false" aria-controls="fd-fc-content">
@@ -2730,7 +2895,7 @@
           <span class="fd-fc-chevron" aria-hidden="true"></span>
         </button>
         <div class="fd-fc-content" id="fd-fc-content">
-          <div><div class="fd-fc-inner">${depts}</div></div>
+          <div><div class="fd-fc-inner">${inner}</div></div>
         </div>
       `;
 
@@ -2997,12 +3162,14 @@
       if (p.runtime)  parts.push(`<span>${p.runtime}</span>`);
       fdYearCat.innerHTML = parts.join('');
       fdTitle.textContent = p.title || '';
+      applyTitleMark(p, fdTitleMark, fdTitle);
       fdLogline.textContent = p.logline || p.caption || '';
 
       loadFilmDetailHero(p);
       renderLaurels(p.laurels);
       renderContentBlocks(p);
       renderCredits(p.credits);
+      renderCast(p.cast);
       renderFullCredits(p.fullCredits);
       renderStillsGrid(p.gallery, idx);
 

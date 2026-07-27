@@ -1,16 +1,55 @@
 {
-  "title": "Shades of Red",
-  "caption": "Short Film — 2026",
+  "title": "Gänger",
+  "titleMark": "title.svg",
+  "caption": "48-Hour Film Festival, 2026",
   "year": "2026",
   "category": "Narrative",
   "cover": "cover.webp",
-  "description": "Short film. Dir. Millie Hine. DOP. Matt Kirkham. Produced by Silver Street Productions, 2026.",
+
+  "logline": "A short film written, shot, and edited in 48 hours, inspired by the folklore of the doppelgänger",
+  "runtime": "",
+  "trailer": "",
+
+  "synopsis": "A woman performs the ritual her mother swore would keep the spirits at bay, until an encounter in the forest shatters the safety she thought she had built.",
+  "directorNote": "",
+  "role": "Director",
+
+  "laurels": [
+    { "type": "Longlisted", "festival": "LAMDA x LFS x RD Studios 48-Hour Film Festival", "year": "2026" }
+  ],
+
+  "credits": [
+    { "role": "Director",                "name": "Matthew Kirkham" },
+    { "role": "Writer",                  "name": "Aoife McGrath" },
+    { "role": "Writer",                  "name": "Matthew Kirkham" },
+    { "role": "Director of Photography", "name": "Callum Watson" }
+  ],
+
+  "cast": [
+    { "role": "Young Woman", "name": "Madeleine Kerr" }
+  ],
+
+  "fullCredits": [
+    { "role": "1st Assistant Camera",   "name": "Jay Yolchiyeva" },
+    { "role": "1st Assistant Director", "name": "Yegor Chmilewsky" },
+    { "role": "Sound Recordist",        "name": "Daniella Adetoye" },
+    { "role": "Gaffer",                 "name": "James Hartley" },
+    { "role": "Makeup Artist",          "name": "Rosy Rockets" },
+    { "role": "Production Assistant",   "name": "Jude Jones" },
+    { "role": "Composer",               "name": "James Hartley" },
+    { "role": "VFX Artist",             "name": "Yegor Chmilewsky" }
+  ],
+
   "gallery": [
-    "cover.webp",
-    "001.webp",
-    "002.webp",
-    "003.webp",
-    "004.webp",
-    "005.webp"
+    "stills/001.webp",
+    "stills/002.webp",
+    "stills/003.webp",
+    "stills/004.webp",
+    "stills/005.webp",
+    "stills/006.webp",
+    "stills/007.webp",
+    "stills/008.webp",
+    "stills/009.webp",
+    "stills/0010.webp"
   ]
 }
