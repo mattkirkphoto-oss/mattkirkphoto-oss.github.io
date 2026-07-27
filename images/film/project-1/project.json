@@ -19,9 +19,8 @@
   ],
 
   "credits": [
-    { "role": "Director",                "name": "Matthew Kirkham" },
+    { "role": "Director & Writer",       "name": "Matthew Kirkham" },
     { "role": "Writer",                  "name": "Aoife McGrath" },
-    { "role": "Writer",                  "name": "Matthew Kirkham" },
     { "role": "Director of Photography", "name": "Callum Watson" }
   ],
 
@@ -30,14 +29,16 @@
   ],
 
   "fullCredits": [
-    { "role": "1st Assistant Camera",   "name": "Jay Yolchiyeva" },
+ { "role": "1st Assistant Camera",   "name": "Jay Yolchiyeva" },
     { "role": "1st Assistant Director", "name": "Yegor Chmilewsky" },
     { "role": "Sound Recordist",        "name": "Daniella Adetoye" },
     { "role": "Gaffer",                 "name": "James Hartley" },
     { "role": "Makeup Artist",          "name": "Rosy Rockets" },
     { "role": "Production Assistant",   "name": "Jude Jones" },
     { "role": "Composer",               "name": "James Hartley" },
-    { "role": "VFX Artist",             "name": "Yegor Chmilewsky" }
+    { "role": "VFX Artist",             "name": "Yegor Chmilewsky" },
+    { "role": "Editor",                 "name": "Matthew Kirkham" },
+    { "role": "Editor",                 "name": "Aoife McGrath" }
   ],
 
   "gallery": [
@@ -50,6 +51,9 @@
     "stills/007.webp",
     "stills/008.webp",
     "stills/009.webp",
-    "stills/0010.webp"
+    "stills/0010.webp",
+    "stills/0011.webp",
+    "stills/0012.webp",
+    "stills/0013.webp"
   ]
 }
