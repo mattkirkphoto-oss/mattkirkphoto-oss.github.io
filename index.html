@@ -495,7 +495,7 @@
         width:100%;
       }
       .film-entry-title { font-size:clamp(28px, 8vw, 44px); }
-      .film-entry-title-mark { width:min(80vw, 380px); }
+      .film-entry-title-mark { width:min(62vw, 280px); }
       .film-entry-logline { font-size:13px; }
     }
 
@@ -1286,6 +1286,17 @@
 
       /* ── FILM SECTION ── */
       .film-inner { padding:56px 22px; }
+      /* section-header already draws a border-bottom right above this —
+         film-index's own border-top duplicated that line 32px later,
+         reading as two redundant rules stacked close together. Mobile
+         only: let the header's line be the only one. */
+      #film-index { border-top:none; }
+      /* 52px of padding before every entry gives good rhythm BETWEEN
+         films, but stacked after the header's own margin-bottom it added
+         up to ~84px of dead space before the very first photo. Tighten
+         just the first entry; every entry after keeps full breathing
+         room. */
+      .film-entry:first-child { padding-top:20px; }
 
       /* ── GRADING ── */
       #grading-grid { grid-template-columns:1fr; }
