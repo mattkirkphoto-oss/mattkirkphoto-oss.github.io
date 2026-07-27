@@ -6,8 +6,14 @@
   <title>Matt Kirkham</title>
   <meta name="description" content="Photography and film — Matt Kirkham, Cambridge.">
 
-  <!-- Favicon — embedded, no separate file needed -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230a0a0a'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='system-ui,sans-serif' font-size='13' font-weight='400' letter-spacing='1' fill='%23ede9e1'%3EMK%3C/text%3E%3C/svg%3E">
+  <!-- Favicon — hosted files, not an inline data URI. Google's search-
+       result favicon crawler expects a fetchable file with its own URL to
+       cache; a data URI (the previous approach) renders fine in browser
+       tabs but doesn't reliably surface in Google Search results. Same
+       "MK" mark, just at a proper hosted 64x64+ size instead of 32x32. -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 
   <!-- Mobile browser chrome colour -->
   <meta name="theme-color" content="#0a0a0a">
