@@ -764,43 +764,58 @@
       grid-template-rows:1fr;
     }
     .fd-fc-content > div { overflow:hidden; }
+    /* Credits flow — a flat sequence of header/role items (built and, when
+       long, split by JS — see renderFullCredits). Single column by
+       default; `.fd-fc-inner--split` switches to two side-by-side flex
+       columns for long credit lists. JS decides exactly which items go in
+       each column by walking the real list and counting, rather than
+       leaning on CSS multi-column's height-balancing (which weighs
+       department headers heavily enough to produce lopsided splits, and
+       whose `column-fill:auto` behaviour with break-avoid rules proved
+       unreliable across content). Deterministic JS split = fills the left
+       column with Cast then Crew in order, continues the rest in the
+       right column, exactly matching how a printed credits sheet reads. */
     .fd-fc-inner {
       padding:16px 0 72px;
-      display:flex; flex-direction:column; gap:52px;
-      align-items:center; text-align:center;
+      max-width:960px; margin:0 auto;
+      display:flex; flex-direction:column;
     }
-    .fd-fc-dept {
-      display:flex; flex-direction:column; gap:20px;
-      align-items:center;
-      width:100%; max-width:620px;
+    .fd-fc-inner--split {
+      flex-direction:row; align-items:flex-start; gap:72px;
     }
-    /* Flat shape (no department headers) — role rows separated by a
-       hairline instead of relying on department grouping for rhythm. */
-    .fd-fc-dept--flat { gap:0; }
-    .fd-fc-dept--flat .fd-fc-role {
-      padding:14px 0;
-      border-bottom:1px solid rgba(242,237,229,0.06);
+    .fd-fc-col {
+      flex:1 1 0; min-width:0;
+      display:flex; flex-direction:column;
     }
-    .fd-fc-dept--flat .fd-fc-role:last-child { border-bottom:0; }
+    /* Header items: block-level, with breathing room above every one
+       except the very first item in a column (where it'd be redundant
+       next to the column's own top padding). */
     .fd-fc-dept-name {
+      display:block;
       font-size:9px; font-weight:400; letter-spacing:0.4em;
       text-transform:uppercase; color:var(--mid);
-      padding-bottom:14px;
+      padding-bottom:14px; margin-top:36px; margin-bottom:6px;
       border-bottom:1px solid var(--rule);
-      width:100%;
+    }
+    .fd-fc-inner > .fd-fc-dept-name:first-child,
+    .fd-fc-col > .fd-fc-dept-name:first-child {
+      margin-top:0;
     }
     .fd-fc-role {
-      display:grid; grid-template-columns:1fr 1fr; gap:32px;
+      display:grid; grid-template-columns:auto 1fr; gap:18px;
       align-items:baseline; width:100%;
+      padding:10px 0;
+      border-bottom:1px solid rgba(242,237,229,0.06);
     }
+    .fd-fc-role:last-child { border-bottom:0; }
     .fd-fc-role-label {
-      font-size:9px; font-weight:300; letter-spacing:0.28em;
+      font-size:9px; font-weight:300; letter-spacing:0.2em;
       text-transform:uppercase; color:var(--mid);
-      text-align:right;
+      white-space:nowrap;
     }
     .fd-fc-role-name {
       font-size:12px; font-weight:300; letter-spacing:0.03em;
-      color:var(--text); text-align:left;
+      color:var(--text);
     }
 
     /* Stills — variable aspect ratio grid, each tile sized to its image */
@@ -890,10 +905,16 @@
       .fd-nav-btn-title { font-size:13px; }
       #fd-full-credits { padding:0 22px; }
       .fd-fc-toggle { padding:36px 0; font-size:9px; letter-spacing:0.28em; }
-      .fd-fc-inner { padding:8px 0 52px; gap:40px; }
-      .fd-fc-role { grid-template-columns:1fr; gap:4px; text-align:center; }
-      .fd-fc-role-label { text-align:center; }
-      .fd-fc-role-name { text-align:center; }
+      /* Two columns only makes sense with room to breathe — collapse back
+         to a single continuous flow on narrow screens. !important guards
+         against a stale split from before a resize down to mobile width
+         (the JS split logic already skips mobile at render time — this
+         is just a safety net, not the primary mechanism). */
+      .fd-fc-inner--split {
+        flex-direction:column !important; gap:0 !important;
+      }
+      .fd-fc-inner { padding:8px 0 52px; }
+      .fd-fc-role { grid-template-columns:auto 1fr; gap:14px; }
     }
 
     #gallery {
@@ -2868,22 +2889,31 @@
     }
 
     /* Expandable end-credits-style block below the body. Rendered from
-       p.fullCredits, which accepts TWO shapes:
+       p.fullCredits (accepts flat OR grouped shape) plus p.cast, which
+       renders as its own "Cast" department at the top of the expanded
+       block — standard billing order, crew follows.
          Flat:    [{ role, name }, ...]
          Grouped: [{ department, roles: [{ role, name }, ...] }, ...]
        Shape is detected per-array (presence of `.department` on the first
        item) rather than configured — flat suits small crews where a
        department would only ever hold one name; grouped is worth it once
-       a department has 3+ people. Starts collapsed; the toggle animates
-       open using the grid-template-rows 0fr → 1fr trick so no JS height
-       measurement is needed regardless of how many credits there are. */
-    /* Expandable end-credits-style block below the body. Rendered from
-       p.fullCredits (accepts flat or grouped shape) plus p.cast which
-       renders as its own "Cast" department at the top of the expanded
-       block. Cast used to live in the body next to key credits, but that
-       cluttered the dashboard for films with only one or two roles —
-       putting it inside the expanded view alongside the crew list keeps
-       the summary clean and gives cast its own labelled home. */
+       a department has 3+ people.
+       Once the combined Cast + Crew list is long enough that a single
+       column would run tall, the whole thing flows into two columns
+       instead — left fills completely, then continues into the right.
+       Short lists stay in one natural column.
+       The split point is decided directly in JS by walking a flat,
+       ordered list of header/role items and counting weighted units —
+       not by CSS multi-column's height-balancing, which weighs
+       department headers heavily enough to produce lopsided splits (e.g.
+       3 items left / 8 items right on an 11-credit list), and not by
+       `column-fill:auto`, whose interaction with break-avoid rules proved
+       unreliable across browsers. Walking our own list means the exact
+       same split every time, in every browser.
+       Starts collapsed; the toggle animates open using the
+       grid-template-rows 0fr → 1fr trick. */
+    const FC_SPLIT_THRESHOLD = 6;   /* combined cast+crew count that triggers two columns */
+
     function renderFullCredits(fullCredits, cast) {
       const container = fdFullCredits;
       const hasFC = fullCredits && fullCredits.length;
@@ -2897,39 +2927,72 @@
       container.classList.remove('hidden');
       container.classList.remove('open');   /* always start collapsed on new film */
 
-      const roleRow = r =>
+      const roleHTML = r =>
         `<div class="fd-fc-role">
           <span class="fd-fc-role-label">${r.role || ''}</span>
           <span class="fd-fc-role-name">${r.name || ''}</span>
         </div>`;
+      const headerHTML = text => `<span class="fd-fc-dept-name">${text}</span>`;
 
-      /* Cast block always uses the grouped/department pattern so it gets
-         its own labelled header, regardless of what shape fullCredits is
-         using. Renders above the crew list — standard billing order. */
-      const castBlock = hasCast
-        ? `<div class="fd-fc-dept">
-            <span class="fd-fc-dept-name">Cast</span>
-            ${cast.map(roleRow).join('')}
-          </div>`
-        : '';
-
-      let crewBlock = '';
+      /* Build one flat, ordered list of {kind, html} items — this is the
+         single source of truth for both "how many credits total" and
+         "what actual markup renders in what order." Cast first (billing
+         convention), crew after. */
+      const items = [];
+      let totalCount = 0;
+      if (hasCast) {
+        items.push({ kind:'header', html: headerHTML('Cast') });
+        cast.forEach(c => { items.push({ kind:'role', html: roleHTML(c) }); totalCount++; });
+      }
       if (hasFC) {
         const isGrouped = fullCredits[0] && Array.isArray(fullCredits[0].roles);
-        crewBlock = isGrouped
-          ? fullCredits.map(dept => `<div class="fd-fc-dept">
-              <span class="fd-fc-dept-name">${dept.department || ''}</span>
-              ${(dept.roles || []).map(roleRow).join('')}
-            </div>`).join('')
+        if (isGrouped) {
+          fullCredits.forEach(dept => {
+            items.push({ kind:'header', html: headerHTML(dept.department || '') });
+            (dept.roles || []).forEach(r => { items.push({ kind:'role', html: roleHTML(r) }); totalCount++; });
+          });
+        } else {
           /* When cast is also present, the flat crew list still gets a
              "Crew" header so the two blocks read as distinct — otherwise
              it'd look like one long continuous list with just Cast at
              the top and no matching label for what follows. */
-          : `<div class="fd-fc-dept ${hasCast ? '' : 'fd-fc-dept--flat'}">
-              ${hasCast ? '<span class="fd-fc-dept-name">Crew</span>' : ''}
-              ${fullCredits.map(roleRow).join('')}
-            </div>`;
+          if (hasCast) items.push({ kind:'header', html: headerHTML('Crew') });
+          fullCredits.forEach(r => { items.push({ kind:'role', html: roleHTML(r) }); totalCount++; });
+        }
       }
+
+      /* Below the threshold, everything renders as one flowing column —
+         a lopsided two-column split on a short list looks worse than a
+         single tidy list. Above it, split by actual ROLE COUNT (not
+         weighted height) — headers cost nothing toward the split target,
+         they just travel along with whichever column holds their first
+         role. Weighting headers as "worth roughly N roles of height"
+         was tried first but produces its own asymmetry: a column that
+         happens to contain both headers "spends" that weight without any
+         corresponding visible content, so it ends up under-filled with
+         actual roles relative to the other column. Splitting on role
+         count directly guarantees both columns show a near-equal number
+         of visible entries — the thing that actually reads as "balanced"
+         to a viewer, rather than the two boxes matching height exactly. */
+      let splitAt = null;
+      if (totalCount > FC_SPLIT_THRESHOLD) {
+        const roleTarget = Math.ceil(totalCount / 2);
+        let roleAcc = 0;
+        splitAt = items.length;
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].kind === 'role') {
+            roleAcc++;
+            if (roleAcc >= roleTarget) { splitAt = i + 1; break; }
+          }
+        }
+        if (splitAt > 0 && items[splitAt - 1].kind === 'header') splitAt -= 1;
+        if (splitAt <= 0 || splitAt >= items.length) splitAt = null; /* degenerate cut — don't split */
+      }
+
+      const bodyHTML = splitAt
+        ? `<div class="fd-fc-col">${items.slice(0, splitAt).map(i => i.html).join('')}</div>
+           <div class="fd-fc-col">${items.slice(splitAt).map(i => i.html).join('')}</div>`
+        : items.map(i => i.html).join('');
 
       container.innerHTML = `
         <button class="fd-fc-toggle" type="button" aria-expanded="false" aria-controls="fd-fc-content">
@@ -2937,7 +3000,7 @@
           <span class="fd-fc-chevron" aria-hidden="true"></span>
         </button>
         <div class="fd-fc-content" id="fd-fc-content">
-          <div><div class="fd-fc-inner">${castBlock}${crewBlock}</div></div>
+          <div><div class="fd-fc-inner${splitAt ? ' fd-fc-inner--split' : ''}">${bodyHTML}</div></div>
         </div>
       `;
 
