@@ -1196,6 +1196,20 @@
     #about { border-top:1px solid var(--rule); }
     .about-wrap { max-width:1440px; margin:0 auto; padding:88px 44px; display:grid; grid-template-columns:300px 1fr; gap:88px; align-items:start; }
     .about-l { position:sticky; top:80px; }
+    /* Headshot — deliberately small and quiet, sitting below the name like
+       a credit line rather than a hero image. Circular crop reads as
+       understated/personal; the site has enough striking imagery already
+       that this shouldn't compete for attention. */
+    .about-headshot {
+      width:112px; height:112px;
+      border-radius:50%;
+      object-fit:cover;
+      margin-top:28px;
+      outline:1px solid rgba(229,224,216,0.14);
+      outline-offset:4px;
+      opacity:0.94;
+      display:block;
+    }
     .about-tag { font-size:9px; font-weight:300; letter-spacing:0.35em; text-transform:uppercase; color:var(--mid); margin-bottom:22px; display:block; }
     .about-name { font-size:clamp(28px,3vw,42px); font-weight:200; letter-spacing:0.22em; text-transform:uppercase; line-height:1.1; }
     .about-r { padding-top:4px; }
@@ -1326,6 +1340,7 @@
       /* ── ABOUT ── */
       .about-wrap { grid-template-columns:1fr; gap:36px; padding:56px 22px; }
       .about-l { position:static; }
+      .about-headshot { width:88px; height:88px; margin-top:20px; }
       .about-body { font-size:14px; line-height:1.88; }
 
       /* ── CONTACT ── */
@@ -1526,6 +1541,7 @@
       <div class="about-l fi">
         <span class="about-tag">04 — About</span>
         <h2 class="about-name">Matt<br>Kirkham</h2>
+        <img class="about-headshot" src="images/about/headshot.webp" alt="Matt Kirkham">
       </div>
       <div class="about-r fi d1">
         <div class="about-body">
