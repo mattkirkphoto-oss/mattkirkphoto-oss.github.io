@@ -1600,6 +1600,8 @@
       videography: [
         'images/videography/project-1/',
         'images/videography/project-2/',
+        'images/videography/project-3/',
+        'images/videography/project-4/',
       ],
 
       film: [
@@ -1634,12 +1636,24 @@
          "titleMark":    "title.svg",  // Illustrator title-card artwork.
                                        // Lives in the project folder next to
                                        // project.json. Replaces the plain-
-                                       // text title on BOTH the section-page
-                                       // index and the detail hero — line
-                                       // breaks, so leave them out of `title`
-                                       // itself (still required, used for
-                                       // alt text / accessibility / nav).
-                                       // Falls back to plain text if absent.
+                                       // text title on the section-page
+                                       // index — line breaks are baked into
+                                       // the artwork, so leave them out of
+                                       // `title` itself (still required,
+                                       // used for alt text / accessibility
+                                       // / nav). Falls back to plain text
+                                       // if absent.
+         "titleMarkHero": "title-hero.svg",  // OPTIONAL separate composition
+                                       // for the centred hero. Only needed
+                                       // if titleMark is left-anchored —
+                                       // a left-cropped mark often won't
+                                       // optically centre correctly in the
+                                       // hero if the letterforms carry
+                                       // asymmetric visual weight (swashes,
+                                       // descenders, diacritics off to one
+                                       // side). Falls back to titleMark if
+                                       // omitted, so most films only need
+                                       // one file.
          "logline":      "One-line pitch, shown under the title on the hero.",
          "runtime":      "12 min",
          "trailer":      "VIMEO_ID",   // Optional dedicated hero video; falls
@@ -1718,6 +1732,15 @@
           cover:         folder + (meta.cover || 'cover.jpg'),
           title:         meta.title       || '',
           titleMark:     meta.titleMark ? folder + meta.titleMark : '',
+          /* Optional separate composition for the centred hero context.
+             A mark cropped tight and left-anchored for the section-page
+             index often won't optically centre in the hero if the
+             letterforms carry asymmetric visual weight (descenders,
+             swashes, diacritics off to one side) — so films that need it
+             can supply a second file balanced for centring. Falls back to
+             titleMark when no dedicated hero version is given. */
+          titleMarkHero: meta.titleMarkHero ? folder + meta.titleMarkHero
+                       : (meta.titleMark    ? folder + meta.titleMark : ''),
           caption:       meta.caption     || '',
           year:          meta.year        || '',
           category:      meta.category    || '',
@@ -2475,7 +2498,7 @@
         const img   = el.querySelector('.film-entry-img');
         const titleEl     = el.querySelector('.film-entry-title');
         const titleMarkEl = el.querySelector('.film-entry-title-mark');
-        applyTitleMark(p, titleMarkEl, titleEl);
+        applyTitleMark(p.titleMark, titleMarkEl, titleEl);
 
         /* Cover format fallback (avif → webp → jpg) */
         if (img) {
@@ -2805,20 +2828,24 @@
       return promise;
     }
 
-    /* Renders a title mark into `container` if p.titleMark is set, falling
+    /* Renders a title mark into `container` given a direct SVG url, falling
        back to plain text (already rendered by the caller) on any failure —
-       missing file, malformed SVG, network error. `textEl` is toggled
-       invisible rather than removed so accessibility tools and the browser
-       tab / nav titles still have real text to read even when the mark
-       is showing. */
-    async function applyTitleMark(p, markContainer, textEl) {
-      if (!p.titleMark) {
+       missing file, malformed SVG, network error, or no url supplied at
+       all. `textEl` is toggled invisible rather than removed so
+       accessibility tools and the browser tab / nav titles still have
+       real text to read even when the mark is showing.
+       Takes a raw url (not the project object) so different call sites
+       can pass different fields — e.g. the section-page index uses
+       p.titleMark while the centred hero uses p.titleMarkHero, which may
+       be a differently-composed file for the same film. */
+    async function applyTitleMark(url, markContainer, textEl) {
+      if (!url) {
         markContainer.innerHTML = '';
         markContainer.style.display = 'none';
         textEl.style.display = '';
         return;
       }
-      const svg = await loadTitleMarkSVG(p.titleMark);
+      const svg = await loadTitleMarkSVG(url);
       if (!svg) {
         /* Fetch failed — quietly keep showing the text title */
         markContainer.innerHTML = '';
@@ -3166,7 +3193,7 @@
       if (p.runtime)  parts.push(`<span>${p.runtime}</span>`);
       fdYearCat.innerHTML = parts.join('');
       fdTitle.textContent = p.title || '';
-      applyTitleMark(p, fdTitleMark, fdTitle);
+      applyTitleMark(p.titleMarkHero, fdTitleMark, fdTitle);
       fdLogline.textContent = p.logline || p.caption || '';
 
       loadFilmDetailHero(p);
