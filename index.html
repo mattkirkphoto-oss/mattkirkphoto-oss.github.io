@@ -2348,7 +2348,12 @@
 
       container.innerHTML = projects.map((p, i) => {
         const ord     = String(i + 1).padStart(2, '0');
-        const hasVid  = (p.gallery || []).some(g => g.vimeo && g.vimeo !== 'YOUR_VIMEO_ID');
+        /* Video sources for hover preview + play chip come from EITHER a
+           `trailer` field OR a vimeo entry inside `gallery`. Trailer wins. */
+        const trailerId = (p.trailer && p.trailer !== 'YOUR_VIMEO_ID') ? p.trailer : null;
+        const galleryVimeo = (p.gallery || []).find(g => g.vimeo && g.vimeo !== 'YOUR_VIMEO_ID');
+        const previewVimeoId = trailerId || (galleryVimeo && galleryVimeo.vimeo) || null;
+        const hasVid  = !!previewVimeoId;
         const metaBits = [];
         if (p.year)     metaBits.push(`<span>${p.year}</span>`);
         if (p.category) metaBits.push(`<span>${p.category}</span>`);
@@ -2398,9 +2403,13 @@
           });
         }
 
-        /* Video hover preview — built lazily on mouseenter, destroyed on leave */
-        const vimeoItem = (p.gallery || []).find(g => g.vimeo && g.vimeo !== 'YOUR_VIMEO_ID');
-        if (vimeoItem && canHover) {
+        /* Video hover preview — built lazily on mouseenter, destroyed on leave.
+           Source resolution mirrors the detail hero: prefer p.trailer, then
+           fall back to the first vimeo entry inside p.gallery. */
+        const trailerHoverId = (p.trailer && p.trailer !== 'YOUR_VIMEO_ID') ? p.trailer : null;
+        const galleryVimeoItem = (p.gallery || []).find(g => g.vimeo && g.vimeo !== 'YOUR_VIMEO_ID');
+        const hoverVimeoId = trailerHoverId || (galleryVimeoItem && galleryVimeoItem.vimeo) || null;
+        if (hoverVimeoId && canHover) {
           let previewFrame  = null;
           let destroyTimer  = null;
           let msgListener   = null;   /* postMessage handler — cleared on destroy */
@@ -2417,7 +2426,7 @@
             previewFrame = document.createElement('iframe');
             previewFrame.className = 'preview-frame';
             previewFrame.style.opacity = '0';
-            previewFrame.src = `https://player.vimeo.com/video/${vimeoItem.vimeo}?background=1&autoplay=1&loop=1&muted=1`;
+            previewFrame.src = `https://player.vimeo.com/video/${hoverVimeoId}?background=1&autoplay=1&loop=1&muted=1`;
             previewFrame.allow = 'autoplay';
             previewFrame.tabIndex = -1;
             previewFrame.style.width  = (fW * previewScale) + 'px';
