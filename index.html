@@ -640,9 +640,23 @@
       display:flex; flex-direction:column; align-items:center; gap:14px;
       margin-bottom:28px;
       padding-bottom:22px;
-      border-bottom:1px solid rgba(242,237,229,0.14);
+      /* Border applied via a pseudo-element instead of border-bottom so
+         the separator can be a fixed narrower width than the laurel block
+         itself — proportional to the text sitting above it rather than
+         spanning the whole hero column. */
+      position:relative;
     }
-    #fd-laurels:empty { display:none; margin:0; padding:0; border:0; }
+    #fd-laurels::after {
+      content:'';
+      position:absolute;
+      left:50%; bottom:0;
+      transform:translateX(-50%);
+      width:220px;
+      height:1px;
+      background:rgba(242,237,229,0.14);
+    }
+    #fd-laurels:empty { display:none; margin:0; padding:0; }
+    #fd-laurels:empty::after { display:none; }
     .fd-laurel {
       font-size:10px; font-weight:300; letter-spacing:0.28em;
       text-transform:uppercase; color:var(--mid);
@@ -707,24 +721,10 @@
       color:var(--text);
     }
 
-    /* Cast — visually separated from key crew credits above it. Sits in
-       the same right-hand column but gets its own label and a wider gap
-       so it reads as "billing block" convention: crew, then Starring. */
-    #fd-cast {
-      display:flex; flex-direction:column; gap:20px;
-      margin-top:36px;
-    }
-    #fd-cast.hidden { display:none; }
-    #fd-cast-list {
-      display:flex; flex-direction:column;
-      margin-top:6px;
-    }
-    /* Cast rows reuse .fd-credit for role/name grid + divider styling,
-       just rendered inside their own labelled block. */
-
-    /* Full credits — expandable end-credits-style block. Data comes from
-       p.fullCredits, structured as departments each with a `roles` array.
-       Coexists with the summary credits in the right column above. */
+    /* Full credits — expandable end-credits-style block. Cast lives inside
+       this expanded view now (in its own labelled Cast department), so the
+       body dashboard only needs to show Synopsis + Director's Note on the
+       left and key crew Credits on the right. */
     #fd-full-credits {
       padding:0 44px;
       max-width:1440px; margin:0 auto;
@@ -1440,10 +1440,6 @@
         <div id="fd-credits">
           <span class="fd-label">Credits</span>
           <div id="fd-credit-list"></div>
-        </div>
-        <div id="fd-cast">
-          <span class="fd-label">Starring</span>
-          <div id="fd-cast-list"></div>
         </div>
       </div>
       <div id="fd-full-credits"></div>
@@ -2747,8 +2743,6 @@
     const fdBody       = document.getElementById('fd-body');
     const fdCredits    = document.getElementById('fd-credits');
     const fdCreditList = document.getElementById('fd-credit-list');
-    const fdCast       = document.getElementById('fd-cast');
-    const fdCastList   = document.getElementById('fd-cast-list');
     const fdFullCredits= document.getElementById('fd-full-credits');
     const fdStillsBlk  = document.getElementById('fd-stills-block');
     const fdStills     = document.getElementById('fd-stills');
@@ -2780,25 +2774,6 @@
       }
       fdCredits.classList.remove('hidden');
       fdCreditList.innerHTML = credits.map(c =>
-        `<div class="fd-credit">
-          <span class="fd-credit-role">${c.role || ''}</span>
-          <span class="fd-credit-name">${c.name || ''}</span>
-        </div>`
-      ).join('');
-    }
-
-    /* Cast — visually separate "Starring" block, always visible alongside
-       the key credits above (billing-block convention). Reuses .fd-credit
-       row styling so it looks consistent, just lives in its own labelled
-       container with extra top margin for separation. */
-    function renderCast(cast) {
-      if (!cast || !cast.length) {
-        fdCastList.innerHTML = '';
-        fdCast.classList.add('hidden');
-        return;
-      }
-      fdCast.classList.remove('hidden');
-      fdCastList.innerHTML = cast.map(c =>
         `<div class="fd-credit">
           <span class="fd-credit-role">${c.role || ''}</span>
           <span class="fd-credit-name">${c.name || ''}</span>
@@ -2868,9 +2843,18 @@
        a department has 3+ people. Starts collapsed; the toggle animates
        open using the grid-template-rows 0fr → 1fr trick so no JS height
        measurement is needed regardless of how many credits there are. */
-    function renderFullCredits(fullCredits) {
+    /* Expandable end-credits-style block below the body. Rendered from
+       p.fullCredits (accepts flat or grouped shape) plus p.cast which
+       renders as its own "Cast" department at the top of the expanded
+       block. Cast used to live in the body next to key credits, but that
+       cluttered the dashboard for films with only one or two roles —
+       putting it inside the expanded view alongside the crew list keeps
+       the summary clean and gives cast its own labelled home. */
+    function renderFullCredits(fullCredits, cast) {
       const container = fdFullCredits;
-      if (!fullCredits || !fullCredits.length) {
+      const hasFC = fullCredits && fullCredits.length;
+      const hasCast = cast && cast.length;
+      if (!hasFC && !hasCast) {
         container.innerHTML = '';
         container.classList.add('hidden');
         container.classList.remove('open');
@@ -2879,20 +2863,39 @@
       container.classList.remove('hidden');
       container.classList.remove('open');   /* always start collapsed on new film */
 
-      const isGrouped = fullCredits[0] && Array.isArray(fullCredits[0].roles);
-
       const roleRow = r =>
         `<div class="fd-fc-role">
           <span class="fd-fc-role-label">${r.role || ''}</span>
           <span class="fd-fc-role-name">${r.name || ''}</span>
         </div>`;
 
-      const inner = isGrouped
-        ? fullCredits.map(dept => `<div class="fd-fc-dept">
-            <span class="fd-fc-dept-name">${dept.department || ''}</span>
-            ${(dept.roles || []).map(roleRow).join('')}
-          </div>`).join('')
-        : `<div class="fd-fc-dept fd-fc-dept--flat">${fullCredits.map(roleRow).join('')}</div>`;
+      /* Cast block always uses the grouped/department pattern so it gets
+         its own labelled header, regardless of what shape fullCredits is
+         using. Renders above the crew list — standard billing order. */
+      const castBlock = hasCast
+        ? `<div class="fd-fc-dept">
+            <span class="fd-fc-dept-name">Cast</span>
+            ${cast.map(roleRow).join('')}
+          </div>`
+        : '';
+
+      let crewBlock = '';
+      if (hasFC) {
+        const isGrouped = fullCredits[0] && Array.isArray(fullCredits[0].roles);
+        crewBlock = isGrouped
+          ? fullCredits.map(dept => `<div class="fd-fc-dept">
+              <span class="fd-fc-dept-name">${dept.department || ''}</span>
+              ${(dept.roles || []).map(roleRow).join('')}
+            </div>`).join('')
+          /* When cast is also present, the flat crew list still gets a
+             "Crew" header so the two blocks read as distinct — otherwise
+             it'd look like one long continuous list with just Cast at
+             the top and no matching label for what follows. */
+          : `<div class="fd-fc-dept ${hasCast ? '' : 'fd-fc-dept--flat'}">
+              ${hasCast ? '<span class="fd-fc-dept-name">Crew</span>' : ''}
+              ${fullCredits.map(roleRow).join('')}
+            </div>`;
+      }
 
       container.innerHTML = `
         <button class="fd-fc-toggle" type="button" aria-expanded="false" aria-controls="fd-fc-content">
@@ -2900,7 +2903,7 @@
           <span class="fd-fc-chevron" aria-hidden="true"></span>
         </button>
         <div class="fd-fc-content" id="fd-fc-content">
-          <div><div class="fd-fc-inner">${inner}</div></div>
+          <div><div class="fd-fc-inner">${castBlock}${crewBlock}</div></div>
         </div>
       `;
 
@@ -2931,12 +2934,10 @@
           <p>${p.directorNote.replace(/\n\n/g, '</p><p>')}</p>
         </div>`);
       }
-      if (p.role) {
-        blocks.push(`<div class="fd-block">
-          <span class="fd-label">Role</span>
-          <p>${p.role}</p>
-        </div>`);
-      }
+      /* p.role is intentionally not rendered here — role info is already
+         communicated by the Credits block (Director/Writer/etc.), and a
+         standalone Role block was creating redundant visual clutter. The
+         field is preserved in the schema for backward compatibility. */
       fdContent.innerHTML = blocks.join('');
       /* If no content and no credits, hide the whole body */
       const hasCredits = (p.credits || []).length > 0;
@@ -3174,8 +3175,7 @@
       renderLaurels(p.laurels);
       renderContentBlocks(p);
       renderCredits(p.credits);
-      renderCast(p.cast);
-      renderFullCredits(p.fullCredits);
+      renderFullCredits(p.fullCredits, p.cast);
       renderStillsGrid(p.gallery, idx);
 
       /* Prev / Next */
