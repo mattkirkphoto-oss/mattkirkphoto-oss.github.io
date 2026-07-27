@@ -637,18 +637,23 @@
 
     /* Laurels — integrated into the hero overlay as small caps text */
     #fd-laurels {
-      display:flex; flex-direction:column; align-items:center; gap:8px;
-      margin-bottom:6px;
+      display:flex; flex-direction:column; align-items:center; gap:14px;
+      margin-bottom:28px;
+      padding-bottom:22px;
+      border-bottom:1px solid rgba(242,237,229,0.14);
     }
-    #fd-laurels:empty { display:none; margin:0; }
+    #fd-laurels:empty { display:none; margin:0; padding:0; border:0; }
     .fd-laurel {
       font-size:10px; font-weight:300; letter-spacing:0.28em;
-      text-transform:uppercase; color:var(--text);
+      text-transform:uppercase; color:var(--mid);
       display:flex; align-items:center; gap:14px;
       opacity:0.9;
     }
-    .fd-laurel-type { font-weight:400; }
-    .fd-laurel-fest { color:var(--mid); }
+    /* Festival name is the specific, meaningful information — bold and
+       full colour. "Longlisted"/"Official Selection" etc. is just the
+       category label, so it stays dimmer and lighter weight. */
+    .fd-laurel-type { color:var(--mid); }
+    .fd-laurel-fest { font-weight:500; color:var(--text); }
     .fd-laurel-year { color:var(--dim); font-size:9px; letter-spacing:0.34em; }
     .fd-laurel > *:not(:last-child)::after {
       content:'·'; margin-left:14px; opacity:0.55;
