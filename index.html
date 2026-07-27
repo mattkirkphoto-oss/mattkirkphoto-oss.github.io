@@ -470,6 +470,14 @@
         max-width:none; gap:16px;
         padding:0;
         margin:0;
+        /* Reset align-self (desktop sets it to center for row-flex vertical
+           centring — on mobile that cross-axis is horizontal, so without a
+           reset the body horizontally centres based on its widest child.
+           Result: short titles look centred, long ones don't. Force stretch
+           so all rows sit flush left consistently. */
+        align-self:stretch;
+        align-items:flex-start;
+        width:100%;
       }
       .film-entry-title { font-size:clamp(28px, 8vw, 44px); }
       .film-entry-logline { font-size:13px; }
