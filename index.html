@@ -2425,7 +2425,9 @@
             else         { fH = cH + 2; fW = Math.ceil(cH * vR) + 2; }
             previewFrame = document.createElement('iframe');
             previewFrame.className = 'preview-frame';
-            previewFrame.style.opacity = '0';
+            /* Do NOT set inline opacity — base CSS sets it to 0 and the
+               `.loaded` class transitions it to 1. Inline styles would win
+               over the class rule and keep the iframe permanently hidden. */
             previewFrame.src = `https://player.vimeo.com/video/${hoverVimeoId}?background=1&autoplay=1&loop=1&muted=1`;
             previewFrame.allow = 'autoplay';
             previewFrame.tabIndex = -1;
