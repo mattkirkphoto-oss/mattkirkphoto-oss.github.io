@@ -331,6 +331,14 @@
     }
     .film-entry-img.loaded { opacity:0.92; }
     .film-entry:hover .film-entry-img { opacity:1; transform:scale(1.025); }
+    /* Overlay used by the hover crossfade cycle. Sits on top of the base
+       image at the same z-index — later in DOM order wins — and stays
+       invisible until the cycle fades one gallery image in over another. */
+    .film-entry-img-next {
+      position:absolute; inset:0; width:100%; height:100%;
+      object-fit:cover; opacity:0; z-index:1;
+      pointer-events:none;
+    }
 
     /* Play chip for entries with video — always on the outside edge, since
        the inside edge is masked by the fade gradient. */
@@ -2349,6 +2357,7 @@
         return `<div class="film-entry fi" data-idx="${i}" role="button" tabindex="0" aria-label="Open ${p.title}">
           <div class="film-entry-media">
             <img class="film-entry-img" src="${p.cover}" alt="${p.title}" loading="lazy" decoding="async" style="object-position:${p.thumbPosition}">
+            <img class="film-entry-img-next" src="" alt="" aria-hidden="true" decoding="async">
             ${hasVid ? '<span class="film-entry-play">&#9654;&ensp;Play</span>' : ''}
           </div>
           <div class="film-entry-body">
@@ -2448,6 +2457,119 @@
             if (previewFrame) previewFrame.classList.remove('loaded');
             destroyTimer = setTimeout(destroyFrame, 550);
           });
+        } else if (canHover) {
+          /* No video — if there are multiple gallery stills, hover triggers
+             a slow crossfade cycle through them, mirroring the photography
+             tile behaviour. Uses two stacked <img> layers so the transition
+             is a real fade, not an image reload. All timing constants match
+             the photography section so both sections feel like one system. */
+          const imgSrcs = (p.gallery || []).filter(g => g.src).map(g => g.src);
+          if (imgSrcs.length > 1) {
+            const nextImg = el.querySelector('.film-entry-img-next');
+            let cycleTimer    = null;
+            let cycleInterval = null;
+            let swapTimer     = null;
+            let cycleIdx      = 1;
+            let isHovering    = false;
+            let resolvedCoverSrc = null;
+
+            function cancelCycle() {
+              clearTimeout(cycleTimer);
+              clearInterval(cycleInterval);
+              clearTimeout(swapTimer);
+              cycleTimer = cycleInterval = swapTimer = null;
+            }
+
+            function resetToCover() {
+              cancelCycle();
+              /* Fade overlay away */
+              nextImg.style.transition = 'opacity 0.6s ease';
+              nextImg.style.opacity    = '0';
+              /* If the base has drifted to a gallery image, crossfade back */
+              if (resolvedCoverSrc && img.src !== resolvedCoverSrc) {
+                img.style.transition = 'opacity 0.3s ease';
+                img.style.opacity    = '0';
+                setTimeout(() => {
+                  img.src = resolvedCoverSrc;
+                  img.style.transition = 'opacity 0.5s ease';
+                  img.style.opacity    = '0.92';
+                  setTimeout(() => {
+                    img.style.transition     = '';
+                    img.style.opacity        = '';
+                    img.style.transform      = '';
+                    nextImg.src              = '';
+                    nextImg.style.transition = '';
+                    nextImg.style.transform  = '';
+                  }, 520);
+                }, 320);
+              } else {
+                setTimeout(() => {
+                  img.style.transition     = '';
+                  img.style.transform      = '';
+                  nextImg.src              = '';
+                  nextImg.style.transition = '';
+                  nextImg.style.transform  = '';
+                }, 650);
+              }
+            }
+
+            /* Preload next image, then fade the overlay in over the base. Once
+               fully opaque, quietly swap the base src underneath and hide the
+               overlay — ready for the next cycle. */
+            function crossFadeTo(src) {
+              if (!isHovering) return;
+              clearTimeout(swapTimer);
+              const preload = new Image();
+              preload.onload = () => {
+                if (!isHovering) return;
+                nextImg.src                 = src;
+                nextImg.style.objectPosition = p.thumbPosition;
+                nextImg.style.transition    = 'none';
+                nextImg.style.opacity       = '0';
+                /* Pin base scale so CSS hover rule can't jolt it mid-cycle */
+                img.style.transform      = 'scale(1.025)';
+                img.style.transition     = 'none';
+                nextImg.style.transform  = 'scale(1.025)';
+                requestAnimationFrame(() => {
+                  requestAnimationFrame(() => {
+                    if (!isHovering) return;
+                    nextImg.style.transition = 'opacity 1.4s ease';
+                    nextImg.style.opacity    = '1';
+                    swapTimer = setTimeout(() => {
+                      if (!isHovering) return;
+                      img.src                  = src;
+                      img.style.objectPosition = p.thumbPosition;
+                      nextImg.style.transition = 'none';
+                      nextImg.style.opacity    = '0';
+                    }, 1450);
+                  });
+                });
+              };
+              preload.src = src;
+            }
+
+            el.addEventListener('mouseenter', () => {
+              isHovering = true;
+              /* Snapshot the actual loaded cover src (after format fallback) */
+              if (!resolvedCoverSrc && img.src) resolvedCoverSrc = img.src;
+              /* Warm the browser cache for every still */
+              imgSrcs.forEach(src => { const w = new Image(); w.src = src; });
+              cycleIdx = 1;
+              cycleTimer = setTimeout(() => {
+                if (!isHovering) return;
+                crossFadeTo(imgSrcs[cycleIdx]);
+                cycleInterval = setInterval(() => {
+                  cycleIdx = cycleIdx + 1 >= imgSrcs.length ? 1 : cycleIdx + 1;
+                  crossFadeTo(imgSrcs[cycleIdx]);
+                }, 3600);
+              }, 1400);
+            });
+
+            el.addEventListener('mouseleave', () => {
+              isHovering = false;
+              resetToCover();
+            });
+          }
         }
 
         el.addEventListener('mouseenter', () => curView());
