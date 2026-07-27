@@ -357,7 +357,9 @@
       position:absolute; top:50%; left:50%;
       transform:translate(-50%,-50%);
       border:0; pointer-events:none;
-      opacity:0; transition:opacity 0.5s ease; z-index:3;
+      /* z-index 1 (not 3) so the ::after fade gradient (z-index 2) sits
+         above the video, keeping the seamless inside-edge treatment. */
+      opacity:0; transition:opacity 0.5s ease; z-index:1;
     }
     .film-entry-media .preview-frame.loaded { opacity:1; }
 
