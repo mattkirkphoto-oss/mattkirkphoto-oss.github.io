@@ -1,23 +1,10 @@
 {
-  "title": "I Think Something's Wrong",
-  "caption": "Short Film — 2023",
-  "year": "2023",
+  "title": "Glasshouse",
+  "caption": "Silver Street Productions, 2026",
+  "year": "2026",
   "category": "Narrative",
   "cover": "cover.webp",
-  "description": "A coming-of-age short film. Directed and shot by Matt Kirkham, written and directed by Lola Malone.",
-  "gallery": [
-    "cover.webp",
-    "001.webp",
-    "002.webp",
-    "003.webp",
-    "004.webp",
-    "005.webp",
-    "006.webp",
-    "007.webp",
-    "008.webp",
-    "009.webp",
-    "010.webp",
-    "011.webp",
-    "012.webp"
-  ]
+  "previewScale": 1.33,
+  "description": "Short film. Directed by Charlie McGuire, Director of Photography Matt Kirkham, Producer Aidan Collins. Produced by Silver Street Productions and Cambridge Arts Initiative and Collective. Shot on location, 2026.",
+  "gallery": ["001.webp", { "vimeo": "1192833965" }, "002.webp", "003.webp", "004.webp", "005.webp"]
 }
