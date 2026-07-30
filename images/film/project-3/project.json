@@ -1,11 +1,57 @@
 {
   "title": "Glasshouse",
   "titleMark": "title.svg",
-  "caption": "Silver Street Productions, 2026",
+  "titleMarkScale": 1.3,
+  "caption": "Silver Street Productions x CAIAC, 2026",
   "year": "2026",
   "category": "Narrative",
   "cover": "cover.webp",
-  "previewScale": 1.33,
-  "description": "Short film. Directed by Charlie McGuire, Director of Photography Matt Kirkham, Producer Aidan Collins. Produced by Silver Street Productions and Cambridge Arts Initiative and Collective. Shot on location, 2026.",
-  "gallery": ["001.webp", { "vimeo": "1192833965" }, "002.webp", "003.webp", "004.webp", "005.webp"]
+  "previewScale": 1.35,
+
+  "logline": "A boundary-pushing mocku-theatre piece: a stubborn bus driver, a houseless man who can't afford a ticket, and a repugnant dilemma for the passengers between them.",
+  "runtime": "",
+  "trailer": "1192833965",
+
+  "synopsis": "On a night of unrelenting rain and flooding in the British countryside, a standoff between a stubborn bus driver and a houseless man who can't afford a ticket slides into a mire of tension and social conflict — bringing the passengers to a repugnant dilemma. Adapted from the stage play by Charlie McGuire, Glasshouse explores the human beast with unwavering intimacy through pre-recorded interviews with its 'real-life' characters, in which they share their renditions of what happened on the night of February 14th, 2011.",
+  "directorNote": "",
+  "role": "Director of Photography",
+
+  "laurels": [],
+
+  "credits": [
+    { "role": "Director",                "name": "Charlie McGuire" },
+    { "role": "Writer",                  "name": "Charlie McGuire" },
+    { "role": "Producer",                "name": "Aidan Collins" },
+    { "role": "Director of Photography", "name": "Matt Kirkham" }
+  ],
+
+  "cast": [
+    { "role": "Owen",    "name": "Joe Orrell" },
+    { "role": "Freya",   "name": "May Daws" },
+    { "role": "Natalie", "name": "Imogen Carter" },
+    { "role": "Sarah",   "name": "Eliza Harrison" },
+    { "role": "Eden",    "name": "Rafael Griso" },
+    { "role": "Calum",   "name": "Harry Lloyd Yorke" },
+    { "role": "Colin",   "name": "David Streames" }
+  ],
+
+  "fullCredits": [
+    { "role": "1st AC",             "name": "James Majid" },
+    { "role": "2nd AC",             "name": "Jen Shaftoe" },
+    { "role": "Gaffer",             "name": "Callum Watson" },
+    { "role": "Assistant Producer", "name": "Maddy Guha" },
+    { "role": "Runner",             "name": "Holly McLaughlin" },
+    { "role": "Runner",             "name": "Juliette Berry" },
+    { "role": "Editor",             "name": "Jonnie Howard" },
+    { "role": "Composer",           "name": "Dilan Shant" }
+  ],
+
+  "gallery": [
+    "001.webp",
+    "002.webp",
+    "003.webp",
+    "004.webp",
+    "005.webp",
+    { "vimeo": "1192833965" }
+  ]
 }
