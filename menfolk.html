@@ -300,18 +300,33 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 
 #inbox-overlay{position:fixed;inset:0;z-index:400;display:none;align-items:flex-start;justify-content:flex-end;padding-top:54px;}
 #inbox-overlay.visible{display:flex;}
-#inbox-panel{width:320px;background:var(--bg-panel);border:0.5px solid var(--border-strong);border-radius:var(--radius-lg);box-shadow:0 8px 32px rgba(0,0,0,0.4);margin-right:12px;overflow:hidden;animation:slideIn 0.15s ease;}
-.inbox-panel-header{padding:12px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+/* Panel is a flex column with a capped height so the header and "Open
+   inbox" button stay pinned in view — only the email list itself scrolls.
+   Previously this had no max-height at all on desktop (only a mobile
+   media query added one), so the panel just grew as tall as its content
+   demanded; once that exceeded the viewport, overflow:hidden silently
+   clipped everything past the screen edge with no way to scroll to it.
+   Combined with "mark as read" never actually removing an email from the
+   list (just dimming it), old emails piled up forever with no way to
+   reach anything beyond the first screenful. */
+#inbox-panel{width:320px;max-height:min(70vh,560px);display:flex;flex-direction:column;background:var(--bg-panel);border:0.5px solid var(--border-strong);border-radius:var(--radius-lg);box-shadow:0 8px 32px rgba(0,0,0,0.4);margin-right:12px;overflow:hidden;animation:slideIn 0.15s ease;}
+.inbox-panel-header{flex:0 0 auto;padding:12px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 .inbox-panel-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);}
 .inbox-mark-read{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-tertiary);background:none;border:none;cursor:pointer;letter-spacing:0.04em;}
 .inbox-mark-read:hover{color:var(--text);}
+/* The actual scrolling region — flex:1 lets it fill remaining space
+   between the fixed header/footer, min-height:0 is required for a flex
+   child to be allowed to shrink below its content size (without it,
+   overflow-y:auto has no effect since the flex item just grows to fit
+   all content instead of scrolling). */
+#inbox-email-list{flex:1 1 auto;min-height:0;overflow-y:auto;}
 .inbox-email-row{padding:12px 14px;border-bottom:0.5px solid var(--border);cursor:pointer;transition:background 0.1s;}
 .inbox-email-row:hover{background:var(--bg-hover);}
 .inbox-email-from{font-size:12px;color:var(--text);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .inbox-email-subject{font-size:11px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .inbox-email-time{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-tertiary);margin-top:3px;}
 .inbox-empty{padding:20px 14px;font-size:12px;color:var(--text-tertiary);font-family:'DM Mono',monospace;text-align:center;}
-.inbox-open-btn{display:block;width:100%;padding:11px 14px;background:var(--accent);color:#0f0f0d;border:none;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;text-align:center;transition:opacity 0.1s;}
+.inbox-open-btn{flex:0 0 auto;display:block;width:100%;padding:11px 14px;background:var(--accent);color:#0f0f0d;border:none;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;text-align:center;transition:opacity 0.1s;}
 .inbox-open-btn:hover{opacity:0.85;}
 
 /* ═══════════════════════════════════════════════════════════════
@@ -440,7 +455,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   .dash-full-cols { flex-direction: column; }
 
   #inbox-overlay { padding-top: 0; align-items: flex-start; }
-  #inbox-panel { width: calc(100vw - 24px) !important; margin: 12px; max-height: 80vh; overflow-y: auto; }
+  #inbox-panel { width: calc(100vw - 24px) !important; margin: 12px; max-height: 80vh; }
 
   .login-title { font-size: 38px; }
   #login-step-3 { width: calc(100vw - 48px) !important; }
