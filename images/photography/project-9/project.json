@@ -1,10 +1,9 @@
 {
-  "title": "Graduation Photos",
-  "caption": "2025 Graduation Photos",
-  "year": "2025",
-  "category": "Portraiture",
+  "title": "Churchill College Marriage Formal",
+  "caption": "Photography for the first-year marriage Formal, hosted at Churchill College, Cambridge.",
+  "year": "2026",
+  "category": "Events",
+  "description": "Highlights from the first-year marriage Formal at Churchill College, Cambridge.",
   "cover": "cover.webp",
-  "thumbPosition": "center 20%",
-  "description": "Graduation portraits, Manchester, UK, 2025.",
-  "gallery": ["001.webp", "002.webp", "003.webp", "004.webp", "005.webp", "006.webp"]
+  "gallery": ["001.webp", "002.webp", "003.webp", "004.webp", "005.webp","006.webp","007.webp","008.webp","009.webp"]
 }
