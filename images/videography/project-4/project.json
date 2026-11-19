@@ -1,8 +1,9 @@
 {
-  "title": "'HIS' - Cambridge University Charity Fashion Show",
-  "caption": "HIS' - Cambridge University Charity Fashion Show",
-  "year": "2026",
-  "category": "Fashion Editorial",
-  "description": "Promotional video for the Cambridge University Charity Fashion Show. Directed by Matt Kirkham & Meg Flood, Director of Photography & Edited by Matt Kirkham",
-  "gallery": [{ "vimeo": "1248319971" }]
+  "title": "Les Miserables - Stagecoach Theatre Company, Cambridge",
+  "caption": "Les Miserables - Stagecoach Theatre Company, Cambridge",
+  "year": "2024",
+  "category": "Theatre",
+  "cover": "cover.webp",
+  "description": "Videography of the Les Miserables production at Stagecoach Theatre Company, Cambridge",
+  "gallery": [{ "vimeo": "1194040389" }]
 }
